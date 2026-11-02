@@ -250,6 +250,106 @@
         background: var(--text); color: var(--bg); padding: 9px 16px; border-radius: 999px;
         font-size: 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); max-width: 88vw; text-align: center;
       }
+      /* keyword search banner above the list */
+      .kwbanner {
+        display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+        border: 1px solid var(--search-blue); border-radius: 12px;
+        background: var(--surface); padding: 10px 14px; margin-bottom: 16px; line-height: 1.6;
+      }
+      .kwbanner b { color: var(--search-blue); }
+      .kw-preview { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+      .kw-item {
+        text-align: left; padding: 8px 10px; border-radius: 8px; font-size: 15px; line-height: 1.5;
+        border: 1px solid var(--border); background: var(--surface); color: var(--text);
+      }
+      .kw-item .qid { color: var(--search-blue); font-weight: 700; margin-right: 6px; }
+      .kw-count { font-size: 14px; color: var(--dim); margin-top: 8px; }
+      .kw-count b { color: var(--search-blue); }
+
+      /* materials (资料夹) fab + panel */
+      .fab-mat {
+        position: fixed; z-index: 40; right: 16px;
+        bottom: calc(94px + env(safe-area-inset-bottom));
+        width: 60px; height: 60px; border: none; border-radius: 50%;
+        background: #2e7d4f; color: #fff; font-weight: 700; font-size: 13px; line-height: 1.3;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+      }
+      .card-actions { flex-shrink: 0; display: flex; gap: 6px; }
+      .mat-form label { display: block; font-size: 14px; font-weight: 700; color: var(--dim); margin-top: 12px; }
+      .mat-form input[type="text"], .mat-form input[type="url"], .mat-form select {
+        width: 100%; margin-top: 6px; padding: 10px 12px; border-radius: 8px; font-size: 16px;
+        border: 1px solid var(--border); background: var(--surface); color: var(--text);
+      }
+      .mat-form textarea {
+        width: 100%; margin-top: 6px; padding: 10px 12px; border-radius: 8px; font: inherit;
+        border: 1px solid var(--border); background: var(--surface); color: var(--text);
+        line-height: 1.6; resize: vertical;
+      }
+      .mat-item {
+        border: 1px solid var(--border); border-radius: 10px; background: var(--surface);
+        padding: 12px; margin-top: 10px;
+      }
+      .mat-item h3 { margin: 0; font-size: 16px; line-height: 1.5; }
+      .mat-item .body { margin: 6px 0 0; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+      .mat-item .src { margin-top: 6px; font-size: 14px; word-break: break-all; }
+      .mat-item .src a { color: var(--link); }
+      .mat-item .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px; }
+      .mat-qchip {
+        padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 700;
+        background: var(--green-soft); color: var(--green); border: 1px solid var(--green);
+      }
+      .mini-btn {
+        padding: 5px 12px; border-radius: 999px; font-size: 14px;
+        border: 1px solid var(--border); background: var(--surface); color: var(--link);
+      }
+      .mini-btn.danger { color: var(--crimson); border-color: var(--crimson); }
+
+      /* colour pens: highlights */
+      .hl { border-radius: 3px; padding: 0 1px; cursor: pointer; color: inherit; }
+      .hl-yellow { background: rgba(250, 204, 21, 0.45); }
+      .hl-pink { background: rgba(244, 114, 182, 0.38); }
+      .hl-green { background: rgba(74, 222, 128, 0.42); }
+      .hl-blue { background: rgba(96, 165, 250, 0.42); }
+      .hl-red {
+        background: transparent; border: 1.5px solid var(--crimson); border-radius: 999px;
+        padding: 0 4px;
+      }
+      @media (prefers-color-scheme: dark) {
+        .hl-yellow { background: rgba(250, 204, 21, 0.35); }
+        .hl-pink { background: rgba(244, 114, 182, 0.32); }
+        .hl-green { background: rgba(74, 222, 128, 0.3); }
+        .hl-blue { background: rgba(96, 165, 250, 0.35); }
+      }
+      .pentool {
+        position: fixed; z-index: 70; display: flex; gap: 6px; align-items: center;
+        background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+        padding: 6px 8px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      }
+      .pen {
+        width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(0, 0, 0, 0.15);
+        padding: 0; font-size: 13px; line-height: 1;
+      }
+      .pen.yellow { background: #facc15; }
+      .pen.pink { background: #f472b6; }
+      .pen.green { background: #4ade80; }
+      .pen.blue { background: #60a5fa; }
+      .pen.red { background: var(--surface); border-color: var(--crimson); color: var(--crimson); font-weight: 700; }
+      .pen-x {
+        width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border);
+        background: var(--surface); font-size: 14px; padding: 0;
+      }
+      .hlpop {
+        position: fixed; z-index: 70; width: min(320px, calc(100vw - 24px));
+        background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+        padding: 12px; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.3);
+      }
+      .hlpop .txt { font-size: 14px; color: var(--dim); line-height: 1.6; word-break: break-word; }
+      .hlpop textarea {
+        width: 100%; margin-top: 8px; padding: 8px 10px; border-radius: 8px; font: inherit; font-size: 15px;
+        border: 1px solid var(--border); background: var(--surface); color: var(--text); resize: vertical;
+      }
+      .hlpop .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px; }
+      .pen.sel { outline: 3px solid var(--text); outline-offset: 1px; }
       [hidden] { display: none !important; }
     </style>
   </head>
@@ -263,7 +363,7 @@
           题，其余为选择、判断、配对、排序等客观题。先自己作答，再点按钮看得分和解析；名词解释、简答题、论述题写完后对照参考答案与要点自评。答对满分的题会锁定，答案和解析固定显示；答错的题可以改了再做。只要一道题曾经答错过，它就会一直留在错题集里——就算后来订正答对、锁定了，也能用「只看错题」翻出来复习。
         </p>
         <p>
-          文中<button type="button" class="term" id="sample-term">红色带虚线的词</button>可以点开看名词解释（解释为帮助理解的拓展说明，具体以教材为准）。用浏览器菜单把本页「添加到主屏幕」，下次点图标就能直接进来做题。
+          文中<button type="button" class="term" id="sample-term">红色带虚线的词</button>可以点开看名词解释（解释为帮助理解的拓展说明，具体以教材为准）。用浏览器菜单把本页「添加到主屏幕」，下次点图标就能直接进来做题。右侧两个悬浮球：金色是搜题与筛选（顶部可输关键词即时搜题），绿色是资料夹（把联网查到的资料贴进来和题目对照）；做题时选中任意文字，还会弹出色笔，可以荧光标重点、用红笔圈、补笔记。资料、标注和做题记录一样，只保留在本次打开期间。
         </p>
         <div class="stats" id="stats-line"></div>
         <div class="bar" role="progressbar" aria-label="做题进度" aria-valuemin="0" aria-valuemax="80" id="stats-bar">
@@ -271,9 +371,15 @@
         </div>
       </header>
 
+      <div class="kwbanner" id="kw-banner" hidden>
+        <span>关键词：<b id="kw-banner-text"></b> · <span id="kw-banner-count"></span></span>
+        <button type="button" class="mini-btn" id="kw-banner-clear">清除关键词</button>
+      </div>
+
       <main id="list"></main>
     </div>
 
+    <button type="button" class="fab-mat serif" id="fab-mat" aria-label="打开资料夹">资料<br />夹</button>
     <button type="button" class="fab serif" id="fab" aria-label="打开搜题和筛选">搜题<br />筛选</button>
 
     <section class="panel" id="panel" role="dialog" aria-label="搜题和筛选" hidden>
@@ -283,6 +389,17 @@
       </div>
       <div class="stats" id="panel-stats"></div>
 
+      <div class="flbl" style="margin-top: 12px">关键词搜题（即时）</div>
+      <div class="searchrow">
+        <input type="text" id="kw-input" aria-label="关键词搜题" placeholder="输入关键词，立刻筛出相关题目…" />
+        <button type="button" class="btn-plain" id="kw-clear">清除</button>
+      </div>
+      <p class="hint">题干、选项、正确答案、解析、参考答案和要点里带这个词的题都会被找到；输两个词、用空格隔开，就是两个词都要有。</p>
+      <div class="chips" id="kw-chips"></div>
+      <div class="kw-count" id="kw-count"></div>
+      <div class="kw-preview" id="kw-preview"></div>
+
+      <div class="flbl">查资料 / 问小帕</div>
       <div class="searchrow">
         <input type="text" id="search-input" aria-label="搜索问题" placeholder="做题时遇到不懂的？输入问题…" />
         <a class="searchbtn" id="search-link" href="https://www.bing.com/search?q=%E4%B8%96%E7%95%8C%E8%BF%91%E4%BB%A3%E5%8F%B2" target="_blank" rel="noreferrer">🌐 联网搜索</a>
@@ -305,6 +422,63 @@
       <div class="flbl">记录</div>
       <div class="chips" id="reset-zone"></div>
     </section>
+
+    <section class="panel" id="mat-panel" role="dialog" aria-label="资料夹" hidden>
+      <div style="display: flex; align-items: center; justify-content: space-between">
+        <h2 class="serif">资料夹</h2>
+        <button type="button" class="x" id="mat-close" aria-label="关闭资料夹">✕</button>
+      </div>
+      <p class="hint">把联网搜到的资料粘贴到这里，做题时调出来和题目对照，也可以当补充知识点存着。资料只保留在本次打开期间，关掉页面就会清空。</p>
+      <form class="mat-form" id="mat-form">
+        <label for="mat-title">标题</label>
+        <input type="text" id="mat-title" placeholder="给这份资料起个名，例如：奥格斯堡和约要点" />
+        <label for="mat-content">内容</label>
+        <textarea id="mat-content" rows="5" placeholder="把搜到的资料粘贴到这里…"></textarea>
+        <label for="mat-source">来源链接（可不填）</label>
+        <input type="url" id="mat-source" placeholder="https://…" />
+        <label for="mat-qid">关联题目（可不选）</label>
+        <select id="mat-qid"></select>
+        <p class="hint err" id="mat-hint" hidden></p>
+        <button type="submit" class="btn" id="mat-save">存进资料夹</button>
+        <button type="button" class="btn-plain" id="mat-cancel-edit" hidden>取消编辑</button>
+      </form>
+
+      <div class="flbl">已存资料</div>
+      <div class="chips" id="mat-filter-row">
+        <select id="mat-filter" aria-label="按题目筛选资料" style="flex: 1; min-width: 0">
+          <option value="all">全部资料</option>
+          <option value="none">未关联题目的</option>
+        </select>
+      </div>
+      <div id="mat-list"></div>
+    </section>
+
+    <div class="pentool" id="pen-tool" role="toolbar" aria-label="色笔" hidden>
+      <button type="button" class="pen yellow" data-pen="yellow" aria-label="黄色荧光笔"></button>
+      <button type="button" class="pen pink" data-pen="pink" aria-label="粉色荧光笔"></button>
+      <button type="button" class="pen green" data-pen="green" aria-label="绿色荧光笔"></button>
+      <button type="button" class="pen blue" data-pen="blue" aria-label="蓝色荧光笔"></button>
+      <button type="button" class="pen red" data-pen="red" aria-label="红笔圈">圈</button>
+      <button type="button" class="pen-x" id="pen-close" aria-label="收起色笔">✕</button>
+    </div>
+
+    <div class="hlpop" id="hl-pop" hidden>
+      <div class="txt" id="hl-pop-text"></div>
+      <div class="row" id="hl-pop-pens">
+        <button type="button" class="pen yellow" data-hlpen="yellow" aria-label="改成黄色"></button>
+        <button type="button" class="pen pink" data-hlpen="pink" aria-label="改成粉色"></button>
+        <button type="button" class="pen green" data-hlpen="green" aria-label="改成绿色"></button>
+        <button type="button" class="pen blue" data-hlpen="blue" aria-label="改成蓝色"></button>
+        <button type="button" class="pen red" data-hlpen="red" aria-label="改成红笔圈">圈</button>
+      </div>
+      <textarea id="hl-note" rows="2" placeholder="给这处重点补一条笔记…（可不写）" aria-label="标注笔记"></textarea>
+      <div class="row">
+        <button type="button" class="mini-btn" id="hl-save-note">保存笔记</button>
+        <button type="button" class="mini-btn danger" id="hl-delete">删除标注</button>
+        <button type="button" class="mini-btn" id="hl-close">关闭</button>
+      </div>
+      <p class="hint" id="hl-note-show" hidden></p>
+    </div>
 
     <div class="overlay" id="term-overlay" hidden>
       <div class="modal" role="dialog" aria-modal="true" id="term-modal">
@@ -349,7 +523,15 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
       // ---------- state (kept for this visit) ----------
       var progress = {}; // id -> {score, answer, essayText, everWrong}
       var drafts = {};   // id -> {sel, tf, matchSel, orderRank, essayText, showRef, pts}
-      var ui = { chapter: "全部", typeFilter: "all", wrongOnly: false, confirmReset: false };
+      var ui = { chapter: "全部", typeFilter: "all", wrongOnly: false, confirmReset: false, keyword: "" };
+
+      // ---------- materials + colour-pen highlights (this visit only) ----------
+      var materials = []; // {id, title, content, source, qid}
+      var highlights = []; // {id, qid, text, color, note}
+      var matSeq = 0, hlSeq = 0;
+      var matEditingId = null;
+      var pendingSel = null; // {qid, text, rect}
+      var activeHlId = null;
 
       function draft(q) {
         if (drafts[q.id]) return drafts[q.id];
@@ -491,7 +673,7 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
         h += '<div class="card-top"><div class="meta">' + q.id + " · " + q.chapter + " · " + escHtml(q.topic) +
           " · " + (TYPE_LABEL[q.type] || q.type) + " · " + escHtml(q.difficulty) +
           (p && p.everWrong ? '<span class="wrong-badge">错题集</span>' : "") +
-          '</div><button type="button" class="lookup" data-act="lookup">🔍 查这道题</button></div>';
+          '</div><span class="card-actions"><button type="button" class="lookup" data-act="savemat">📎 存资料</button><button type="button" class="lookup" data-act="lookup">🔍 查这道题</button></span></div>';
         h += '<h3 class="stem serif">' + rich(q.stem) +
           (q.type === "glossary" ? '<span style="font-size:16px">（名词解释）</span>' : "") + "</h3>";
 
@@ -588,8 +770,28 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
         return h;
       }
 
+      function questionSearchText(q) {
+        var parts = [q.id, q.chapter, q.topic, q.stem, q.explanation || "", q.reference || ""];
+        (q.options || []).forEach(function (o) { parts.push(o); });
+        (q.expected_points || []).forEach(function (o) { parts.push(o); });
+        (q.tags || []).forEach(function (o) { parts.push(o); });
+        if (q.pairs) q.pairs.forEach(function (pr) { parts.push(pr[0], pr[1]); });
+        if (q.items) q.items.forEach(function (o) { parts.push(o); });
+        return parts.join(" ");
+      }
+      function keywordTerms() {
+        return ui.keyword.split(/\s+/).filter(function (t) { return t.length > 0; });
+      }
+      function matchesKeyword(q) {
+        var terms = keywordTerms();
+        if (terms.length === 0) return true;
+        var text = questionSearchText(q);
+        return terms.every(function (t) { return text.indexOf(t) >= 0; });
+      }
+
       function filteredQuestions() {
         return QUESTIONS.filter(function (q) {
+          if (!matchesKeyword(q)) return false;
           if (ui.chapter !== "全部" && q.chapter !== ui.chapter) return false;
           if (ui.typeFilter === "glossary" && q.type !== "glossary") return false;
           if (ui.typeFilter === "short_answer" && q.type !== "short_answer") return false;
@@ -606,20 +808,26 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
         if (qs.length === 0) {
           var s = stats();
           var msg;
-          if (ui.wrongOnly && s.wrong === 0) msg = "错题集是空的 —— 还没有任何一道题答错过，继续保持。";
+          if (keywordTerms().length > 0) msg = "没有找到带「" + escHtml(ui.keyword) + "」的题目，换个关键词试试，或者点上方横幅里的「清除关键词」看全部题。";
+          else if (ui.wrongOnly && s.wrong === 0) msg = "错题集是空的 —— 还没有任何一道题答错过，继续保持。";
           else if (ui.wrongOnly && s.wrong > 0)
             msg = "你一共有 " + s.wrong + " 道错题，但不在当前的章节 / 题型筛选范围里。把章节切到「全部」、题型切到「全部题型」就能看到它们。";
           else msg = "当前筛选下没有题目，换个章节或题型试试。";
           list.innerHTML = '<div class="empty">' + msg + "</div>";
+          renderKwBanner();
           return;
         }
         list.innerHTML = qs.map(cardHtml).join("");
+        applyHighlights();
+        renderKwBanner();
       }
       function renderAll() { renderStats(); renderList(); renderChips(); renderReset(); }
 
       // ---------- card events (delegated) ----------
       var listEl = document.getElementById("list");
       listEl.addEventListener("click", function (e) {
+        var hlEl = e.target.closest ? e.target.closest(".hl") : null;
+        if (hlEl && hlEl.getAttribute("data-hlid")) { openHlPop(hlEl); return; }
         var termBtn = e.target.closest("[data-term]");
         if (termBtn) { openTerm(termBtn.getAttribute("data-term")); return; }
         var btn = e.target.closest("[data-act]");
@@ -633,6 +841,8 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
           updateSearchLink();
           clearAsk();
           openPanel();
+        } else if (act === "savemat") {
+          openMatPanel(q.id);
         } else if (act === "opt") {
           var letter = btn.getAttribute("data-letter");
           if (q.type === "single_choice") d.sel = [letter];
@@ -717,8 +927,18 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
       // ---------- floating panel ----------
       var panel = document.getElementById("panel");
       var fab = document.getElementById("fab");
-      function openPanel() { panel.hidden = false; fab.hidden = true; }
-      function closePanel() { panel.hidden = true; fab.hidden = false; ui.confirmReset = false; renderReset(); }
+      var fabMat = document.getElementById("fab-mat");
+      function syncFabs() {
+        var anyOpen = !panel.hidden || !document.getElementById("mat-panel").hidden;
+        fab.hidden = anyOpen;
+        fabMat.hidden = anyOpen;
+      }
+      function openPanel() {
+        document.getElementById("mat-panel").hidden = true;
+        panel.hidden = false;
+        syncFabs();
+      }
+      function closePanel() { panel.hidden = true; syncFabs(); ui.confirmReset = false; renderReset(); }
       fab.addEventListener("click", openPanel);
       document.getElementById("panel-close").addEventListener("click", closePanel);
 
@@ -805,21 +1025,377 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
           z.innerHTML = '<button type="button" class="btn-plain" id="reset-btn">重新开始（清空记录）</button>';
           document.getElementById("reset-btn").addEventListener("click", function () { ui.confirmReset = true; renderReset(); });
         } else {
-          z.innerHTML = '<span class="reset-confirm"><span class="warn">会清掉全部 80 题的记录，确定吗？</span>' +
+          z.innerHTML = '<span class="reset-confirm"><span class="warn">会清掉全部 80 题的记录、资料夹和色笔标注，确定吗？</span>' +
             '<button type="button" class="btn-danger" id="reset-yes">确定清空</button>' +
             '<button type="button" class="btn-plain" id="reset-no">取消</button></span>';
           document.getElementById("reset-yes").addEventListener("click", function () {
-            progress = {}; drafts = {}; ui.wrongOnly = false; ui.confirmReset = false;
+            progress = {}; drafts = {}; materials = []; highlights = [];
+            matEditingId = null; activeHlId = null;
+            document.getElementById("hl-pop").hidden = true;
+            ui.wrongOnly = false; ui.confirmReset = false;
+            setKeyword("");
+            renderMaterials();
             renderAll();
           });
           document.getElementById("reset-no").addEventListener("click", function () { ui.confirmReset = false; renderReset(); });
         }
       }
 
-      document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape") { closeTerm(); if (!panel.hidden) closePanel(); }
+      // ---------- keyword search (instant) ----------
+      var kwInput = document.getElementById("kw-input");
+      var kwCount = document.getElementById("kw-count");
+      var kwPreview = document.getElementById("kw-preview");
+      var KW_QUICK = ["好望角", "光荣革命", "圈地运动", "文艺复兴", "启蒙运动", "工业革命"];
+      document.getElementById("kw-chips").innerHTML = KW_QUICK.map(function (w) {
+        return '<button type="button" class="chip" data-kw="' + w + '">' + w + "</button>";
+      }).join("");
+      document.getElementById("kw-chips").querySelectorAll("[data-kw]").forEach(function (b) {
+        b.addEventListener("click", function () { setKeyword(b.getAttribute("data-kw")); });
+      });
+      function renderKwPreview() {
+        if (keywordTerms().length === 0) { kwCount.innerHTML = ""; kwPreview.innerHTML = ""; return; }
+        var qs = filteredQuestions();
+        kwCount.innerHTML = "找到 <b>" + qs.length + "</b> 道相关题目，点下面任意一道直接跳过去：";
+        kwPreview.innerHTML = qs.slice(0, 8).map(function (q) {
+          var stem = q.stem.length > 42 ? q.stem.slice(0, 42) + "…" : q.stem;
+          return '<button type="button" class="kw-item" data-jump="' + q.id + '"><span class="qid">' + q.id + "</span>" + escHtml(stem) + "</button>";
+        }).join("") + (qs.length === 0 ? '<p class="hint">没有找到带这个词的题目，换个词试试。</p>' : "");
+        kwPreview.querySelectorAll("[data-jump]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var id = b.getAttribute("data-jump");
+            closePanel();
+            setTimeout(function () { scrollToCard(id); }, 30);
+          });
+        });
+      }
+      function renderKwBanner() {
+        var banner = document.getElementById("kw-banner");
+        if (keywordTerms().length === 0) { banner.hidden = true; return; }
+        banner.hidden = false;
+        document.getElementById("kw-banner-text").textContent = ui.keyword;
+        document.getElementById("kw-banner-count").textContent = "共找到 " + filteredQuestions().length + " 题";
+      }
+      function setKeyword(v) {
+        ui.keyword = (v || "").trim();
+        if (kwInput.value !== ui.keyword) kwInput.value = ui.keyword;
+        renderList();
+        renderKwPreview();
+        renderKwBanner();
+      }
+      kwInput.addEventListener("input", function () { setKeyword(kwInput.value); });
+      document.getElementById("kw-clear").addEventListener("click", function () { setKeyword(""); kwInput.focus(); });
+      document.getElementById("kw-banner-clear").addEventListener("click", function () { setKeyword(""); });
+
+      function clearAllFiltersForJump() {
+        ui.chapter = "全部"; ui.typeFilter = "all"; ui.wrongOnly = false;
+        setKeyword("");
+        renderChips();
+      }
+
+      // ---------- 资料夹 ----------
+      var matPanel = document.getElementById("mat-panel");
+      var matTitle = document.getElementById("mat-title");
+      var matContent = document.getElementById("mat-content");
+      var matSource = document.getElementById("mat-source");
+      var matQid = document.getElementById("mat-qid");
+      var matHint = document.getElementById("mat-hint");
+      var matSaveBtn = document.getElementById("mat-save");
+      var matCancelEdit = document.getElementById("mat-cancel-edit");
+      var matFilter = document.getElementById("mat-filter");
+
+      function fillMatQidOptions(selected) {
+        matQid.innerHTML = '<option value="">不关联题目</option>' + QUESTIONS.map(function (q) {
+          var stem = q.stem.length > 26 ? q.stem.slice(0, 26) + "…" : q.stem;
+          return '<option value="' + q.id + '"' + (q.id === selected ? " selected" : "") + ">" + q.id + " · " + escHtml(stem) + "</option>";
+        }).join("");
+        var f = matFilter.value || "all";
+        matFilter.innerHTML = '<option value="all">全部资料</option><option value="none">未关联题目的</option>' + QUESTIONS.map(function (q) {
+          return '<option value="' + q.id + '">' + q.id + "</option>";
+        }).join("");
+        matFilter.value = f;
+      }
+      function openMatPanel(preselectQid) {
+        panel.hidden = true;
+        matPanel.hidden = false;
+        syncFabs();
+        fillMatQidOptions(preselectQid || (matEditingId ? (findMat(matEditingId) || {}).qid : ""));
+        if (preselectQid) matQid.value = preselectQid;
+        renderMaterials();
+      }
+      function closeMatPanel() { matPanel.hidden = true; syncFabs(); cancelMatEdit(); }
+      fabMat.addEventListener("click", function () { openMatPanel(""); });
+      document.getElementById("mat-close").addEventListener("click", closeMatPanel);
+      function findMat(id) {
+        for (var i = 0; i < materials.length; i++) if (materials[i].id === id) return materials[i];
+        return null;
+      }
+      function cancelMatEdit() {
+        matEditingId = null;
+        matTitle.value = ""; matContent.value = ""; matSource.value = "";
+        fillMatQidOptions("");
+        matSaveBtn.textContent = "存进资料夹";
+        matCancelEdit.hidden = true;
+        matHint.hidden = true;
+      }
+      matCancelEdit.addEventListener("click", cancelMatEdit);
+      document.getElementById("mat-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var content = matContent.value.trim();
+        var title = matTitle.value.trim();
+        if (!content && !title) {
+          matHint.textContent = "先粘贴一点资料内容，或者至少写个标题，再保存。";
+          matHint.hidden = false;
+          return;
+        }
+        matHint.hidden = true;
+        if (matEditingId) {
+          var m = findMat(matEditingId);
+          if (m) { m.title = title; m.content = content; m.source = matSource.value.trim(); m.qid = matQid.value || ""; }
+          showToast("资料已更新");
+        } else {
+          materials.unshift({
+            id: "m" + (++matSeq),
+            title: title, content: content,
+            source: matSource.value.trim(), qid: matQid.value || "",
+          });
+          showToast("已存进资料夹");
+        }
+        cancelMatEdit();
+        renderMaterials();
+      });
+      matFilter.addEventListener("change", renderMaterials);
+      function renderMaterials() {
+        var box = document.getElementById("mat-list");
+        var f = matFilter.value || "all";
+        var items = materials.filter(function (m) {
+          if (f === "all") return true;
+          if (f === "none") return !m.qid;
+          return m.qid === f;
+        });
+        if (materials.length === 0) {
+          box.innerHTML = '<p class="hint">资料夹还是空的。从网上搜到有用的资料，复制下来粘贴到上面就能存进来。</p>';
+          return;
+        }
+        if (items.length === 0) {
+          box.innerHTML = '<p class="hint">这个筛选下没有资料，换个筛选看看。</p>';
+          return;
+        }
+        box.innerHTML = items.map(function (m) {
+          var h = '<div class="mat-item">';
+          h += "<h3>" + escHtml(m.title || "（无标题）") + "</h3>";
+          if (m.content) h += '<p class="body">' + escHtml(m.content) + "</p>";
+          if (m.source) {
+            var safe = /^https?:\/\//i.test(m.source) ? m.source : "";
+            h += '<p class="src">来源：' + (safe ? '<a href="' + escHtml(safe) + '" target="_blank" rel="noreferrer">' + escHtml(m.source) + "</a>" : escHtml(m.source)) + "</p>";
+          }
+          h += '<div class="row">';
+          if (m.qid) h += '<button type="button" class="mat-qchip" data-matjump="' + m.qid + '">关联 ' + m.qid + " · 跳到题目</button>";
+          h += '<button type="button" class="mini-btn" data-matedit="' + m.id + '">编辑</button>';
+          h += '<button type="button" class="mini-btn danger" data-matdel="' + m.id + '">删除</button>';
+          h += "</div></div>";
+          return h;
+        }).join("");
+        box.querySelectorAll("[data-matjump]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var id = b.getAttribute("data-matjump");
+            closeMatPanel();
+            clearAllFiltersForJump();
+            renderList();
+            setTimeout(function () { scrollToCard(id); }, 30);
+          });
+        });
+        box.querySelectorAll("[data-matedit]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var m = findMat(b.getAttribute("data-matedit"));
+            if (!m) return;
+            matEditingId = m.id;
+            matTitle.value = m.title; matContent.value = m.content; matSource.value = m.source;
+            fillMatQidOptions(m.qid);
+            matSaveBtn.textContent = "保存修改";
+            matCancelEdit.hidden = false;
+            matPanel.scrollTop = 0;
+          });
+        });
+        box.querySelectorAll("[data-matdel]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var id = b.getAttribute("data-matdel");
+            materials = materials.filter(function (m) { return m.id !== id; });
+            if (matEditingId === id) cancelMatEdit();
+            renderMaterials();
+            showToast("资料已删除");
+          });
+        });
+      }
+
+      // ---------- toast ----------
+      var toastEl = document.getElementById("toast");
+      var toastTimer = null;
+      function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.hidden = false;
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toastEl.hidden = true; }, 2200);
+      }
+
+      // ---------- 色笔：highlights ----------
+      function findHl(id) {
+        for (var i = 0; i < highlights.length; i++) if (highlights[i].id === id) return highlights[i];
+        return null;
+      }
+      function wrapFirstTextMatch(root, hl) {
+        if (!root || root.querySelector('[data-hlid="' + hl.id + '"]')) return;
+        var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+          acceptNode: function (node) {
+            if (!node.nodeValue || node.nodeValue.indexOf(hl.text) < 0) return NodeFilter.FILTER_REJECT;
+            var p = node.parentElement;
+            if (!p || p.closest(".hl") || p.closest("select") || p.closest("textarea")) return NodeFilter.FILTER_REJECT;
+            return NodeFilter.FILTER_ACCEPT;
+          },
+        });
+        var node = walker.nextNode();
+        if (!node) return;
+        var idx = node.nodeValue.indexOf(hl.text);
+        var mid = node.splitText(idx);
+        mid.splitText(hl.text.length);
+        var mark = document.createElement("mark");
+        mark.className = "hl hl-" + hl.color;
+        mark.setAttribute("data-hlid", hl.id);
+        if (hl.note) mark.title = hl.note;
+        mid.parentNode.replaceChild(mark, mid);
+        mark.appendChild(mid);
+      }
+      function applyHighlights() {
+        if (highlights.length === 0) return;
+        highlights.forEach(function (hl) {
+          var card = document.querySelector('[data-qid="' + hl.qid + '"]');
+          if (card) wrapFirstTextMatch(card, hl);
+        });
+      }
+
+      var penTool = document.getElementById("pen-tool");
+      function hidePenTool() { penTool.hidden = true; pendingSel = null; }
+      function showPenToolForSelection() {
+        var sel = window.getSelection ? window.getSelection() : null;
+        if (!sel || sel.isCollapsed || sel.rangeCount === 0) { hidePenTool(); return; }
+        var text = sel.toString().replace(/\s+/g, " ").trim();
+        if (!text || text.length > 200) { hidePenTool(); return; }
+        var range = sel.getRangeAt(0);
+        var card = null;
+        var n = range.commonAncestorContainer;
+        var el = n.nodeType === 1 ? n : n.parentElement;
+        if (el) card = el.closest ? el.closest("[data-qid]") : null;
+        if (!card || !listEl.contains(card)) { hidePenTool(); return; }
+        // only take selections fully inside one card and one text run we can re-find
+        pendingSel = { qid: card.getAttribute("data-qid"), text: text };
+        var rect = range.getBoundingClientRect();
+        penTool.hidden = false;
+        var w = penTool.offsetWidth || 240, h = penTool.offsetHeight || 44;
+        var x = Math.min(Math.max(8, rect.left + rect.width / 2 - w / 2), window.innerWidth - w - 8);
+        var y = rect.top - h - 10;
+        if (y < 8) y = rect.bottom + 10;
+        penTool.style.left = x + "px";
+        penTool.style.top = y + "px";
+      }
+      var selTimer = null;
+      function queuePenTool() {
+        if (selTimer) clearTimeout(selTimer);
+        selTimer = setTimeout(showPenToolForSelection, 120);
+      }
+      document.addEventListener("mouseup", function (e) {
+        if (penTool.contains(e.target) || document.getElementById("hl-pop").contains(e.target)) return;
+        queuePenTool();
+      });
+      document.addEventListener("touchend", function (e) {
+        if (penTool.contains(e.target)) return;
+        queuePenTool();
+      }, { passive: true });
+      document.addEventListener("selectionchange", function () {
+        // Do not clear pendingSel here: tapping a pen button can collapse the
+        // browser selection before the click lands, and the pen handler
+        // still needs the stored selection. mouseup/touchend re-evaluate.
+      });
+      penTool.querySelectorAll("[data-pen]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          if (!pendingSel) return;
+          highlights.push({
+            id: "h" + (++hlSeq),
+            qid: pendingSel.qid, text: pendingSel.text,
+            color: b.getAttribute("data-pen"), note: "",
+          });
+          hidePenTool();
+          if (window.getSelection) window.getSelection().removeAllRanges();
+          renderList();
+          showToast("已标注，去题目里点这段文字可以改颜色、补笔记或删除");
+        });
+      });
+      document.getElementById("pen-close").addEventListener("click", hidePenTool);
+
+      // highlight popover: recolour / note / delete
+      var hlPop = document.getElementById("hl-pop");
+      var hlNote = document.getElementById("hl-note");
+      var hlNoteShow = document.getElementById("hl-note-show");
+      function closeHlPop() { hlPop.hidden = true; activeHlId = null; }
+      function openHlPop(markEl) {
+        var hl = findHl(markEl.getAttribute("data-hlid"));
+        if (!hl) return;
+        activeHlId = hl.id;
+        hidePenTool();
+        document.getElementById("hl-pop-text").textContent = "「" + (hl.text.length > 60 ? hl.text.slice(0, 60) + "…" : hl.text) + "」";
+        hlNote.value = hl.note || "";
+        if (hl.note) { hlNoteShow.textContent = "已有笔记：" + hl.note; hlNoteShow.hidden = false; }
+        else hlNoteShow.hidden = true;
+        hlPop.querySelectorAll("[data-hlpen]").forEach(function (b) {
+          b.classList.toggle("sel", b.getAttribute("data-hlpen") === hl.color);
+        });
+        hlPop.hidden = false;
+        var rect = markEl.getBoundingClientRect();
+        var w = hlPop.offsetWidth || 320, h = hlPop.offsetHeight || 220;
+        var x = Math.min(Math.max(8, rect.left), window.innerWidth - w - 8);
+        var y = rect.bottom + 8;
+        if (y + h > window.innerHeight - 8) y = Math.max(8, rect.top - h - 8);
+        hlPop.style.left = x + "px";
+        hlPop.style.top = y + "px";
+      }
+      hlPop.querySelectorAll("[data-hlpen]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          var hl = findHl(activeHlId);
+          if (!hl) return;
+          hl.color = b.getAttribute("data-hlpen");
+          closeHlPop();
+          renderList();
+        });
+      });
+      document.getElementById("hl-save-note").addEventListener("click", function () {
+        var hl = findHl(activeHlId);
+        if (!hl) return;
+        hl.note = hlNote.value.trim();
+        closeHlPop();
+        renderList();
+        showToast(hl.note ? "笔记已保存" : "笔记已清空");
+      });
+      document.getElementById("hl-delete").addEventListener("click", function () {
+        highlights = highlights.filter(function (x) { return x.id !== activeHlId; });
+        closeHlPop();
+        renderList();
+        showToast("标注已删除");
+      });
+      document.getElementById("hl-close").addEventListener("click", closeHlPop);
+      document.addEventListener("click", function (e) {
+        if (!hlPop.hidden && !hlPop.contains(e.target) && !(e.target.closest && e.target.closest(".hl"))) closeHlPop();
       });
 
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+          closeTerm();
+          closeHlPop();
+          hidePenTool();
+          if (!panel.hidden) closePanel();
+          if (!matPanel.hidden) closeMatPanel();
+        }
+      });
+
+      fillMatQidOptions("");
+      renderMaterials();
       renderAll();
     </script>
   </body>
