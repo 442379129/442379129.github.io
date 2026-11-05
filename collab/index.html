@@ -74,7 +74,7 @@
   <div id="menu">
     <div class="mtitle" id="projTitle">加载中…</div>
     <div class="msub" id="projMeta"></div>
-    <div class="msub" id="verLine">版本 1105-x</div>
+    <div class="msub" id="verLine">版本 1105-z</div>
     <div id="counts">时间 <b id="timeLbl">00:00.000</b><br>
       <span class="dot" style="background:#19d3da"></span>普通 <b id="cTap">0</b>　
       <span class="dot" style="background:#ffd21f"></span>黄 <b id="cDrag">0</b><br>
@@ -130,7 +130,7 @@
   <button class="btn" id="impBtn">⬆ 导入项目</button>
   <input type="file" id="impFile" accept=".json,application/json" style="display:none">
   <button class="btn warn" id="resetBtn">清空本项目谱面</button>
-  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-x（画布尺寸写死，根治放大）</div>
+  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-z（键坐进格子里）</div>
   <button class="btn" id="moreClose">关闭</button>
 </div></div>
 
@@ -387,13 +387,13 @@ function draw() {
       ctx.fillStyle = "#9cc8ff"; ctx.fillRect(x, yBot - gh, w, gh);
     } else {
       ctx.fillStyle = TYPE_COLOR[n.t];
-      ctx.fillRect(x, yBot - gh / 2, w, gh);
+      ctx.fillRect(x, yBot - gh, w, gh);
       ctx.fillStyle = "rgba(255,255,255,0.55)"; ctx.fillRect(x, yBot - 1, w, 2);
     }
   }
   if (addHoldStart !== null) {
     const x = FX + addHoldStart.lane * LW + 5, y = yOf(addHoldStart.b);
-    ctx.fillStyle = "#9cc8ff"; ctx.fillRect(x, y - cellH / 2, LW - 10, cellH);
+    ctx.fillStyle = "#9cc8ff"; ctx.fillRect(x, y - cellH, LW - 10, cellH);
   }
   ctx.restore();
   /* 谱面左右边线＋边线旁小节号 */
