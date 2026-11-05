@@ -95,6 +95,7 @@
       <button class="btn" id="zoomFit">一屏 5 小节</button>
     </div>
     <input type="range" id="zoom" min="2" max="30" step="0.1" value="5.3">
+    <div class="sub" id="diag">画面：…</div>
     <div class="label">时间栏标记（给小帕的事件说明）</div>
     <div class="row">
       <button class="btn" id="markPlayBtn">＋ 播放头处</button>
@@ -115,7 +116,7 @@
     <button class="btn" id="impBtn">⬆ 导入项目</button>
     <input type="file" id="impFile" accept=".json,application/json" style="display:none">
     <button class="btn warn" id="resetBtn">清空本项目谱面</button>
-    <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-l（转屏自动回到 5 小节）</div>
+    <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-m（持续自适应画面＋诊断行）</div>
   </div>
 </div>
 
@@ -290,6 +291,7 @@ function draw() {
   if (!W || !P) return;
   ctx.clearRect(0, 0, W, H);
   const laneW = W / LANES, top12 = beat12AtY(0), bot12 = beat12AtY(H);
+  const dg = $("diag"); if (dg) { const s = "画面 " + W + "×" + H + " · 每格 " + (ppb / 12).toFixed(1) + "px · 一屏约 " + (H / ppb / 4).toFixed(1) + " 小节 · " + LANES + " 列 · DPR " + DPR; if (dg.textContent !== s) dg.textContent = s; }
   for (let g = Math.floor(bot12); g <= Math.ceil(top12); g++) {
     if (g < 0 || g > totalB * 12) continue;
     const y = Math.round(yOf(g)) + 0.5;
@@ -362,6 +364,7 @@ function drawRail(bot12, top12) {
   }
 }
 function tick() {
+  if (P && wrap.clientWidth && (Math.abs(wrap.clientWidth - W) > 2 || Math.abs(wrap.clientHeight - H) > 2)) { resize(); if (!userZoomed) frameFive(); }
   keyTick();
   if (playing && audioReady && P) {
     const b = curBeat12() / 12;
