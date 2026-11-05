@@ -14,12 +14,19 @@
   .tbtn { padding:7px 12px; background:#1a1a1a; border:1px solid #333; border-radius:8px; color:#eee; font-size:13px; cursor:pointer; user-select:none; white-space:nowrap; }
   .tbtn:active { background:#2c2c2c; }
   .tbtn.on { background:#0e3238; border-color:#19d3da; color:#c9f6f9; }
-  #app { position:fixed; top:48px; left:0; right:0; bottom:0; display:flex; }
-  #rail { width:92px; flex:0 0 92px; position:relative; background:#050505; border-right:1px solid #222; touch-action:none; }
-  #railCanvas { position:absolute; inset:0; }
-  #gridwrap { flex:1; position:relative; overflow:hidden; background:#000; touch-action:none; }
+  #app { position:fixed; inset:0; }
+  #gridwrap { position:absolute; inset:0; overflow:hidden; background:#000; touch-action:none; }
   #grid { position:absolute; inset:0; }
-  #menu { width:184px; flex:0 0 184px; background:#0a0a0a; border-left:1px solid #222; padding:10px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
+  #menu { position:fixed; top:0; right:0; bottom:0; width:176px; z-index:30; background:transparent; padding:16px 12px 12px 0; overflow-y:auto; display:flex; flex-direction:column; gap:4px; }
+  .mtitle { color:#fff; font-size:14px; font-weight:600; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .msub { color:#999; font-size:11px; text-align:right; margin-bottom:2px; }
+  .mrow { display:flex; align-items:center; gap:10px; width:100%; background:transparent; border:none; color:#fff; font-size:15px; padding:8px 0; cursor:pointer; }
+  .mrow .mlab { flex:1; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mrow .mic { flex:0 0 38px; width:38px; height:38px; border:1.6px solid rgba(255,255,255,0.9); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; color:#fff; box-sizing:border-box; }
+  .mrow.on .mic { background:#0e4d52; border-color:#19d3da; }
+  .mrow:active .mic { background:#333; }
+  .hexbtn { position:absolute; left:10px; width:46px; height:50px; clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%); background:linear-gradient(#71767e,#42464d); color:#fff; font-size:20px; border:none; z-index:25; display:flex; align-items:center; justify-content:center; cursor:pointer; user-select:none; touch-action:none; }
+  #playHex { width:66px; height:72px; font-size:25px; }
   .btn { display:block; width:100%; padding:9px 8px; background:#1a1a1a; color:#eee; border:1px solid #333; border-radius:8px; font-size:13px; text-align:center; cursor:pointer; user-select:none; }
   .btn:active { background:#2c2c2c; }
   .btn.on { background:#0e4d52; border-color:#19d3da; color:#cffcff; }
@@ -35,7 +42,7 @@
   .chip[data-k="section"].on { background:#0e4d52; } .chip[data-k="other"].on { background:#333; }
   .label { font-size:11px; color:#888; margin-top:2px; }
   .sub { font-size:11px; color:#999; line-height:1.55; }
-  #counts { font-size:12px; color:#ccc; line-height:1.7; background:#111; border:1px solid #262626; border-radius:8px; padding:7px 9px; }
+  #counts { font-size:11px; color:#bbb; line-height:1.6; text-align:right; padding:2px 0 6px; }
   #counts b { color:#fff; }
   .dot { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:4px; vertical-align:-1px; }
   input[type=range] { width:100%; accent-color:#19d3da; }
@@ -59,66 +66,70 @@
 </style>
 </head>
 <body>
-<div id="topbar">
-  <button class="tbtn" id="projBtn">☰ 项目</button>
-  <div class="ttl" id="projTitle">加载中…</div>
-  <div class="meta" id="projMeta"></div>
-  <div class="sp"></div>
-  <button class="tbtn on" id="keyBtn">🔔 键音：开</button>
-  <button class="tbtn" id="undoBtn" style="opacity:0.45">↩ 撤销</button>
-  <button class="tbtn" id="setBtn">⚙ 项目设置</button>
-</div>
 <div id="app">
-  <div id="rail"><canvas id="railCanvas"></canvas></div>
   <div id="gridwrap"><canvas id="grid"></canvas></div>
+  <button id="zoomOutHex" class="hexbtn" style="top:12px">－</button>
+  <button id="zoomInHex" class="hexbtn" style="top:72px">＋</button>
+  <button id="playHex" class="hexbtn">▶</button>
   <div id="menu">
-    <button class="btn" id="playBtn">▶ 播放</button>
+    <div class="mtitle" id="projTitle">加载中…</div>
+    <div class="msub" id="projMeta"></div>
     <div id="counts">时间 <b id="timeLbl">00:00.000</b><br>
       <span class="dot" style="background:#19d3da"></span>普通 <b id="cTap">0</b>　
       <span class="dot" style="background:#ffd21f"></span>黄 <b id="cDrag">0</b><br>
       <span class="dot" style="background:#ff4757"></span>红 <b id="cFlick">0</b>　
       <span class="dot" style="background:#408cff"></span>长条 <b id="cHold">0</b><br>
       标记 <b id="cMark">0</b> 个</div>
-    <div class="label">倍速</div>
-    <div class="row" id="speedRow">
-      <div class="chip" data-s="0.5">0.5x</div><div class="chip" data-s="0.75">0.75x</div><div class="chip on" data-s="1">1x</div>
-    </div>
-    <button class="btn on" id="followBtn">播放头跟随：开</button>
-    <div class="label">键音分列静音（逐列采音时，点哪列静哪列）</div>
-    <div class="row" id="laneMuteRow">
-      <div class="chip" data-l="0">列1</div><div class="chip" data-l="1">列2</div><div class="chip" data-l="2">列3</div><div class="chip" data-l="3">列4</div><div class="chip" data-l="4">列5</div><div class="chip" data-l="5">列6</div>
-    </div>
-    <div class="label">缩放（每格高度，毫米）</div>
-    <div class="row">
-      <button class="btn" id="zoomOut">－ 缩小</button>
-      <button class="btn" id="zoomIn">＋ 放大</button>
-      <button class="btn" id="zoomFit">一屏 5 小节</button>
-    </div>
-    <input type="range" id="zoom" min="2" max="30" step="0.1" value="5.3">
-    <div class="sub" id="diag">画面：…</div>
-    <div class="label">时间栏标记（给小帕的事件说明）</div>
-    <div class="row">
-      <button class="btn" id="markPlayBtn">＋ 播放头处</button>
-      <button class="btn" id="markViewBtn">＋ 画面底处</button>
-    </div>
-    <div id="markList"></div>
-    <div class="label">模式</div>
-    <div class="row" id="modeRow">
-      <div class="chip on" data-m="edit">编辑</div><div class="chip" data-m="add">添加</div><div class="chip" data-m="del">删除</div>
-    </div>
-    <div class="label">添加键型（长条点两次定头尾）</div>
-    <div class="row" id="addRow">
-      <div class="chip on" data-t="1">普通</div><div class="chip" data-t="4">黄</div><div class="chip" data-t="3">红</div><div class="chip" data-t="2">长条</div>
-    </div>
-    <div class="sub">编辑模式：点键换类型（普通→黄→红）；拖键改时间/列；拖长条尾端改长度。点左侧标尺跳转试听，点标记旗打开标记。</div>
-    <button class="btn" id="pvBtn">🎮 预览试打（无事件）</button>
-    <button class="btn" id="expBtn">⬇ 导出项目（发给小帕）</button>
-    <button class="btn" id="impBtn">⬆ 导入项目</button>
-    <input type="file" id="impFile" accept=".json,application/json" style="display:none">
-    <button class="btn warn" id="resetBtn">清空本项目谱面</button>
-    <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-o（画面钉死全屏＋一节 12 格骨架＋线条对齐像素）</div>
+    <button class="mrow" id="projBtn"><span class="mlab">项目</span><span class="mic">←</span></button>
+    <button class="mrow" id="setBtn"><span class="mlab">项目设置</span><span class="mic">ⓘ</span></button>
+    <button class="mrow" id="modeBtn"><span class="mlab">模式：编辑</span><span class="mic">✎</span></button>
+    <button class="mrow on" id="keyBtn"><span class="mlab">键音：开</span><span class="mic">♪</span></button>
+    <button class="mrow on" id="followBtn"><span class="mlab">播放头跟随：开</span><span class="mic">➤</span></button>
+    <button class="mrow" id="markPlayBtn"><span class="mlab">播放头处加标记</span><span class="mic">⚑</span></button>
+    <button class="mrow" id="pvBtn"><span class="mlab">预览试打</span><span class="mic">▶</span></button>
+    <button class="mrow" id="undoBtn" style="opacity:0.45"><span class="mlab">撤销</span><span class="mic">↩</span></button>
+    <button class="mrow" id="expBtn"><span class="mlab">导出项目</span><span class="mic">⇪</span></button>
+    <button class="mrow" id="moreBtn"><span class="mlab">更多</span><span class="mic">…</span></button>
   </div>
 </div>
+
+<div class="overlay" id="moreOv"><div class="sheet">
+  <h2>更多</h2>
+  <button class="btn" id="playBtn">▶ 播放</button>
+  <div class="label">倍速</div>
+  <div class="row" id="speedRow">
+    <div class="chip" data-s="0.5">0.5x</div><div class="chip" data-s="0.75">0.75x</div><div class="chip on" data-s="1">1x</div>
+  </div>
+  <div class="label">键音分列静音（逐列采音时，点哪列静哪列）</div>
+  <div class="row" id="laneMuteRow">
+    <div class="chip" data-l="0">列1</div><div class="chip" data-l="1">列2</div><div class="chip" data-l="2">列3</div><div class="chip" data-l="3">列4</div><div class="chip" data-l="4">列5</div><div class="chip" data-l="5">列6</div>
+  </div>
+  <div class="label">缩放（每格高度，毫米）</div>
+  <div class="row">
+    <button class="btn" id="zoomOut">－ 缩小</button>
+    <button class="btn" id="zoomIn">＋ 放大</button>
+    <button class="btn" id="zoomFit">一屏 5 小节</button>
+  </div>
+  <input type="range" id="zoom" min="2" max="30" step="0.1" value="5.3">
+  <div class="sub" id="diag">画面：…</div>
+  <div class="label">模式</div>
+  <div class="row" id="modeRow">
+    <div class="chip on" data-m="edit">编辑</div><div class="chip" data-m="add">添加</div><div class="chip" data-m="del">删除</div>
+  </div>
+  <div class="label">添加键型（长条点两次定头尾）</div>
+  <div class="row" id="addRow">
+    <div class="chip on" data-t="1">普通</div><div class="chip" data-t="4">黄</div><div class="chip" data-t="3">红</div><div class="chip" data-t="2">长条</div>
+  </div>
+  <div class="sub">编辑模式：点键换类型（普通→黄→红）；拖键改时间/列；拖长条尾端改长度。拖左侧数字栏滚动，点时间栏跳转试听，点标记旗打开标记。</div>
+  <div class="label">时间栏标记（给小帕的事件说明）</div>
+  <button class="btn" id="markViewBtn">＋ 画面底处加标记</button>
+  <div id="markList"></div>
+  <button class="btn" id="impBtn">⬆ 导入项目</button>
+  <input type="file" id="impFile" accept=".json,application/json" style="display:none">
+  <button class="btn warn" id="resetBtn">清空本项目谱面</button>
+  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-p（Malody 版式一比一复刻）</div>
+  <button class="btn" id="moreClose">关闭</button>
+</div></div>
 
 <div class="overlay" id="drawerOv"><div class="sheet">
   <h2>项目</h2>
@@ -267,13 +278,15 @@ function refreshCounts() {
 }
 /* ============ 编辑器渲染 ============ */
 const wrap = $("gridwrap"), cv = $("grid"), ctx = cv.getContext("2d");
-const rail = $("rail"), rcv = $("railCanvas"), rctx = rcv.getContext("2d");
-let W = 0, H = 0, DPR = 1;
+let W = 0, H = 0, DPR = 1, FX = 0, FW = 0, LW = 0;
 function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, 2);
   W = wrap.clientWidth; H = wrap.clientHeight;
   cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  rcv.width = rail.clientWidth * DPR; rcv.height = rail.clientHeight * DPR; rctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  FX = Math.round(W * 0.235);
+  LW = Math.max(28, Math.round(W * 0.0515));
+  FW = LW * LANES;
+  if (FX + FW > W - 8) { FW = W - 8 - FX; LW = FW / LANES; }
   draw();
 }
 let lastOri = null;
@@ -285,42 +298,71 @@ window.addEventListener("resize", () => {
 });
 function yOf(b12) { return H - (b12 / 12 - scrollB) * ppb; }
 function beat12AtY(y) { return (scrollB + (H - y) / ppb) * 12; }
-function laneAtX(x) { return Math.max(0, Math.min(LANES - 1, Math.floor(x / (W / LANES)))); }
+function laneAtX(x) { return Math.max(0, Math.min(LANES - 1, Math.floor((x - FX) / LW))); }
 const TYPE_COLOR = { 1: "#19d3da", 4: "#ffd21f", 3: "#ff4757" };
 function draw() {
   if (!W || !P) return;
   ctx.clearRect(0, 0, W, H);
-  const laneW = W / LANES, top12 = beat12AtY(0), bot12 = beat12AtY(H);
-  const dg = $("diag"); if (dg) { const s = "画面 " + W + "×" + H + " · 每格 " + (ppb / 12).toFixed(1) + "px · 一屏约 " + (H / ppb / 4).toFixed(1) + " 小节 · " + LANES + " 列 · DPR " + DPR; if (dg.textContent !== s) dg.textContent = s; }
+  const top12 = beat12AtY(0), bot12 = beat12AtY(H);
+  const dg = $("diag"); if (dg) { const s2 = "画面 " + W + "×" + H + " · 谱面 " + FW + "px · 每格 " + (ppb / 12).toFixed(1) + "px · 一屏约 " + (H / ppb / 4).toFixed(1) + " 小节 · DPR " + DPR; if (dg.textContent !== s2) dg.textContent = s2; }
   const cellPx = ppb / 12;
+  /* 左侧数字栏：刻度小线（与谱面线同色）＋小节大数字 */
+  for (let g = Math.floor(bot12); g <= Math.ceil(top12); g++) {
+    if (g < 0 || g > totalB * 12) continue;
+    const y = (Math.round(yOf(g) * DPR) + 0.5) / DPR;
+    let c = null, len = 0;
+    if (g % 48 === 0) { c = "rgba(255,255,255,0.85)"; len = 17; }
+    else if (g % 12 === 0) { c = "rgba(255,255,255,0.5)"; len = 12; }
+    else if (g % 4 === 0) { c = "rgba(196,110,255,0.65)"; len = 10; }
+    else if (g % 3 === 0) { c = "rgba(84,156,255,0.6)"; len = 10; }
+    if (c) { ctx.strokeStyle = c; ctx.beginPath(); ctx.moveTo(1, y); ctx.lineTo(1 + len, y); ctx.stroke(); }
+  }
+  ctx.fillStyle = "#e8e8e8"; ctx.font = "300 30px sans-serif"; ctx.textAlign = "center";
+  for (let bar = Math.floor(bot12 / 48) - 1; bar <= Math.ceil(top12 / 48); bar++) {
+    if (bar < 0) continue;
+    const yC = (yOf(bar * 48) + yOf((bar + 1) * 48)) / 2;
+    if (yC < -20 || yC > H + 20) continue;
+    ctx.fillText(String(bar + 1), W * 0.062, yC + 10);
+  }
+  /* 时间栏：上下两端旋转时间 */
+  ctx.save();
+  ctx.fillStyle = "#fff"; ctx.font = "19px monospace"; ctx.textAlign = "center";
+  ctx.shadowColor = "rgba(255,255,255,0.55)"; ctx.shadowBlur = 7;
+  ctx.translate(W * 0.178, H * 0.115); ctx.rotate(-Math.PI / 2); ctx.fillText(fmt(beatToSec(Math.min(top12, totalB * 12))), 0, 6); ctx.restore();
+  ctx.save();
+  ctx.fillStyle = "#fff"; ctx.font = "19px monospace"; ctx.textAlign = "center";
+  ctx.shadowColor = "rgba(255,255,255,0.55)"; ctx.shadowBlur = 7;
+  ctx.translate(W * 0.178, H * 0.885); ctx.rotate(-Math.PI / 2); ctx.fillText(fmt(beatToSec(Math.max(bot12, 0))), 0, 6); ctx.restore();
+  /* 谱面（裁剪在谱面范围内） */
+  ctx.save();
+  ctx.beginPath(); ctx.rect(FX, 0, FW, H); ctx.clip();
   for (let g = Math.floor(bot12); g <= Math.ceil(top12); g++) {
     if (g < 0 || g > totalB * 12) continue;
     const yRaw = yOf(g);
-    if (g % 48 === 0) { ctx.strokeStyle = "rgba(255,255,255,0.65)"; ctx.lineWidth = 2; const y = Math.round(yRaw * DPR) / DPR; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); ctx.lineWidth = 1; continue; }
+    if (g % 48 === 0) { ctx.strokeStyle = "rgba(255,255,255,0.65)"; ctx.lineWidth = 2; const y = Math.round(yRaw * DPR) / DPR; ctx.beginPath(); ctx.moveTo(FX, y); ctx.lineTo(FX + FW, y); ctx.stroke(); ctx.lineWidth = 1; continue; }
     const y = (Math.round(yRaw * DPR) + 0.5) / DPR;
     if (g % 12 === 0) { ctx.strokeStyle = "rgba(255,255,255,0.25)"; }
     else if (g % 4 === 0) { ctx.strokeStyle = "rgba(196,110,255,0.45)"; }
     else if (g % 3 === 0) { ctx.strokeStyle = "rgba(84,156,255,0.38)"; }
     else { if (cellPx < 5) continue; ctx.strokeStyle = "rgba(255,255,255,0.05)"; }
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(FX, y); ctx.lineTo(FX + FW, y); ctx.stroke(); ctx.lineWidth = 1;
   }
-  ctx.strokeStyle = "rgba(255,255,255,0.14)"; ctx.lineWidth = 1;
-  for (let i = 1; i < LANES; i++) { const x = Math.round(i * laneW) + 0.5; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
-  /* 标记线（横贯谱面） */
+  ctx.strokeStyle = "rgba(255,255,255,0.16)"; ctx.lineWidth = 1;
+  for (let i = 1; i < LANES; i++) { const x = FX + Math.round(i * LW) + 0.5; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
   for (const k of P.marks) {
     if (k.b < bot12 - 4 || k.b > top12 + 4) continue;
     const y = Math.round(yOf(k.b)) + 0.5;
     ctx.strokeStyle = KIND_COLOR[k.kind]; ctx.globalAlpha = 0.55; ctx.setLineDash([7, 5]); ctx.lineWidth = 1.4;
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(FX, y); ctx.lineTo(FX + FW, y); ctx.stroke();
     ctx.setLineDash([]); ctx.globalAlpha = 1;
     ctx.fillStyle = KIND_COLOR[k.kind]; ctx.font = "10px sans-serif"; ctx.textAlign = "left";
-    ctx.fillText("⚑ " + k.text.slice(0, 16), 6, y - 4);
+    ctx.fillText("⚑ " + k.text.slice(0, 16), FX + 6, y - 4);
   }
-  const cellH = ppb / 12; /* Malody 式：一个键的高度正好等于一格（1/12 拍） */
+  const cellH = ppb / 12;
   for (const n of P.notes) {
     const e12 = n.b + n.l;
     if (e12 < bot12 - 24 || n.b > top12 + 24) continue;
-    const x = n.lane * laneW + 5, w = laneW - 10, yTop = yOf(e12), yBot = yOf(n.b);
+    const x = FX + n.lane * LW + 5, w = LW - 10, yTop = yOf(e12), yBot = yOf(n.b);
     if (n.t === 2) {
       ctx.fillStyle = "rgba(64,140,255,0.75)"; ctx.fillRect(x, yTop, w, Math.max(3, yBot - yTop));
       ctx.fillStyle = "#9cc8ff"; ctx.fillRect(x, yBot - cellH, w, cellH);
@@ -332,38 +374,36 @@ function draw() {
     }
   }
   if (addHoldStart !== null) {
-    const x = addHoldStart.lane * laneW + 5, y = yOf(addHoldStart.b);
-    ctx.fillStyle = "#9cc8ff"; ctx.fillRect(x, y - cellH / 2, laneW - 10, cellH);
+    const x = FX + addHoldStart.lane * LW + 5, y = yOf(addHoldStart.b);
+    ctx.fillStyle = "#9cc8ff"; ctx.fillRect(x, y - cellH / 2, LW - 10, cellH);
   }
-  const pb = audioReady ? curBeat12() : playheadSec / SPB() * 12;
-  if (pb >= bot12 && pb <= top12) {
-    const y = Math.round(yOf(pb)) + 0.5;
-    ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); ctx.lineWidth = 1;
+  ctx.restore();
+  /* 谱面左右边线＋边线旁小节号 */
+  ctx.strokeStyle = "rgba(255,255,255,0.35)";
+  ctx.beginPath(); ctx.moveTo(FX + 0.5, 0); ctx.lineTo(FX + 0.5, H); ctx.moveTo(FX + FW - 0.5, 0); ctx.lineTo(FX + FW - 0.5, H); ctx.stroke();
+  ctx.fillStyle = "#ccc"; ctx.font = "11px sans-serif"; ctx.textAlign = "right";
+  for (let g = Math.ceil(bot12 / 48) * 48; g <= top12; g += 48) {
+    if (g < 0 || g > totalB * 12) continue;
+    ctx.fillText(String(g / 48 + 1), FX - 5, yOf(g) + 3);
   }
-  drawRail(bot12, top12);
-}
-function drawRail(bot12, top12) {
-  const rw = rail.clientWidth, rh = rail.clientHeight;
-  rctx.clearRect(0, 0, rw, rh);
-  rctx.fillStyle = "#050505"; rctx.fillRect(0, 0, rw, rh);
-  for (let bar = Math.floor(bot12 / 48); bar <= Math.ceil(top12 / 48); bar++) {
-    const g = bar * 48; if (g < 0 || g > totalB * 12) continue;
-    const y = yOf(g);
-    rctx.strokeStyle = "rgba(255,255,255,0.45)"; rctx.beginPath(); rctx.moveTo(34, Math.round(y) + 0.5); rctx.lineTo(58, Math.round(y) + 0.5); rctx.stroke();
-    rctx.fillStyle = "#ddd"; rctx.font = "13px sans-serif"; rctx.textAlign = "center";
-    rctx.fillText(String(bar + 1), 17, y - 6);
-    rctx.save(); rctx.translate(48, y - 8); rctx.rotate(-Math.PI / 2); rctx.textAlign = "right";
-    rctx.fillStyle = "#9adfe3"; rctx.font = "10px monospace"; rctx.fillText(fmt(beatToSec(g)), 0, 3); rctx.restore();
-  }
-  /* 标记旗 */
+  /* 标记旗（时间栏右侧） */
   for (const k of P.marks) {
     if (k.b < bot12 - 4 || k.b > top12 + 4) continue;
     const y = yOf(k.b), c = KIND_COLOR[k.kind];
-    rctx.strokeStyle = c; rctx.beginPath(); rctx.moveTo(58, Math.round(y) + 0.5); rctx.lineTo(rw, Math.round(y) + 0.5); rctx.stroke();
-    rctx.fillStyle = c; rctx.beginPath(); rctx.moveTo(62, y - 5); rctx.lineTo(74, y); rctx.lineTo(62, y + 5); rctx.closePath(); rctx.fill();
-    rctx.fillStyle = "#eee"; rctx.font = "10px sans-serif"; rctx.textAlign = "left";
-    rctx.fillText(k.text.slice(0, 7), 78, y + 3);
+    ctx.strokeStyle = c; ctx.beginPath(); ctx.moveTo(FX - 16, Math.round(y) + 0.5); ctx.lineTo(FX, Math.round(y) + 0.5); ctx.stroke();
+    ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(FX - 13, y - 5); ctx.lineTo(FX - 3, y); ctx.lineTo(FX - 13, y + 5); ctx.closePath(); ctx.fill();
   }
+  /* 播放头：横线＋左侧橙三角，六角按钮跟位 */
+  const pb = audioReady ? curBeat12() : playheadSec / SPB() * 12;
+  const hex = $("playHex");
+  if (pb >= bot12 - 48 && pb <= top12 + 48) {
+    const y = yOf(pb);
+    if (pb >= bot12 && pb <= top12) {
+      ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, Math.round(y) + 0.5); ctx.lineTo(FX + FW, Math.round(y) + 0.5); ctx.stroke(); ctx.lineWidth = 1;
+      ctx.fillStyle = "#ff9f43"; ctx.beginPath(); ctx.moveTo(0, y - 7); ctx.lineTo(13, y); ctx.lineTo(0, y + 7); ctx.closePath(); ctx.fill();
+    }
+    if (hex) { hex.style.display = "flex"; hex.style.left = Math.round(FX - W * 0.088 - 33) + "px"; hex.style.top = Math.round(y - 36) + "px"; const sym = playing ? "⏸" : "▶"; if (hex.textContent !== sym) hex.textContent = sym; }
+  } else if (hex) hex.style.display = "none";
 }
 function tick() {
   if (P && wrap.clientWidth && (Math.abs(wrap.clientWidth - W) > 2 || Math.abs(wrap.clientHeight - H) > 2)) { resize(); if (!userZoomed) frameFive(); }
@@ -436,6 +476,7 @@ cv.addEventListener("pointerdown", e => {
   cv.setPointerCapture(e.pointerId);
   const r = cv.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
   const b = beat12AtY(py), lane = laneAtX(px);
+  if (px < FX) { gesture = { kind: "lscroll", y0: py, x0: px, scroll0: scrollB, moved: false }; return; }
   if (mode === "add") {
     if (addType === 2) {
       if (addHoldStart === null) { addHoldStart = { b: Math.round(b), lane }; toast("已定长条头，再点一处定尾"); }
@@ -459,13 +500,24 @@ cv.addEventListener("pointermove", e => {
   const r = cv.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
   const b = beat12AtY(py);
   if (Math.abs(px - gesture.x0) + Math.abs(py - gesture.y0) > 7) gesture.moved = true;
-  if (gesture.kind === "scroll") { scrollB = Math.max(0, Math.min(totalB, gesture.scroll0 + (py - gesture.y0) / ppb)); draw(); }
+  if (gesture.kind === "scroll" || gesture.kind === "lscroll") { scrollB = Math.max(0, Math.min(totalB, gesture.scroll0 + (py - gesture.y0) / ppb)); draw(); }
   else if (gesture.kind === "note" && gesture.moved) { gesture.n.b = Math.max(0, gesture.ob + Math.round(b - gesture.startB)); gesture.n.lane = laneAtX(px); draw(); }
   else if (gesture.kind === "tail" && gesture.moved) { gesture.n.l = Math.max(1, gesture.ol + Math.round(b - gesture.startB)); draw(); }
 });
 cv.addEventListener("pointerup", () => {
   if (!gesture) return;
   const g = gesture; gesture = null;
+  if (g.kind === "lscroll") {
+    if (!g.moved) {
+      for (const k of P.marks) if (Math.abs(yOf(k.b) - g.y0) <= 10) { openMark(k); return; }
+      const b = beat12AtY(g.y0);
+      playheadSec = Math.max(0, b / 12 * SPB());
+      if (audioReady) au.currentTime = playheadSec + P.off;
+      $("timeLbl").textContent = fmt(playheadSec);
+      draw();
+    }
+    return;
+  }
   if (g.kind === "note") {
     if (!g.moved) { if (g.n.t !== 2) { g.n.t = g.n.t === 1 ? 4 : g.n.t === 4 ? 3 : 1; saveP(); } else toast("长条：拖动移位，拖尾端改长度"); }
     else { recalcTotal(); saveP(); }
@@ -474,17 +526,8 @@ cv.addEventListener("pointerup", () => {
 });
 cv.addEventListener("pointercancel", () => { gesture = null; draw(); });
 wrap.addEventListener("wheel", e => { e.preventDefault(); scrollB = Math.max(0, Math.min(totalB, scrollB + e.deltaY / ppb)); draw(); }, { passive: false });
-rail.addEventListener("pointerdown", e => {
-  if (!P) return;
-  const r = rail.getBoundingClientRect(), py = e.clientY - r.top, b = beat12AtY(py);
-  for (const k of P.marks) if (Math.abs(yOf(k.b) - py) <= 10) { openMark(k); return; }
-  playheadSec = Math.max(0, b / 12 * SPB());
-  if (audioReady) au.currentTime = playheadSec + P.off;
-  $("timeLbl").textContent = fmt(playheadSec);
-  draw();
-});
 /* ============ 播放与菜单 ============ */
-$("keyBtn").onclick = () => { keyOn = !keyOn; ensureAC(); $("keyBtn").textContent = keyOn ? "🔔 键音：开" : "🔕 键音：关"; $("keyBtn").classList.toggle("on", keyOn); if (keyOn) clack(1); };
+$("keyBtn").onclick = () => { keyOn = !keyOn; ensureAC(); $("keyBtn").querySelector(".mlab").textContent = keyOn ? "键音：开" : "键音：关"; $("keyBtn").classList.toggle("on", keyOn); if (keyOn) clack(1); };
 $("laneMuteRow").addEventListener("click", e => {
   const c = e.target.closest("[data-l]"); if (!c) return;
   const l = parseInt(c.dataset.l, 10);
@@ -503,18 +546,45 @@ $("speedRow").addEventListener("click", e => {
   speed = parseFloat(c.dataset.s); au.playbackRate = speed;
   $("speedRow").querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x === c));
 });
-$("followBtn").onclick = () => { follow = !follow; $("followBtn").textContent = "播放头跟随：" + (follow ? "开" : "关"); $("followBtn").classList.toggle("on", follow); };
+$("followBtn").onclick = () => { follow = !follow; $("followBtn").querySelector(".mlab").textContent = "播放头跟随：" + (follow ? "开" : "关"); $("followBtn").classList.toggle("on", follow); };
 $("zoom").oninput = e => { userZoomed = true; ppb = Math.max(24, Math.round(parseFloat(e.target.value) * MMPX * 12)); draw(); };
 function syncZoom() { $("zoom").value = Math.max(2, Math.min(30, ppb / (MMPX * 12))).toFixed(1); }
 function frameFive() { if (H > 0) { ppb = Math.max(24, Math.round(H / 20)); syncZoom(); draw(); } }
 $("zoomIn").onclick = () => { userZoomed = true; ppb = Math.min(1400, Math.round(ppb * 1.25)); syncZoom(); draw(); };
 $("zoomOut").onclick = () => { userZoomed = true; ppb = Math.max(24, Math.round(ppb / 1.25)); syncZoom(); draw(); };
 $("zoomFit").onclick = () => { userZoomed = false; frameFive(); };
+const MODE_LAB = { edit: "模式：编辑", add: "模式：添加", del: "模式：删除" };
 $("modeRow").addEventListener("click", e => {
   const c = e.target.closest("[data-m]"); if (!c) return;
   mode = c.dataset.m; addHoldStart = null;
-  $("modeRow").querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x === c)); draw();
+  $("modeRow").querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x === c));
+  $("modeBtn").querySelector(".mlab").textContent = MODE_LAB[mode]; draw();
 });
+$("modeBtn").onclick = () => {
+  const order = ["edit", "add", "del"], nx = order[(order.indexOf(mode) + 1) % 3];
+  $("modeRow").querySelector('[data-m="' + nx + '"]').click();
+};
+$("moreBtn").onclick = () => { $("moreOv").style.display = "block"; };
+$("moreClose").onclick = () => { $("moreOv").style.display = "none"; };
+$("zoomInHex").onclick = () => $("zoomIn").click();
+$("zoomOutHex").onclick = () => $("zoomOut").click();
+(() => {
+  const hex = $("playHex"); let drag = null;
+  hex.onclick = () => { if (hex._sup) { hex._sup = false; return; } $("playBtn").click(); };
+  hex.addEventListener("pointerdown", e => { drag = { y: e.clientY, moved: false }; hex.setPointerCapture(e.pointerId); });
+  hex.addEventListener("pointermove", e => {
+    if (!drag || !P) return;
+    const dy = e.clientY - drag.y;
+    if (Math.abs(dy) < 4) return;
+    const pb = (audioReady ? curBeat12() : playheadSec / SPB() * 12) - dy / ppb * 12;
+    playheadSec = Math.max(0, pb / 12 * SPB());
+    if (audioReady) au.currentTime = playheadSec + P.off;
+    $("timeLbl").textContent = fmt(playheadSec);
+    drag.y = e.clientY; drag.moved = true; draw();
+  });
+  hex.addEventListener("pointerup", () => { if (drag && drag.moved) hex._sup = true; drag = null; });
+  hex.addEventListener("pointercancel", () => { drag = null; });
+})();
 $("addRow").addEventListener("click", e => {
   const c = e.target.closest("[data-t]"); if (!c) return;
   addType = parseInt(c.dataset.t, 10); addHoldStart = null;
@@ -688,7 +758,7 @@ function pvJudgeTap(lane, t) {
 }
 function pvHud() { $("pvCombo").textContent = pvCombo; $("pvHit").textContent = pvHits; $("pvMiss").textContent = pvMiss; }
 pvc.addEventListener("pointerdown", e => {
-  const r = pvc.getBoundingClientRect(), lane = Math.max(0, Math.min(LANES - 1, Math.floor((e.clientX - r.left) / (r.width / LANES))));
+  const r = pvc.getBoundingClientRect(), lane = Math.max(0, Math.min(LANES - 1, Math.floor((e.clientX - r.left - FX) / (FW / LANES))));
   pvPointers.set(e.pointerId, lane); pvJudgeTap(lane, pvTNow());
 });
 pvc.addEventListener("pointerup", e => pvPointers.delete(e.pointerId));
@@ -698,7 +768,7 @@ window.addEventListener("keydown", e => { if (pvOn && KEYLANE[e.key.toLowerCase(
 window.addEventListener("keyup", e => { if (KEYLANE[e.key.toLowerCase()] !== undefined) pvKeys.delete(KEYLANE[e.key.toLowerCase()]); });
 function pvTick(now) {
   if (!pvOn) return;
-  const w = pv.clientWidth, h = pv.clientHeight, lineY = h * 0.84, laneW = w / LANES;
+  const w = pv.clientWidth, h = pv.clientHeight, lineY = h * 0.84, laneW = FW / LANES;
   const t = pvTNow(), dt = Math.min(0.05, (now - pvLastFrame) / 1000); pvLastFrame = now;
   const held = pvLanesHeld();
   for (const n of P.notes) {
@@ -712,14 +782,14 @@ function pvTick(now) {
   }
   if (t > pvLastNoteSec + 0.6) { pvEnd("预览结束：命中 " + pvHits + " · 漏 " + pvMiss + " · 最大连击 " + pvMaxCombo); return; }
   pvx.clearRect(0, 0, w, h);
-  for (let i = 0; i < LANES; i++) if (held.has(i)) { pvx.fillStyle = "rgba(255,255,255,0.08)"; pvx.fillRect(i * laneW, 0, laneW, h); }
+  for (let i = 0; i < LANES; i++) if (held.has(i)) { pvx.fillStyle = "rgba(255,255,255,0.08)"; pvx.fillRect(FX + i * laneW, 0, laneW, h); }
   pvx.strokeStyle = "rgba(255,255,255,0.15)";
-  for (let i = 1; i < LANES; i++) { pvx.beginPath(); pvx.moveTo(i * laneW + 0.5, 0); pvx.lineTo(i * laneW + 0.5, h); pvx.stroke(); }
-  pvx.strokeStyle = "#fff"; pvx.lineWidth = 2; pvx.beginPath(); pvx.moveTo(0, lineY); pvx.lineTo(w, lineY); pvx.stroke(); pvx.lineWidth = 1;
+  for (let i = 1; i < LANES; i++) { pvx.beginPath(); pvx.moveTo(FX + i * laneW + 0.5, 0); pvx.lineTo(FX + i * laneW + 0.5, h); pvx.stroke(); }
+  pvx.strokeStyle = "#fff"; pvx.lineWidth = 2; pvx.beginPath(); pvx.moveTo(FX, lineY); pvx.lineTo(FX + FW, lineY); pvx.stroke(); pvx.lineWidth = 1;
   const pxPerSec = lineY / FALL;
   for (const n of P.notes) {
     const s = beatToSec(n.b); if (s > t + FALL + 0.1 || beatToSec(n.b + n.l) < t - 0.3) continue;
-    const x = n.lane * laneW + 5, nw = laneW - 10, yHead = lineY - (s - t) * pxPerSec;
+    const x = FX + n.lane * laneW + 5, nw = laneW - 10, yHead = lineY - (s - t) * pxPerSec;
     const done = pvHitSet.has(n.id), missed = pvMissSet.has(n.id);
     if (n.t === 2) {
       const yTail = lineY - (beatToSec(n.b + n.l) - t) * pxPerSec;
