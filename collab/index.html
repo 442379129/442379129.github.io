@@ -127,7 +127,7 @@
   <button class="btn" id="impBtn">⬆ 导入项目</button>
   <input type="file" id="impFile" accept=".json,application/json" style="display:none">
   <button class="btn warn" id="resetBtn">清空本项目谱面</button>
-  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-p（Malody 版式一比一复刻）</div>
+  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-q（一节严格 12 格＋左侧时间轴收窄）</div>
   <button class="btn" id="moreClose">关闭</button>
 </div></div>
 
@@ -283,7 +283,7 @@ function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, 2);
   W = wrap.clientWidth; H = wrap.clientHeight;
   cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  FX = Math.round(W * 0.235);
+  FX = Math.max(120, Math.min(230, Math.round(W * 0.16)));
   LW = Math.max(28, Math.round(W * 0.0515));
   FW = LW * LANES;
   if (FX + FW > W - 8) { FW = W - 8 - FX; LW = FW / LANES; }
@@ -314,7 +314,7 @@ function draw() {
     if (g % 48 === 0) { c = "rgba(255,255,255,0.85)"; len = 17; }
     else if (g % 12 === 0) { c = "rgba(255,255,255,0.5)"; len = 12; }
     else if (g % 4 === 0) { c = "rgba(196,110,255,0.65)"; len = 10; }
-    else if (g % 3 === 0) { c = "rgba(84,156,255,0.6)"; len = 10; }
+    else if (g % 3 === 0) { if (cellPx >= 4.5) { c = "rgba(84,156,255,0.6)"; len = 10; } }
     if (c) { ctx.strokeStyle = c; ctx.beginPath(); ctx.moveTo(1, y); ctx.lineTo(1 + len, y); ctx.stroke(); }
   }
   ctx.fillStyle = "#e8e8e8"; ctx.font = "300 30px sans-serif"; ctx.textAlign = "center";
@@ -322,17 +322,17 @@ function draw() {
     if (bar < 0) continue;
     const yC = (yOf(bar * 48) + yOf((bar + 1) * 48)) / 2;
     if (yC < -20 || yC > H + 20) continue;
-    ctx.fillText(String(bar + 1), W * 0.062, yC + 10);
+    ctx.fillText(String(bar + 1), Math.round(FX * 0.34), yC + 10);
   }
   /* 时间栏：上下两端旋转时间 */
   ctx.save();
   ctx.fillStyle = "#fff"; ctx.font = "19px monospace"; ctx.textAlign = "center";
   ctx.shadowColor = "rgba(255,255,255,0.55)"; ctx.shadowBlur = 7;
-  ctx.translate(W * 0.178, H * 0.115); ctx.rotate(-Math.PI / 2); ctx.fillText(fmt(beatToSec(Math.min(top12, totalB * 12))), 0, 6); ctx.restore();
+  ctx.translate(FX - 32, H * 0.115); ctx.rotate(-Math.PI / 2); ctx.fillText(fmt(beatToSec(Math.min(top12, totalB * 12))), 0, 6); ctx.restore();
   ctx.save();
   ctx.fillStyle = "#fff"; ctx.font = "19px monospace"; ctx.textAlign = "center";
   ctx.shadowColor = "rgba(255,255,255,0.55)"; ctx.shadowBlur = 7;
-  ctx.translate(W * 0.178, H * 0.885); ctx.rotate(-Math.PI / 2); ctx.fillText(fmt(beatToSec(Math.max(bot12, 0))), 0, 6); ctx.restore();
+  ctx.translate(FX - 32, H * 0.885); ctx.rotate(-Math.PI / 2); ctx.fillText(fmt(beatToSec(Math.max(bot12, 0))), 0, 6); ctx.restore();
   /* 谱面（裁剪在谱面范围内） */
   ctx.save();
   ctx.beginPath(); ctx.rect(FX, 0, FW, H); ctx.clip();
@@ -343,8 +343,8 @@ function draw() {
     const y = (Math.round(yRaw * DPR) + 0.5) / DPR;
     if (g % 12 === 0) { ctx.strokeStyle = "rgba(255,255,255,0.25)"; }
     else if (g % 4 === 0) { ctx.strokeStyle = "rgba(196,110,255,0.45)"; }
-    else if (g % 3 === 0) { ctx.strokeStyle = "rgba(84,156,255,0.38)"; }
-    else { if (cellPx < 5) continue; ctx.strokeStyle = "rgba(255,255,255,0.05)"; }
+    else if (g % 3 === 0) { if (cellPx < 4.5) continue; ctx.strokeStyle = "rgba(84,156,255,0.38)"; }
+    else { if (cellPx < 7) continue; ctx.strokeStyle = "rgba(255,255,255,0.05)"; }
     ctx.beginPath(); ctx.moveTo(FX, y); ctx.lineTo(FX + FW, y); ctx.stroke(); ctx.lineWidth = 1;
   }
   ctx.strokeStyle = "rgba(255,255,255,0.16)"; ctx.lineWidth = 1;
@@ -402,7 +402,7 @@ function draw() {
       ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, Math.round(y) + 0.5); ctx.lineTo(FX + FW, Math.round(y) + 0.5); ctx.stroke(); ctx.lineWidth = 1;
       ctx.fillStyle = "#ff9f43"; ctx.beginPath(); ctx.moveTo(0, y - 7); ctx.lineTo(13, y); ctx.lineTo(0, y + 7); ctx.closePath(); ctx.fill();
     }
-    if (hex) { hex.style.display = "flex"; hex.style.left = Math.round(FX - W * 0.088 - 33) + "px"; hex.style.top = Math.round(y - 36) + "px"; const sym = playing ? "⏸" : "▶"; if (hex.textContent !== sym) hex.textContent = sym; }
+    if (hex) { hex.style.display = "flex"; hex.style.left = Math.round(FX - 92) + "px"; hex.style.top = Math.round(y - 36) + "px"; const sym = playing ? "⏸" : "▶"; if (hex.textContent !== sym) hex.textContent = sym; }
   } else if (hex) hex.style.display = "none";
 }
 function tick() {
