@@ -74,7 +74,7 @@
   <div id="menu">
     <div class="mtitle" id="projTitle">加载中…</div>
     <div class="msub" id="projMeta"></div>
-    <div class="msub" id="verLine">版本 1106-c</div>
+    <div class="msub" id="verLine">版本 1106-d</div>
     <div id="counts">时间 <b id="timeLbl">00:00.000</b><br>
       <span class="dot" style="background:#19d3da"></span>普通 <b id="cTap">0</b>　
       <span class="dot" style="background:#ffd21f"></span>黄 <b id="cDrag">0</b><br>
@@ -130,7 +130,7 @@
   <button class="btn" id="impBtn">⬆ 导入项目</button>
   <input type="file" id="impFile" accept=".json,application/json" style="display:none">
   <button class="btn warn" id="resetBtn">清空本项目谱面</button>
-  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1106-c（Malody 原样：12 格＋紫红/青拍线）</div>
+  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1106-d（补回淡蓝线，半拍键有着落）</div>
   <button class="btn" id="moreClose">关闭</button>
 </div></div>
 
@@ -330,7 +330,7 @@ function draw() {
     if (g % 48 === 0) { c = "rgba(255,255,255,0.85)"; len = 17; }
     else if (g % 12 === 0) { c = (g % 48 === 24) ? "rgba(110,200,230,0.85)" : "rgba(216,110,216,0.8)"; len = 12; }
     else if (g % 4 === 0) { c = "rgba(210,210,210,0.55)"; len = 10; }
-    else if (g % 3 === 0) { if (cellPx >= 4.5) { c = "rgba(84,156,255,0.6)"; len = 10; } }
+    else if (g % 3 === 0) { c = "rgba(84,156,255,0.45)"; len = 10; }
     if (c) { ctx.strokeStyle = c; ctx.beginPath(); ctx.moveTo(1, y); ctx.lineTo(1 + len, y); ctx.stroke(); }
   }
   { const vv = window.visualViewport; ctx.fillStyle = "rgba(120,220,255,0.95)"; ctx.font = "11px monospace"; ctx.textAlign = "left";
@@ -361,7 +361,7 @@ function draw() {
     const y = (Math.round(yRaw * DPR) + 0.5) / DPR;
     if (g % 12 === 0) { ctx.strokeStyle = (g % 48 === 24) ? "rgba(110,200,230,0.55)" : "rgba(216,110,216,0.5)"; }
     else if (g % 4 === 0) { ctx.strokeStyle = "rgba(210,210,210,0.30)"; }
-    else if (g % 3 === 0) { if (cellPx < 4.5) continue; ctx.strokeStyle = "rgba(84,156,255,0.38)"; }
+    else if (g % 3 === 0) { ctx.strokeStyle = cellPx < 4.5 ? "rgba(84,156,255,0.22)" : "rgba(84,156,255,0.38)"; }
     else { if (cellPx < 7) continue; ctx.strokeStyle = "rgba(255,255,255,0.05)"; }
     ctx.beginPath(); ctx.moveTo(FX, y); ctx.lineTo(FX + FW, y); ctx.stroke(); ctx.lineWidth = 1;
   }
