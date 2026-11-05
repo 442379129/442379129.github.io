@@ -74,7 +74,7 @@
   <div id="menu">
     <div class="mtitle" id="projTitle">加载中…</div>
     <div class="msub" id="projMeta"></div>
-    <div class="msub" id="verLine">版本 1105-w</div>
+    <div class="msub" id="verLine">版本 1105-x</div>
     <div id="counts">时间 <b id="timeLbl">00:00.000</b><br>
       <span class="dot" style="background:#19d3da"></span>普通 <b id="cTap">0</b>　
       <span class="dot" style="background:#ffd21f"></span>黄 <b id="cDrag">0</b><br>
@@ -130,7 +130,7 @@
   <button class="btn" id="impBtn">⬆ 导入项目</button>
   <input type="file" id="impFile" accept=".json,application/json" style="display:none">
   <button class="btn warn" id="resetBtn">清空本项目谱面</button>
-  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-w（画面左上角带诊断行）</div>
+  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-x（画布尺寸写死，根治放大）</div>
   <button class="btn" id="moreClose">关闭</button>
 </div></div>
 
@@ -294,7 +294,7 @@ function resize() {
   const vs = viewSize(), app = $("app");
   app.style.width = vs.w + "px"; app.style.height = vs.h + "px"; app.style.left = vs.x + "px"; app.style.top = vs.y + "px";
   W = vs.w; H = vs.h;
-  cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + "px"; cv.style.height = H + "px"; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   FX = Math.max(120, Math.min(230, Math.round(W * 0.16)));
   LW = Math.max(28, Math.round(W * 0.0515));
   FW = LW * LANES;
@@ -763,7 +763,7 @@ $("pvBtn").onclick = () => {
   pvCombo = 0; pvMaxCombo = 0; pvHits = 0; pvMiss = 0; pvHud();
   pvLastNoteSec = Math.max(...P.notes.map(n => beatToSec(n.b + n.l)));
   pv.style.display = "block"; { const vs = viewSize(); pv.style.width = vs.w + "px"; pv.style.height = vs.h + "px"; } pvOn = true;
-  pvc.width = pv.clientWidth * DPR; pvc.height = pv.clientHeight * DPR; pvx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  pvc.width = pv.clientWidth * DPR; pvc.height = pv.clientHeight * DPR; pvc.style.width = pv.clientWidth + "px"; pvc.style.height = pv.clientHeight + "px"; pvx.setTransform(DPR, 0, 0, DPR, 0, 0);
   au.currentTime = beatToSec(startB12) - FALL + P.off; au.playbackRate = speed; au.play();
   pvLastFrame = performance.now();
   requestAnimationFrame(pvTick);
