@@ -88,8 +88,8 @@
     <div class="row" id="laneMuteRow">
       <div class="chip" data-l="0">列1</div><div class="chip" data-l="1">列2</div><div class="chip" data-l="2">列3</div><div class="chip" data-l="3">列4</div><div class="chip" data-l="4">列5</div><div class="chip" data-l="5">列6</div>
     </div>
-    <div class="label">缩放（每拍高度）</div>
-    <input type="range" id="zoom" min="14" max="64" step="1" value="36">
+    <div class="label">缩放（每格高度，毫米）</div>
+    <input type="range" id="zoom" min="2" max="9" step="0.25" value="5">
     <div class="label">时间栏标记（给小帕的事件说明）</div>
     <div class="row">
       <button class="btn" id="markPlayBtn">＋ 播放头处</button>
@@ -110,7 +110,7 @@
     <button class="btn" id="impBtn">⬆ 导入项目</button>
     <input type="file" id="impFile" accept=".json,application/json" style="display:none">
     <button class="btn warn" id="resetBtn">清空本项目谱面</button>
-    <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-f（存储超时修复＋加载分步显示）</div>
+    <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-g（每格默认 5 毫米）</div>
   </div>
 </div>
 
@@ -196,7 +196,9 @@ function fmt(sec) { if (sec < 0) sec = 0; const m = Math.floor(sec / 60), s = se
 /* ============ 项目状态 ============ */
 let P = null;                 // 当前项目 {pid,title,bpm,off,audioName,audioBlob,notes,marks,nextId,nextMarkId,updatedAt}
 let mode = "edit", addType = 1, addHoldStart = null;
-let ppb = 36, scrollB = 0, follow = true, speed = 1, playing = false;
+let MMPX = 3.78;
+try { const d = document.createElement("div"); d.style.cssText = "width:10mm;position:absolute;visibility:hidden"; document.body.appendChild(d); MMPX = d.getBoundingClientRect().width / 10 || 3.78; d.remove(); } catch (e) {}
+let ppb = Math.round(5 * MMPX * 12), scrollB = 0, follow = true, speed = 1, playing = false;
 let audioReady = false, playheadSec = 0, totalB = 628;
 const SPB = () => 60 / P.bpm;
 const beatToSec = b12 => b12 / 12 * SPB();
@@ -484,7 +486,7 @@ $("speedRow").addEventListener("click", e => {
   $("speedRow").querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x === c));
 });
 $("followBtn").onclick = () => { follow = !follow; $("followBtn").textContent = "播放头跟随：" + (follow ? "开" : "关"); $("followBtn").classList.toggle("on", follow); };
-$("zoom").oninput = e => { ppb = parseInt(e.target.value, 10); draw(); };
+$("zoom").oninput = e => { ppb = Math.max(24, Math.round(parseFloat(e.target.value) * MMPX * 12)); draw(); };
 $("modeRow").addEventListener("click", e => {
   const c = e.target.closest("[data-m]"); if (!c) return;
   mode = c.dataset.m; addHoldStart = null;
