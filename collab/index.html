@@ -116,7 +116,7 @@
     <button class="btn" id="impBtn">⬆ 导入项目</button>
     <input type="file" id="impFile" accept=".json,application/json" style="display:none">
     <button class="btn warn" id="resetBtn">清空本项目谱面</button>
-    <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-m（持续自适应画面＋诊断行）</div>
+    <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-n（总览时格线抽稀，不再密成一片）</div>
   </div>
 </div>
 
@@ -292,15 +292,16 @@ function draw() {
   ctx.clearRect(0, 0, W, H);
   const laneW = W / LANES, top12 = beat12AtY(0), bot12 = beat12AtY(H);
   const dg = $("diag"); if (dg) { const s = "画面 " + W + "×" + H + " · 每格 " + (ppb / 12).toFixed(1) + "px · 一屏约 " + (H / ppb / 4).toFixed(1) + " 小节 · " + LANES + " 列 · DPR " + DPR; if (dg.textContent !== s) dg.textContent = s; }
+  const cellPx = ppb / 12;
   for (let g = Math.floor(bot12); g <= Math.ceil(top12); g++) {
     if (g < 0 || g > totalB * 12) continue;
     const y = Math.round(yOf(g)) + 0.5;
     if (g % 48 === 0) { ctx.strokeStyle = "rgba(255,255,255,0.65)"; ctx.lineWidth = 2; }
-    else if (g % 12 === 0) { ctx.strokeStyle = "rgba(255,255,255,0.20)"; ctx.lineWidth = 1; }
-    else if (g % 3 === 0) { ctx.strokeStyle = "rgba(84,156,255,0.42)"; ctx.lineWidth = 1; }
-    else if (g % 4 === 0) { ctx.strokeStyle = "rgba(196,110,255,0.42)"; ctx.lineWidth = 1; }
-    else { ctx.strokeStyle = "rgba(255,255,255,0.045)"; ctx.lineWidth = 1; }
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    else if (g % 12 === 0) { ctx.strokeStyle = "rgba(255,255,255,0.22)"; ctx.lineWidth = 1; }
+    else if (g % 3 === 0) { if (cellPx < 3) continue; ctx.strokeStyle = "rgba(84,156,255,0.42)"; ctx.lineWidth = 1; }
+    else if (g % 4 === 0) { if (cellPx < 3) continue; ctx.strokeStyle = "rgba(196,110,255,0.42)"; ctx.lineWidth = 1; }
+    else { if (cellPx < 5) continue; ctx.strokeStyle = "rgba(255,255,255,0.05)"; ctx.lineWidth = 1; }
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); ctx.lineWidth = 1;
   }
   ctx.strokeStyle = "rgba(255,255,255,0.14)"; ctx.lineWidth = 1;
   for (let i = 1; i < LANES; i++) { const x = Math.round(i * laneW) + 0.5; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
