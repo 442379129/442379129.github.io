@@ -89,6 +89,11 @@
       <div class="chip" data-l="0">列1</div><div class="chip" data-l="1">列2</div><div class="chip" data-l="2">列3</div><div class="chip" data-l="3">列4</div><div class="chip" data-l="4">列5</div><div class="chip" data-l="5">列6</div>
     </div>
     <div class="label">缩放（每格高度，毫米）</div>
+    <div class="row">
+      <button class="btn" id="zoomOut">－ 缩小</button>
+      <button class="btn" id="zoomIn">＋ 放大</button>
+      <button class="btn" id="zoomFit">一屏 5 拍</button>
+    </div>
     <input type="range" id="zoom" min="2" max="30" step="0.1" value="5.3">
     <div class="label">时间栏标记（给小帕的事件说明）</div>
     <div class="row">
@@ -110,7 +115,7 @@
     <button class="btn" id="impBtn">⬆ 导入项目</button>
     <input type="file" id="impFile" accept=".json,application/json" style="display:none">
     <button class="btn warn" id="resetBtn">清空本项目谱面</button>
-    <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-i（每格 ≈ Excel 行高 5.3 毫米）</div>
+    <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-j（默认一屏 5 拍＋缩放按钮）</div>
   </div>
 </div>
 
@@ -250,7 +255,7 @@ function openProject(p) {
   P = p; attachAudio(); scrollB = 0; playheadSec = 0; undoStack = []; syncUndo();
   $("projTitle").textContent = P.title;
   $("projMeta").textContent = "BPM " + P.bpm + " · 偏移 " + Math.round(P.off * 1000) + "ms";
-  recalcTotal(); refreshCounts(); renderMarks(); draw();
+  recalcTotal(); refreshCounts(); renderMarks(); draw(); frameFive();
 }
 function refreshCounts() {
   if (!P) return;
@@ -488,6 +493,11 @@ $("speedRow").addEventListener("click", e => {
 });
 $("followBtn").onclick = () => { follow = !follow; $("followBtn").textContent = "播放头跟随：" + (follow ? "开" : "关"); $("followBtn").classList.toggle("on", follow); };
 $("zoom").oninput = e => { ppb = Math.max(24, Math.round(parseFloat(e.target.value) * MMPX * 12)); draw(); };
+function syncZoom() { $("zoom").value = Math.max(2, Math.min(30, ppb / (MMPX * 12))).toFixed(1); }
+function frameFive() { if (H > 0) { ppb = Math.max(30, Math.round(H / 5)); syncZoom(); draw(); } }
+$("zoomIn").onclick = () => { ppb = Math.min(1400, Math.round(ppb * 1.25)); syncZoom(); draw(); };
+$("zoomOut").onclick = () => { ppb = Math.max(24, Math.round(ppb / 1.25)); syncZoom(); draw(); };
+$("zoomFit").onclick = () => frameFive();
 $("modeRow").addEventListener("click", e => {
   const c = e.target.closest("[data-m]"); if (!c) return;
   mode = c.dataset.m; addHoldStart = null;
