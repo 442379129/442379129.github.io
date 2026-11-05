@@ -89,6 +89,8 @@
     <button class="mrow" id="pvBtn"><span class="mlab">预览试打</span><span class="mic">▶</span></button>
     <button class="mrow" id="undoBtn" style="opacity:0.45"><span class="mlab">撤销</span><span class="mic">↩</span></button>
     <button class="mrow" id="expBtn"><span class="mlab">导出项目</span><span class="mic">⇪</span></button>
+    <button class="mrow" id="topBtn"><span class="mlab">回到开头</span><span class="mic">⏮</span></button>
+    <button class="mrow" id="fitBtn"><span class="mlab">一屏 5 小节</span><span class="mic">▦</span></button>
     <button class="mrow" id="moreBtn"><span class="mlab">更多</span><span class="mic">…</span></button>
   </div>
 </div>
@@ -127,7 +129,7 @@
   <button class="btn" id="impBtn">⬆ 导入项目</button>
   <input type="file" id="impFile" accept=".json,application/json" style="display:none">
   <button class="btn warn" id="resetBtn">清空本项目谱面</button>
-  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-q（一节严格 12 格＋左侧时间轴收窄）</div>
+  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-r（蓝色定位线＋键高一格＋导航钮）</div>
   <button class="btn" id="moreClose">关闭</button>
 </div></div>
 
@@ -293,7 +295,7 @@ let lastOri = null;
 window.addEventListener("resize", () => {
   resize();
   const ori = W >= H ? "L" : "P";
-  if (lastOri && ori !== lastOri && !userZoomed) frameFive();
+  if (lastOri && ori !== lastOri) { userZoomed = false; frameFive(); }
   lastOri = ori;
 });
 function yOf(b12) { return H - (b12 / 12 - scrollB) * ppb; }
@@ -359,15 +361,15 @@ function draw() {
     ctx.fillText("⚑ " + k.text.slice(0, 16), FX + 6, y - 4);
   }
   const cellH = ppb / 12;
+  const gh = Math.max(8, Math.min(ppb / 3, Math.max(cellH, 10)));
   for (const n of P.notes) {
     const e12 = n.b + n.l;
     if (e12 < bot12 - 24 || n.b > top12 + 24) continue;
     const x = FX + n.lane * LW + 5, w = LW - 10, yTop = yOf(e12), yBot = yOf(n.b);
     if (n.t === 2) {
       ctx.fillStyle = "rgba(64,140,255,0.75)"; ctx.fillRect(x, yTop, w, Math.max(3, yBot - yTop));
-      ctx.fillStyle = "#9cc8ff"; ctx.fillRect(x, yBot - cellH, w, cellH);
+      ctx.fillStyle = "#9cc8ff"; ctx.fillRect(x, yBot - gh, w, gh);
     } else {
-      const gh = Math.max(cellH, 14);
       ctx.fillStyle = TYPE_COLOR[n.t];
       ctx.fillRect(x, yBot - gh / 2, w, gh);
       ctx.fillStyle = "rgba(255,255,255,0.55)"; ctx.fillRect(x, yBot - 1, w, 2);
@@ -396,17 +398,19 @@ function draw() {
   /* 播放头：横线＋左侧橙三角，六角按钮跟位 */
   const pb = audioReady ? curBeat12() : playheadSec / SPB() * 12;
   const hex = $("playHex");
-  if (pb >= bot12 - 48 && pb <= top12 + 48) {
+  {
     const y = yOf(pb);
     if (pb >= bot12 && pb <= top12) {
-      ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, Math.round(y) + 0.5); ctx.lineTo(FX + FW, Math.round(y) + 0.5); ctx.stroke(); ctx.lineWidth = 1;
+      ctx.strokeStyle = "#2fb9ff"; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(0, Math.round(y) + 0.5); ctx.lineTo(FX + FW, Math.round(y) + 0.5); ctx.stroke(); ctx.lineWidth = 1;
       ctx.fillStyle = "#ff9f43"; ctx.beginPath(); ctx.moveTo(0, y - 7); ctx.lineTo(13, y); ctx.lineTo(0, y + 7); ctx.closePath(); ctx.fill();
+    } else {
+      ctx.fillStyle = "rgba(47,185,255,0.5)"; ctx.fillRect(0, pb > top12 ? 0 : H - 3, FX + FW, 3);
     }
-    if (hex) { hex.style.display = "flex"; hex.style.left = Math.round(FX - 92) + "px"; hex.style.top = Math.round(y - 36) + "px"; const sym = playing ? "⏸" : "▶"; if (hex.textContent !== sym) hex.textContent = sym; }
-  } else if (hex) hex.style.display = "none";
+    if (hex) { hex.style.display = "flex"; hex.style.left = Math.round(FX - 92) + "px"; hex.style.top = Math.round(Math.max(6, Math.min(H - 78, y - 36))) + "px"; const sym = playing ? "⏸" : "▶"; if (hex.textContent !== sym) hex.textContent = sym; }
+  }
 }
 function tick() {
-  if (P && wrap.clientWidth && (Math.abs(wrap.clientWidth - W) > 2 || Math.abs(wrap.clientHeight - H) > 2)) { resize(); if (!userZoomed) frameFive(); }
+  if (P && wrap.clientWidth && (Math.abs(wrap.clientWidth - W) > 2 || Math.abs(wrap.clientHeight - H) > 2)) { resize(); frameFive(); }
   keyTick();
   if (playing && audioReady && P) {
     const b = curBeat12() / 12;
@@ -565,6 +569,8 @@ $("modeBtn").onclick = () => {
   $("modeRow").querySelector('[data-m="' + nx + '"]').click();
 };
 $("moreBtn").onclick = () => { $("moreOv").style.display = "block"; };
+$("topBtn").onclick = () => { scrollB = 0; draw(); };
+$("fitBtn").onclick = () => { userZoomed = false; frameFive(); };
 $("moreClose").onclick = () => { $("moreOv").style.display = "none"; };
 $("zoomInHex").onclick = () => $("zoomIn").click();
 $("zoomOutHex").onclick = () => $("zoomOut").click();
