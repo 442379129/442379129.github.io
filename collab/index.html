@@ -14,10 +14,10 @@
   .tbtn { padding:7px 12px; background:#1a1a1a; border:1px solid #333; border-radius:8px; color:#eee; font-size:13px; cursor:pointer; user-select:none; white-space:nowrap; }
   .tbtn:active { background:#2c2c2c; }
   .tbtn.on { background:#0e3238; border-color:#19d3da; color:#c9f6f9; }
-  #app { position:fixed; inset:0; }
+  #app { position:fixed; left:0; top:0; }
   #gridwrap { position:absolute; inset:0; overflow:hidden; background:#000; touch-action:none; }
   #grid { position:absolute; inset:0; }
-  #menu { position:fixed; top:0; right:0; bottom:0; width:176px; z-index:30; background:transparent; padding:16px 12px 12px 0; overflow-y:auto; display:flex; flex-direction:column; gap:4px; }
+  #menu { position:absolute; top:0; right:0; bottom:0; width:176px; z-index:30; background:transparent; padding:16px 12px 12px 0; overflow-y:auto; display:flex; flex-direction:column; gap:4px; }
   .mtitle { color:#fff; font-size:14px; font-weight:600; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .msub { color:#999; font-size:11px; text-align:right; margin-bottom:2px; }
   .mrow { display:flex; align-items:center; gap:10px; width:100%; background:transparent; border:none; color:#fff; font-size:15px; padding:8px 0; cursor:pointer; }
@@ -74,7 +74,7 @@
   <div id="menu">
     <div class="mtitle" id="projTitle">加载中…</div>
     <div class="msub" id="projMeta"></div>
-    <div class="msub" id="verLine">版本 1105-u</div>
+    <div class="msub" id="verLine">版本 1105-v</div>
     <div id="counts">时间 <b id="timeLbl">00:00.000</b><br>
       <span class="dot" style="background:#19d3da"></span>普通 <b id="cTap">0</b>　
       <span class="dot" style="background:#ffd21f"></span>黄 <b id="cDrag">0</b><br>
@@ -130,7 +130,7 @@
   <button class="btn" id="impBtn">⬆ 导入项目</button>
   <input type="file" id="impFile" accept=".json,application/json" style="display:none">
   <button class="btn warn" id="resetBtn">清空本项目谱面</button>
-  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-u（版本号移到菜单顶部）</div>
+  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-v（按可见画面定尺寸＋底部留白）</div>
   <button class="btn" id="moreClose">关闭</button>
 </div></div>
 
@@ -268,7 +268,7 @@ au.addEventListener("play", () => { playing = true; $("playBtn").textContent = "
 au.addEventListener("pause", () => { playing = false; $("playBtn").textContent = "▶ 播放"; });
 au.addEventListener("ended", () => { playing = false; });
 function openProject(p) {
-  P = p; attachAudio(); scrollB = 0; playheadSec = 0; undoStack = []; syncUndo();
+  P = p; attachAudio(); scrollB = MIN_SCROLL; playheadSec = 0; undoStack = []; syncUndo();
   $("projTitle").textContent = P.title;
   $("projMeta").textContent = "BPM " + P.bpm + " · 偏移 " + Math.round(P.off * 1000) + "ms";
   recalcTotal(); refreshCounts(); renderMarks(); draw(); frameFive();
@@ -283,9 +283,17 @@ function refreshCounts() {
 /* ============ 编辑器渲染 ============ */
 const wrap = $("gridwrap"), cv = $("grid"), ctx = cv.getContext("2d");
 let W = 0, H = 0, DPR = 1, FX = 0, FW = 0, LW = 0;
+const MIN_SCROLL = -2; /* 底部留白（拍）：第 0 拍悬在底边上方，学 Malody 第一幕 */
+function viewSize() {
+  const vv = window.visualViewport;
+  if (vv) return { w: Math.round(vv.width), h: Math.round(vv.height), x: Math.round(vv.offsetLeft || 0), y: Math.round(vv.offsetTop || 0) };
+  return { w: window.innerWidth, h: window.innerHeight, x: 0, y: 0 };
+}
 function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, 2);
-  W = wrap.clientWidth; H = wrap.clientHeight;
+  const vs = viewSize(), app = $("app");
+  app.style.width = vs.w + "px"; app.style.height = vs.h + "px"; app.style.left = vs.x + "px"; app.style.top = vs.y + "px";
+  W = vs.w; H = vs.h;
   cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   FX = Math.max(120, Math.min(230, Math.round(W * 0.16)));
   LW = Math.max(28, Math.round(W * 0.0515));
@@ -294,6 +302,10 @@ function resize() {
   draw();
 }
 let lastOri = null;
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", () => { if (!playing) { resize(); frameFive(); } });
+  window.visualViewport.addEventListener("scroll", () => { if (!playing) resize(); });
+}
 window.addEventListener("resize", () => {
   resize();
   const ori = W >= H ? "L" : "P";
@@ -414,15 +426,15 @@ function draw() {
 }
 let pendSize = null, pendCount = 0;
 function tick() {
-  if (P && wrap.clientWidth && (Math.abs(wrap.clientWidth - W) > 2 || Math.abs(wrap.clientHeight - H) > 2)) {
-    const key = wrap.clientWidth + "x" + wrap.clientHeight;
+  if (P) { const vs0 = viewSize(); if (Math.abs(vs0.w - W) > 2 || Math.abs(vs0.h - H) > 2) {
+    const key = vs0.w + "x" + vs0.h;
     if (pendSize === key) { pendCount++; } else { pendSize = key; pendCount = 0; }
     if (pendCount >= 20) { resize(); if (!playing) frameFive(); pendSize = null; pendCount = 0; }
-  } else { pendSize = null; pendCount = 0; }
+  } else { pendSize = null; pendCount = 0; } }
   keyTick();
   if (playing && audioReady && P) {
     const b = curBeat12() / 12;
-    if (follow) { const vb = H / ppb; scrollB = Math.max(0, Math.min(Math.max(0, totalB - vb), b - vb * 0.35)); }
+    if (follow) { const vb = H / ppb; scrollB = Math.max(MIN_SCROLL, Math.min(Math.max(0, totalB - vb), b - vb * 0.35)); }
     $("timeLbl").textContent = fmt(Math.max(0, au.currentTime - P.off));
     draw();
   }
@@ -436,7 +448,7 @@ function renderMarks() {
     const d = document.createElement("div");
     d.className = "markItem"; d.style.borderLeftColor = KIND_COLOR[k.kind];
     d.innerHTML = '<span class="mt">' + fmt(beatToSec(k.b)) + "</span> " + k.text.replace(/</g, "&lt;");
-    d.onclick = () => { scrollB = Math.max(0, k.b / 12 - (H / ppb) * 0.4); draw(); openMark(k); };
+    d.onclick = () => { scrollB = Math.max(MIN_SCROLL, k.b / 12 - (H / ppb) * 0.4); draw(); openMark(k); };
     el.appendChild(d);
   }
   $("cMark").textContent = P.marks.length;
@@ -512,7 +524,7 @@ cv.addEventListener("pointermove", e => {
   const r = cv.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
   const b = beat12AtY(py);
   if (Math.abs(px - gesture.x0) + Math.abs(py - gesture.y0) > 7) gesture.moved = true;
-  if (gesture.kind === "scroll" || gesture.kind === "lscroll") { scrollB = Math.max(0, Math.min(totalB, gesture.scroll0 + (py - gesture.y0) / ppb)); draw(); }
+  if (gesture.kind === "scroll" || gesture.kind === "lscroll") { scrollB = Math.max(MIN_SCROLL, Math.min(totalB, gesture.scroll0 + (py - gesture.y0) / ppb)); draw(); }
   else if (gesture.kind === "note" && gesture.moved) { gesture.n.b = Math.max(0, gesture.ob + Math.round(b - gesture.startB)); gesture.n.lane = laneAtX(px); draw(); }
   else if (gesture.kind === "tail" && gesture.moved) { gesture.n.l = Math.max(1, gesture.ol + Math.round(b - gesture.startB)); draw(); }
 });
@@ -537,7 +549,7 @@ cv.addEventListener("pointerup", () => {
   } else if (g.kind === "tail") { if (g.moved) { recalcTotal(); saveP(); } draw(); }
 });
 cv.addEventListener("pointercancel", () => { gesture = null; draw(); });
-wrap.addEventListener("wheel", e => { e.preventDefault(); scrollB = Math.max(0, Math.min(totalB, scrollB + e.deltaY / ppb)); draw(); }, { passive: false });
+wrap.addEventListener("wheel", e => { e.preventDefault(); scrollB = Math.max(MIN_SCROLL, Math.min(totalB, scrollB + e.deltaY / ppb)); draw(); }, { passive: false });
 /* ============ 播放与菜单 ============ */
 $("keyBtn").onclick = () => { keyOn = !keyOn; ensureAC(); $("keyBtn").querySelector(".mlab").textContent = keyOn ? "键音：开" : "键音：关"; $("keyBtn").classList.toggle("on", keyOn); if (keyOn) clack(1); };
 $("laneMuteRow").addEventListener("click", e => {
@@ -577,7 +589,7 @@ $("modeBtn").onclick = () => {
   $("modeRow").querySelector('[data-m="' + nx + '"]').click();
 };
 $("moreBtn").onclick = () => { $("moreOv").style.display = "block"; };
-$("topBtn").onclick = () => { scrollB = 0; draw(); };
+$("topBtn").onclick = () => { scrollB = MIN_SCROLL; draw(); };
 $("fitBtn").onclick = () => { userZoomed = false; frameFive(); };
 $("moreClose").onclick = () => { $("moreOv").style.display = "none"; };
 $("zoomInHex").onclick = () => $("zoomIn").click();
@@ -748,7 +760,7 @@ $("pvBtn").onclick = () => {
   pvHitSet = new Set(); pvMissSet = new Set(); pvHoldAcc = new Map();
   pvCombo = 0; pvMaxCombo = 0; pvHits = 0; pvMiss = 0; pvHud();
   pvLastNoteSec = Math.max(...P.notes.map(n => beatToSec(n.b + n.l)));
-  pv.style.display = "block"; pvOn = true;
+  pv.style.display = "block"; { const vs = viewSize(); pv.style.width = vs.w + "px"; pv.style.height = vs.h + "px"; } pvOn = true;
   pvc.width = pv.clientWidth * DPR; pvc.height = pv.clientHeight * DPR; pvx.setTransform(DPR, 0, 0, DPR, 0, 0);
   au.currentTime = beatToSec(startB12) - FALL + P.off; au.playbackRate = speed; au.play();
   pvLastFrame = performance.now();
@@ -819,7 +831,7 @@ function pvTick(now) {
   requestAnimationFrame(pvTick);
 }
 window.addEventListener("pageshow", e => {
-  if (e.persisted && P) { try { au.pause(); } catch (err) {} playing = false; playheadSec = 0; scrollB = 0; frameFive(); draw(); }
+  if (e.persisted && P) { try { au.pause(); } catch (err) {} playing = false; playheadSec = 0; scrollB = MIN_SCROLL; frameFive(); draw(); }
 });
 /* ============ 初始化 ============ */
 (async function init() {
@@ -846,7 +858,7 @@ window.addEventListener("pageshow", e => {
     resize();
     openProject(all[0]);
     requestAnimationFrame(tick);
-    setTimeout(() => { if (!playing && P && playheadSec === 0) { scrollB = 0; draw(); } }, 400);
+    setTimeout(() => { if (!playing && P && playheadSec === 0) { scrollB = MIN_SCROLL; draw(); } }, 400);
     if (!dbOK) setTimeout(() => toast("⚠ 本机存储不可用：改动不会自动保存，请勤用『导出项目』备份"), 600);
   } catch (err) {
     $("projTitle").textContent = "加载失败：" + (err && err.message ? err.message : err);
