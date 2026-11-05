@@ -129,7 +129,7 @@
   <button class="btn" id="impBtn">⬆ 导入项目</button>
   <input type="file" id="impFile" accept=".json,application/json" style="display:none">
   <button class="btn warn" id="resetBtn">清空本项目谱面</button>
-  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-s（谱面已重铺进编辑器）</div>
+  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-t（定位线防遮挡＋视图稳定）</div>
   <button class="btn" id="moreClose">关闭</button>
 </div></div>
 
@@ -402,6 +402,7 @@ function draw() {
   {
     const y = yOf(pb);
     if (pb >= bot12 && pb <= top12) {
+      ctx.strokeStyle = "rgba(0,0,0,0.45)"; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(0, Math.round(y) + 0.5); ctx.lineTo(FX + FW, Math.round(y) + 0.5); ctx.stroke();
       ctx.strokeStyle = "#2fb9ff"; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(0, Math.round(y) + 0.5); ctx.lineTo(FX + FW, Math.round(y) + 0.5); ctx.stroke(); ctx.lineWidth = 1;
       ctx.fillStyle = "#ff9f43"; ctx.beginPath(); ctx.moveTo(0, y - 7); ctx.lineTo(13, y); ctx.lineTo(0, y + 7); ctx.closePath(); ctx.fill();
     } else {
@@ -410,12 +411,17 @@ function draw() {
     if (hex) { hex.style.display = "flex"; hex.style.left = Math.round(FX - 92) + "px"; hex.style.top = Math.round(Math.max(6, Math.min(H - 78, y - 36))) + "px"; const sym = playing ? "⏸" : "▶"; if (hex.textContent !== sym) hex.textContent = sym; }
   }
 }
+let pendSize = null, pendCount = 0;
 function tick() {
-  if (P && wrap.clientWidth && (Math.abs(wrap.clientWidth - W) > 2 || Math.abs(wrap.clientHeight - H) > 2)) { resize(); frameFive(); }
+  if (P && wrap.clientWidth && (Math.abs(wrap.clientWidth - W) > 2 || Math.abs(wrap.clientHeight - H) > 2)) {
+    const key = wrap.clientWidth + "x" + wrap.clientHeight;
+    if (pendSize === key) { pendCount++; } else { pendSize = key; pendCount = 0; }
+    if (pendCount >= 20) { resize(); if (!playing) frameFive(); pendSize = null; pendCount = 0; }
+  } else { pendSize = null; pendCount = 0; }
   keyTick();
   if (playing && audioReady && P) {
     const b = curBeat12() / 12;
-    if (follow) { const vb = H / ppb; scrollB = Math.max(0, Math.min(Math.max(0, totalB - vb), b - vb * 0.28)); }
+    if (follow) { const vb = H / ppb; scrollB = Math.max(0, Math.min(Math.max(0, totalB - vb), b - vb * 0.35)); }
     $("timeLbl").textContent = fmt(Math.max(0, au.currentTime - P.off));
     draw();
   }
@@ -811,6 +817,9 @@ function pvTick(now) {
   }
   requestAnimationFrame(pvTick);
 }
+window.addEventListener("pageshow", e => {
+  if (e.persisted && P) { try { au.pause(); } catch (err) {} playing = false; playheadSec = 0; scrollB = 0; frameFive(); draw(); }
+});
 /* ============ 初始化 ============ */
 (async function init() {
   try {
@@ -836,6 +845,7 @@ function pvTick(now) {
     resize();
     openProject(all[0]);
     requestAnimationFrame(tick);
+    setTimeout(() => { if (!playing && P && playheadSec === 0) { scrollB = 0; draw(); } }, 400);
     if (!dbOK) setTimeout(() => toast("⚠ 本机存储不可用：改动不会自动保存，请勤用『导出项目』备份"), 600);
   } catch (err) {
     $("projTitle").textContent = "加载失败：" + (err && err.message ? err.message : err);
