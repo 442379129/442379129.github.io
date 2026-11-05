@@ -74,7 +74,7 @@
   <div id="menu">
     <div class="mtitle" id="projTitle">加载中…</div>
     <div class="msub" id="projMeta"></div>
-    <div class="msub" id="verLine">版本 1106-e</div>
+    <div class="msub" id="verLine">版本 1106-f</div>
     <div id="counts">时间 <b id="timeLbl">00:00.000</b><br>
       <span class="dot" style="background:#19d3da"></span>普通 <b id="cTap">0</b>　
       <span class="dot" style="background:#ffd21f"></span>黄 <b id="cDrag">0</b><br>
@@ -130,7 +130,7 @@
   <button class="btn" id="impBtn">⬆ 导入项目</button>
   <input type="file" id="impFile" accept=".json,application/json" style="display:none">
   <button class="btn warn" id="resetBtn">清空本项目谱面</button>
-  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1106-e（谱面按她原稿重铺＋格线回上一版）</div>
+  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1106-f（键边与线合上、长条实心）</div>
   <button class="btn" id="moreClose">关闭</button>
 </div></div>
 
@@ -377,23 +377,25 @@ function draw() {
     ctx.fillText("⚑ " + k.text.slice(0, 16), FX + 6, y - 4);
   }
   const cellH = ppb / 12;
-  const gh = Math.max(8, Math.min(ppb / 3, Math.max(cellH, 10)));
+  const ghRaw = Math.max(8, Math.min(ppb / 3, Math.max(cellH, 10)));
+  const gh = Math.max(6, Math.round(ghRaw * DPR)) / DPR;
+  const noteY = b12 => (Math.round(yOf(b12) * DPR) + 0.5) / DPR;
   for (const n of P.notes) {
     const e12 = n.b + n.l;
     if (e12 < bot12 - 24 || n.b > top12 + 24) continue;
-    const x = FX + n.lane * LW + 5, w = LW - 10, yTop = yOf(e12), yBot = yOf(n.b);
+    const x = FX + n.lane * LW + 2, w = LW - 4, yTop = noteY(e12), yBot = noteY(n.b);
     if (n.t === 2) {
-      ctx.fillStyle = "rgba(64,140,255,0.75)"; ctx.fillRect(x, yTop, w, Math.max(3, yBot - yTop));
+      ctx.fillStyle = "#3f8cff"; ctx.fillRect(x, yTop, w, Math.max(3, yBot - yTop));
       ctx.fillStyle = "#9cc8ff"; ctx.fillRect(x, yBot - gh, w, gh);
     } else {
       ctx.fillStyle = TYPE_COLOR[n.t];
       ctx.fillRect(x, yBot - gh, w, gh);
-      ctx.fillStyle = "rgba(255,255,255,0.55)"; ctx.fillRect(x, yBot - 1, w, 2);
+      ctx.fillStyle = "rgba(255,255,255,0.55)"; ctx.fillRect(x, yBot - 2, w, 2);
     }
   }
   if (addHoldStart !== null) {
-    const x = FX + addHoldStart.lane * LW + 5, y = yOf(addHoldStart.b);
-    ctx.fillStyle = "#9cc8ff"; ctx.fillRect(x, y - cellH, LW - 10, cellH);
+    const x = FX + addHoldStart.lane * LW + 2, y = noteY(addHoldStart.b), chh = Math.max(6, Math.round(cellH * DPR)) / DPR;
+    ctx.fillStyle = "#9cc8ff"; ctx.fillRect(x, y - chh, LW - 4, chh);
   }
   ctx.restore();
   /* 谱面左右边线＋边线旁小节号 */
@@ -821,7 +823,7 @@ function pvTick(now) {
     const done = pvHitSet.has(n.id), missed = pvMissSet.has(n.id);
     if (n.t === 2) {
       const yTail = lineY - (beatToSec(n.b + n.l) - t) * pxPerSec;
-      pvx.fillStyle = done ? "rgba(64,140,255,0.25)" : missed ? "rgba(120,120,120,0.4)" : "rgba(64,140,255,0.8)";
+      pvx.fillStyle = done ? "rgba(64,140,255,0.25)" : missed ? "rgba(120,120,120,0.4)" : "#3f8cff";
       pvx.fillRect(x, yTail, nw, Math.max(3, yHead - yTail));
       pvx.fillStyle = done ? "rgba(156,200,255,0.3)" : "#9cc8ff"; pvx.fillRect(x, yHead - 7, nw, 7);
     } else {
