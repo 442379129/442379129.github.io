@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>小帕 × Yasmine · 制谱协作区</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; background:#000; color:#eee; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; overflow:hidden; }
+  #topbar { height:48px; display:flex; align-items:center; gap:10px; padding:0 10px; background:#0a0a0a; border-bottom:1px solid #262626; }
+  #topbar .ttl { font-size:15px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #topbar .meta { font-size:11px; color:#999; white-space:nowrap; }
+  #topbar .sp { flex:1; }
+  .tbtn { padding:7px 12px; background:#1a1a1a; border:1px solid #333; border-radius:8px; color:#eee; font-size:13px; cursor:pointer; user-select:none; white-space:nowrap; }
+  .tbtn:active { background:#2c2c2c; }
+  .tbtn.on { background:#0e3238; border-color:#19d3da; color:#c9f6f9; }
+  #app { display:flex; height:calc(100dvh - 48px); width:100vw; }
+  #rail { width:150px; flex:0 0 150px; position:relative; background:#050505; border-right:1px solid #222; touch-action:none; }
+  #railCanvas { position:absolute; inset:0; }
+  #gridwrap { flex:1; position:relative; overflow:hidden; background:#000; touch-action:none; }
+  #grid { position:absolute; inset:0; }
+  #menu { width:184px; flex:0 0 184px; background:#0a0a0a; border-left:1px solid #222; padding:10px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
+  .btn { display:block; width:100%; padding:9px 8px; background:#1a1a1a; color:#eee; border:1px solid #333; border-radius:8px; font-size:13px; text-align:center; cursor:pointer; user-select:none; }
+  .btn:active { background:#2c2c2c; }
+  .btn.on { background:#0e4d52; border-color:#19d3da; color:#cffcff; }
+  .btn.warn.on { background:#5c1113; border-color:#ff4757; }
+  .row { display:flex; gap:6px; }
+  .row .btn { flex:1; }
+  .chip { flex:1; padding:7px 2px; font-size:12px; text-align:center; border-radius:8px; border:1px solid #333; background:#141414; cursor:pointer; user-select:none; color:#ccc; }
+  .chip.on { border-color:#fff; color:#fff; }
+  .chip[data-t="1"].on { background:#0e4d52; } .chip[data-t="4"].on { background:#5c4a00; }
+  .chip[data-t="3"].on { background:#5c1113; } .chip[data-t="2"].on { background:#123a6e; }
+  #laneMuteRow .chip.muted { background:#5c1113; color:#f3a8a8; text-decoration:line-through; }
+  .chip[data-k="rotate"].on { background:#5c3a00; } .chip[data-k="demo"].on { background:#3d1458; }
+  .chip[data-k="section"].on { background:#0e4d52; } .chip[data-k="other"].on { background:#333; }
+  .label { font-size:11px; color:#888; margin-top:2px; }
+  .sub { font-size:11px; color:#999; line-height:1.55; }
+  #counts { font-size:12px; color:#ccc; line-height:1.7; background:#111; border:1px solid #262626; border-radius:8px; padding:7px 9px; }
+  #counts b { color:#fff; }
+  .dot { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:4px; vertical-align:-1px; }
+  input[type=range] { width:100%; accent-color:#19d3da; }
+  #markList { display:flex; flex-direction:column; gap:5px; }
+  .markItem { font-size:12px; background:#111; border:1px solid #262626; border-left:4px solid #666; border-radius:6px; padding:6px 8px; cursor:pointer; line-height:1.45; }
+  .markItem .mt { color:#9adfe3; font-family:monospace; font-size:11px; }
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,.66); display:none; z-index:70; }
+  .sheet { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(520px,92vw); max-height:88dvh; overflow-y:auto; background:#101010; border:1px solid #333; border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:10px; }
+  .sheet h2 { font-size:15px; color:#fff; }
+  .sheet input[type=text], .sheet input[type=number] { width:100%; padding:9px; background:#1a1a1a; border:1px solid #3a3a3a; border-radius:8px; color:#fff; font-size:14px; }
+  .projItem { display:flex; align-items:center; gap:8px; background:#161616; border:1px solid #2c2c2c; border-radius:10px; padding:10px; }
+  .projItem .pi-t { flex:1; }
+  .projItem .pi-t b { color:#fff; font-size:14px; }
+  .projItem .pi-t div { font-size:11px; color:#999; }
+  .projItem.cur { border-color:#19d3da; }
+  #toast { position:fixed; left:50%; bottom:26px; transform:translateX(-50%); background:rgba(20,20,20,.94); border:1px solid #444; color:#fff; font-size:13px; padding:8px 16px; border-radius:20px; opacity:0; pointer-events:none; transition:opacity .25s; z-index:90; max-width:88vw; text-align:center; }
+  #preview { position:fixed; inset:0; background:#000; display:none; z-index:60; touch-action:none; }
+  #previewCanvas { position:absolute; inset:0; }
+  #pvHud { position:absolute; top:10px; left:0; right:0; display:flex; justify-content:center; gap:22px; font-size:15px; color:#fff; text-shadow:0 1px 4px #000; pointer-events:none; }
+  #pvExit { position:absolute; top:8px; right:10px; z-index:61; width:auto; padding:8px 16px; }
+</style>
+</head>
+<body>
+<div id="topbar">
+  <button class="tbtn" id="projBtn">☰ 项目</button>
+  <div class="ttl" id="projTitle">加载中…</div>
+  <div class="meta" id="projMeta"></div>
+  <div class="sp"></div>
+  <button class="tbtn on" id="keyBtn">🔔 键音：开</button>
+  <button class="tbtn" id="undoBtn" style="opacity:0.45">↩ 撤销</button>
+  <button class="tbtn" id="setBtn">⚙ 项目设置</button>
+</div>
+<div id="app">
+  <div id="rail"><canvas id="railCanvas"></canvas></div>
+  <div id="gridwrap"><canvas id="grid"></canvas></div>
+  <div id="menu">
+    <button class="btn" id="playBtn">▶ 播放</button>
+    <div id="counts">时间 <b id="timeLbl">00:00.000</b><br>
+      <span class="dot" style="background:#19d3da"></span>普通 <b id="cTap">0</b>　
+      <span class="dot" style="background:#ffd21f"></span>黄 <b id="cDrag">0</b><br>
+      <span class="dot" style="background:#ff4757"></span>红 <b id="cFlick">0</b>　
+      <span class="dot" style="background:#408cff"></span>长条 <b id="cHold">0</b><br>
+      标记 <b id="cMark">0</b> 个</div>
+    <div class="label">倍速</div>
+    <div class="row" id="speedRow">
+      <div class="chip" data-s="0.5">0.5x</div><div class="chip" data-s="0.75">0.75x</div><div class="chip on" data-s="1">1x</div>
+    </div>
+    <button class="btn on" id="followBtn">播放头跟随：开</button>
+    <div class="label">键音分列静音（逐列采音时，点哪列静哪列）</div>
+    <div class="row" id="laneMuteRow">
+      <div class="chip" data-l="0">列1</div><div class="chip" data-l="1">列2</div><div class="chip" data-l="2">列3</div><div class="chip" data-l="3">列4</div><div class="chip" data-l="4">列5</div><div class="chip" data-l="5">列6</div>
+    </div>
+    <div class="label">缩放（每拍高度）</div>
+    <input type="range" id="zoom" min="14" max="64" step="1" value="36">
+    <div class="label">时间栏标记（给小帕的事件说明）</div>
+    <div class="row">
+      <button class="btn" id="markPlayBtn">＋ 播放头处</button>
+      <button class="btn" id="markViewBtn">＋ 画面底处</button>
+    </div>
+    <div id="markList"></div>
+    <div class="label">模式</div>
+    <div class="row" id="modeRow">
+      <div class="chip on" data-m="edit">编辑</div><div class="chip" data-m="add">添加</div><div class="chip" data-m="del">删除</div>
+    </div>
+    <div class="label">添加键型（长条点两次定头尾）</div>
+    <div class="row" id="addRow">
+      <div class="chip on" data-t="1">普通</div><div class="chip" data-t="4">黄</div><div class="chip" data-t="3">红</div><div class="chip" data-t="2">长条</div>
+    </div>
+    <div class="sub">编辑模式：点键换类型（普通→黄→红）；拖键改时间/列；拖长条尾端改长度。点左侧标尺跳转试听，点标记旗打开标记。</div>
+    <button class="btn" id="pvBtn">🎮 预览试打（无事件）</button>
+    <button class="btn" id="expBtn">⬇ 导出项目（发给小帕）</button>
+    <button class="btn" id="impBtn">⬆ 导入项目</button>
+    <input type="file" id="impFile" accept=".json,application/json" style="display:none">
+    <button class="btn warn" id="resetBtn">清空本项目谱面</button>
+    <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-f（存储超时修复＋加载分步显示）</div>
+  </div>
+</div>
+
+<div class="overlay" id="drawerOv"><div class="sheet">
+  <h2>项目</h2>
+  <div id="projList" style="display:flex;flex-direction:column;gap:8px"></div>
+  <h2 style="margin-top:6px">新建项目</h2>
+  <input type="text" id="npTitle" placeholder="歌名（例：陀飞轮）">
+  <div class="row">
+    <input type="number" id="npBpm" placeholder="BPM（例：134）" step="0.001" style="flex:1">
+    <input type="number" id="npOff" placeholder="偏移 ms（例：71）" step="1" style="flex:1">
+  </div>
+  <div class="sub">偏移 = 音频比谱面晚响的毫秒数，拿不准先填 0，之后在项目设置里边听边调。</div>
+  <button class="btn" id="npAudioBtn">选择音频文件</button>
+  <input type="file" id="npAudio" accept="audio/*" style="display:none">
+  <div class="sub" id="npAudioName">未选择音频</div>
+  <button class="btn" id="npCreate">创建项目</button>
+  <button class="btn" id="drawerClose">关闭</button>
+</div></div>
+
+<div class="overlay" id="setOv"><div class="sheet">
+  <h2>项目设置</h2>
+  <div class="label">歌名</div>
+  <input type="text" id="stTitle">
+  <div class="label">BPM</div>
+  <input type="number" id="stBpm" step="0.001">
+  <div class="label">偏移（毫秒，正数 = 音频晚响）</div>
+  <input type="number" id="stOff" step="1">
+  <div class="row">
+    <button class="btn" data-nudge="-25">−25ms</button><button class="btn" data-nudge="-5">−5</button><button class="btn" data-nudge="-1">−1</button>
+    <button class="btn" data-nudge="1">+1</button><button class="btn" data-nudge="5">+5</button><button class="btn" data-nudge="25">+25ms</button>
+  </div>
+  <div class="sub">调偏移时先播放，把播放头停在某个强拍上，看键是不是正落在拍线上；键比声音早，偏移调大；键比声音晚，偏移调小。</div>
+  <div class="label">音频</div>
+  <div class="sub" id="stAudioName">—</div>
+  <button class="btn" id="stAudioBtn">更换 / 添加音频</button>
+  <input type="file" id="stAudio" accept="audio/*" style="display:none">
+  <button class="btn" id="setSave">保存设置</button>
+  <button class="btn" id="setClose">取消</button>
+</div></div>
+
+<div class="overlay" id="markOv"><div class="sheet">
+  <h2>时间标记</h2>
+  <div class="sub" id="mkTime">—</div>
+  <div class="label">类型</div>
+  <div class="row" id="mkKinds">
+    <div class="chip" data-k="rotate">旋转</div><div class="chip" data-k="demo">演示</div><div class="chip" data-k="section">段落</div><div class="chip on" data-k="other">说明</div>
+  </div>
+  <div class="label">写给小帕的话（例：判定线从这里开始在 ±10° 徘徊）</div>
+  <input type="text" id="mkText" placeholder="事件说明">
+  <div class="row">
+    <button class="btn" id="mkMinus">−1/12 拍</button><button class="btn" id="mkPlus">+1/12 拍</button>
+  </div>
+  <button class="btn" id="mkSave">保存标记</button>
+  <button class="btn warn" id="mkDel">删除标记</button>
+  <button class="btn" id="mkClose">取消</button>
+</div></div>
+
+<div id="preview"><canvas id="previewCanvas"></canvas>
+  <div id="pvHud"><span>连击 <b id="pvCombo">0</b></span><span>命中 <b id="pvHit">0</b></span><span>漏 <b id="pvMiss">0</b></span></div>
+  <button class="btn" id="pvExit">退出预览</button>
+</div>
+<div id="toast"></div>
+<audio id="au" preload="auto"></audio>
+<script>
+"use strict";
+/* ============ 常量与工具 ============ */
+const LANES = 6, LANE_X = [-458, -275, -92, 92, 275, 458];
+const SEED_NOTES = [[0,24,30,1,2],[1,24,0,5,1],[2,54,0,4,1],[3,60,0,1,1],[4,66,0,4,1],[5,72,0,1,1],[6,96,9,4,2],[7,105,15,1,2],[8,120,18,4,2],[9,150,0,1,1],[10,156,0,4,1],[11,162,0,1,1],[12,168,0,4,1],[13,216,60,1,2],[14,246,0,4,1],[15,252,0,3,1],[16,258,0,4,1],[17,264,0,3,1],[18,276,6,4,2],[19,282,12,1,2],[20,294,18,4,2],[21,312,18,1,2],[22,330,72,4,2],[23,402,0,1,1],[24,402,0,5,1],[25,405,0,0,1],[26,405,0,2,1],[27,408,0,1,1],[28,408,0,5,1],[29,426,0,4,1],[30,432,12,1,2],[31,444,0,4,1],[32,450,0,1,1],[33,462,0,4,1],[34,474,0,1,1],[35,480,0,4,1],[36,486,0,1,1],[37,492,0,0,1],[38,492,0,4,1],[39,498,0,1,1],[40,504,0,0,1],[41,504,12,4,2],[42,516,12,1,2],[43,528,0,0,1],[44,528,12,4,2],[45,540,0,1,1],[46,546,18,4,2],[47,552,0,1,1],[48,600,0,4,1],[49,618,0,1,1],[50,624,0,0,1],[51,624,12,4,2],[52,636,0,1,1],[53,642,12,4,2],[54,648,0,1,1],[55,654,12,3,2],[56,666,12,1,2],[57,684,12,4,2],[58,690,0,1,1],[59,693,0,2,1],[60,696,12,1,2],[61,696,0,5,1],[62,732,0,4,1],[63,738,0,1,1],[64,744,0,4,1],[65,756,0,1,1],[66,768,0,4,1],[67,780,0,1,1],[68,792,0,4,1],[69,804,0,1,1],[70,810,0,4,1],[71,816,0,1,1],[72,816,0,5,1],[73,828,0,4,1],[74,834,0,1,1],[75,840,0,4,1],[76,846,0,1,1],[77,864,0,0,1],[78,864,0,4,1],[79,870,0,1,1],[80,882,0,4,1],[81,888,0,1,1],[82,888,0,5,1],[83,900,0,4,1],[84,912,0,1,1],[85,912,0,5,1],[86,924,0,4,1],[87,936,0,1,1],[88,936,0,5,1],[89,942,0,4,1],[90,960,12,1,2],[91,960,0,5,1],[92,972,12,4,2],[93,984,0,1,1],[94,984,0,5,1],[95,990,12,4,2],[96,1002,18,1,2],[97,1008,0,4,1],[98,1020,0,2,1],[99,1026,0,4,1],[100,1032,12,1,2],[101,1032,0,5,1],[102,1044,12,4,2],[103,1056,0,1,1],[104,1056,0,5,1],[105,1062,0,4,1],[106,1074,30,1,2],[107,1080,0,4,1],[108,1092,0,3,1],[109,1104,0,4,1],[110,1110,0,1,1],[111,1116,0,4,1],[112,1128,12,1,2],[113,1128,0,5,1],[114,1140,0,0,1],[115,1140,12,4,2],[116,1152,12,1,2],[117,1152,0,5,1],[118,1164,0,0,1],[119,1164,12,4,2],[120,1176,24,1,2],[121,1176,0,5,1],[122,1200,0,0,1],[123,1200,0,4,1],[124,1218,0,1,1],[125,1224,0,0,1],[126,1224,0,4,1],[127,1236,0,1,1],[128,1242,0,4,1],[129,1248,0,1,1],[130,1260,0,4,1],[131,1266,12,1,2],[132,1272,0,4,1],[133,1278,18,2,2],[134,1296,0,0,1],[135,1296,12,4,2],[136,1308,0,1,1],[137,1314,18,4,2],[138,1320,0,1,1],[139,1344,0,0,1],[140,1344,0,4,1],[141,1350,0,1,1],[142,1356,0,0,1],[143,1356,0,4,1],[144,1362,18,1,2],[145,1368,0,4,1],[146,1380,0,2,1],[147,1386,18,4,2],[148,1392,0,1,1],[149,1404,0,0,1],[150,1404,12,3,2],[151,1416,0,1,1],[152,1416,0,5,1],[153,1428,0,4,1],[154,1434,0,1,1],[155,1440,0,4,1],[156,1452,12,1,2],[157,1452,0,5,1],[158,1464,0,0,1],[159,1464,18,4,2],[160,1482,30,1,2],[161,1488,0,4,1],[162,1512,0,2,1],[163,1536,0,0,1],[164,1536,0,4,1],[165,1542,0,1,1],[166,1554,0,4,1],[167,1560,0,1,1],[168,1560,0,5,1],[169,1584,0,0,1],[170,1584,12,4,2],[171,1596,0,1,1],[172,1602,18,4,2],[173,1608,0,1,1],[174,1620,0,3,1],[175,1626,0,1,1],[176,1632,0,4,1],[177,1644,0,1,1],[178,1650,18,4,2],[179,1656,0,1,1],[180,1668,0,3,1],[181,1680,0,1,1],[182,1680,0,5,1],[183,1692,0,4,1],[184,1698,18,1,2],[185,1704,0,4,1],[186,1716,0,2,1],[187,1722,0,4,1],[188,1728,12,1,2],[189,1728,0,5,1],[190,1740,12,4,2],[191,1746,0,1,1],[192,1752,0,0,1],[193,1752,0,3,1],[194,1758,12,1,2],[195,1764,0,4,1],[196,1770,0,2,1],[197,1770,0,5,1],[198,1776,0,0,1],[199,1776,0,4,1],[200,1788,0,1,1],[201,1794,18,4,2],[202,1800,0,1,1],[203,1812,0,3,1],[204,1818,0,1,1],[205,1824,0,4,1],[206,1830,0,1,1],[207,1836,0,0,1],[208,1836,0,4,1],[209,1842,12,1,2],[210,1842,0,5,1],[211,1848,0,2,1],[212,1848,0,5,1],[213,1854,0,2,1],[214,1860,0,4,1],[215,1866,12,1,2],[216,1872,0,4,1],[217,1878,18,2,2],[218,1896,0,0,1],[219,1896,12,4,2],[220,1908,12,0,2],[221,1920,12,2,2],[222,1920,24,5,2],[223,1932,12,0,2],[224,1944,12,1,2],[225,1944,0,3,1],[226,1968,12,1,2],[227,1968,0,5,1],[228,1980,0,2,1],[229,1980,0,4,1],[230,1986,12,1,2],[231,1986,0,5,1],[232,1992,0,4,1],[233,1998,18,2,2],[234,1998,0,5,1],[235,2004,0,4,1],[236,2010,0,4,1],[237,2016,0,0,1],[238,2016,0,4,1],[239,2022,18,1,2],[240,2022,0,5,1],[241,2028,0,4,1],[242,2040,12,2,2],[243,2040,0,5,1],[244,2052,0,4,1],[245,2064,0,1,1],[246,2064,0,5,1],[247,2076,0,4,1],[248,2082,0,1,1],[249,2088,0,4,1],[250,2094,0,1,1],[251,2100,0,0,1],[252,2100,0,4,1],[253,2112,12,1,2],[254,2112,0,5,1],[255,2124,12,4,2],[256,2136,0,1,1],[257,2136,0,3,1],[258,2148,0,0,1],[259,2148,12,4,2],[260,2160,12,1,2],[261,2160,0,3,1],[262,2166,0,4,1],[263,2172,12,2,2],[264,2172,0,5,1],[265,2178,0,0,1],[266,2178,12,5,2],[267,2184,12,1,2],[268,2184,0,3,1],[269,2190,0,4,1],[270,2196,12,2,2],[271,2196,0,5,1],[272,2202,12,5,2],[273,2208,24,1,2],[274,2208,0,3,1],[275,2214,12,4,2],[276,2232,12,2,2],[277,2232,0,5,1],[278,2244,0,4,1],[279,2250,12,1,2],[280,2256,0,4,1],[281,2262,12,2,2],[282,2262,0,5,1],[283,2274,18,4,2],[284,2280,0,1,1],[285,2292,12,3,2],[286,2304,0,1,1],[287,2304,0,5,1],[288,2316,12,4,2],[289,2328,0,1,1],[290,2328,0,3,1],[291,2352,0,0,1],[292,2352,0,4,1],[293,2364,0,1,1],[294,2370,0,4,1],[295,2376,0,1,1],[296,2382,0,4,1],[297,2400,0,1,1],[298,2400,0,5,1],[299,2412,0,4,1],[300,2418,18,1,2],[301,2424,0,4,1],[302,2436,0,2,1],[303,2436,0,5,1],[304,2448,0,0,1],[305,2448,0,4,1],[306,2460,0,1,1],[307,2472,0,0,1],[308,2472,0,4,1],[309,2478,0,1,1],[310,2496,0,0,1],[311,2496,0,4,1],[312,2502,0,1,1],[313,2514,0,4,1],[314,2520,0,1,1],[315,2520,0,5,1],[316,2532,0,4,1],[317,2538,0,1,1],[318,2550,0,4,1],[319,2556,0,1,1],[320,2562,0,0,1],[321,2562,18,4,2],[322,2568,0,1,1],[323,2580,0,3,1],[324,2586,0,1,1],[325,2592,0,4,1],[326,2598,18,1,2],[327,2616,0,2,1],[328,2616,60,4,2],[329,2658,0,1,1],[330,2664,0,2,1],[331,2670,0,1,1],[332,2676,0,3,1],[333,2682,0,1,1],[334,2688,0,4,1],[335,2694,0,1,1],[336,2703,0,4,1],[337,2709,0,1,1],[338,2715,0,0,1],[339,2715,0,4,1],[340,2724,0,1,1],[341,2730,0,4,1],[342,2736,12,1,2],[343,2736,0,5,1],[344,2748,0,4,1],[345,2757,0,1,1],[346,2757,0,5,1],[347,2784,0,4,1],[348,2796,0,1,1],[349,2808,0,4,1],[350,2820,0,1,1],[351,2823,0,4,1],[352,2826,0,1,1],[353,2832,0,0,1],[354,2832,0,4,1],[355,2838,0,1,1],[356,2847,0,4,1],[357,2856,0,1,1],[358,2856,0,5,1],[359,2862,0,4,1],[360,2871,15,1,2],[361,2880,0,4,1],[362,2898,0,1,1],[363,2901,0,4,1],[364,2904,12,1,2],[365,2904,0,5,1],[366,2915,12,4,2],[367,2916,0,2,1],[368,2928,0,0,1],[369,2928,84,2,2],[370,2940,0,0,1],[371,2952,0,4,1],[372,2964,0,0,1],[373,2976,0,4,1],[374,2988,0,0,1],[375,3000,0,4,1],[376,3012,0,1,1],[377,3024,0,4,1],[378,3036,0,1,1],[379,3048,0,0,1],[380,3048,0,4,1],[381,3060,0,1,1],[382,3072,0,0,1],[383,3072,0,4,1],[384,3084,0,1,1],[385,3096,0,0,1],[386,3096,24,4,2],[387,3120,0,1,1],[388,3120,0,3,1],[389,3138,0,4,1],[390,3144,0,1,1],[391,3144,0,5,1],[392,3156,0,4,1],[393,3162,0,1,1],[394,3168,0,4,1],[395,3180,0,1,1],[396,3186,0,4,1],[397,3192,0,1,1],[398,3198,18,4,2],[399,3216,0,1,1],[400,3228,0,4,1],[401,3234,18,1,2],[402,3240,0,4,1],[403,3264,0,1,1],[404,3264,0,5,1],[405,3270,0,4,1],[406,3276,0,1,1],[407,3282,18,4,2],[408,3288,0,1,1],[409,3300,0,3,1],[410,3306,0,1,1],[411,3312,0,4,1],[412,3318,0,1,1],[413,3336,0,0,1],[414,3336,0,4,1],[415,3348,0,1,1],[416,3354,0,4,1],[417,3360,0,1,1],[418,3372,12,4,2],[419,3384,18,1,2],[420,3384,0,5,1],[421,3402,0,0,1],[422,3402,30,4,2],[423,3432,24,1,2],[424,3432,0,5,1],[425,3456,0,0,1],[426,3456,0,4,1],[427,3462,0,1,1],[428,3474,0,4,1],[429,3480,0,1,1],[430,3480,0,5,1],[431,3504,0,0,1],[432,3504,0,4,1],[433,3516,0,1,1],[434,3516,0,5,1],[435,3522,18,4,2],[436,3528,0,1,1],[437,3540,0,3,1],[438,3546,0,1,1],[439,3552,0,4,1],[440,3564,0,1,1],[441,3564,0,5,1],[442,3570,18,4,2],[443,3576,0,1,1],[444,3588,0,0,1],[445,3588,0,3,1],[446,3594,0,1,1],[447,3594,0,5,1],[448,3600,0,4,1],[449,3606,12,1,2],[450,3618,30,4,2],[451,3666,0,1,1],[452,3672,0,0,1],[453,3672,0,4,1],[454,3684,0,1,1],[455,3684,0,5,1],[456,3690,0,4,1],[457,3696,0,1,1],[458,3708,0,0,1],[459,3708,0,4,1],[460,3714,18,1,2],[461,3720,0,4,1],[462,3732,0,2,1],[463,3732,0,5,1],[464,3738,0,3,1],[465,3744,0,2,1],[466,3750,0,3,1],[467,3756,0,2,1],[468,3762,0,3,1],[469,3768,0,2,1],[470,3768,0,5,1],[471,3780,0,3,1],[472,3786,12,1,2],[473,3792,0,3,1],[474,3798,18,2,2],[475,3816,0,0,1],[476,3816,12,4,2],[477,3840,12,1,2],[478,3852,12,4,2],[479,3864,12,1,2],[480,3864,0,3,1],[481,3888,0,0,1],[482,3888,12,4,2],[483,3900,0,2,1],[484,3906,12,4,2],[485,3912,0,2,1],[486,3918,0,3,1],[487,3936,12,1,2],[488,3948,0,2,1],[489,3948,12,4,2],[490,3960,12,1,2],[491,3972,0,3,1],[492,3984,0,2,1],[493,3996,0,3,1],[494,4002,0,2,1],[495,4014,0,3,1],[496,4020,0,2,1],[497,4032,12,4,2],[498,4044,12,1,2],[499,4056,0,2,1],[500,4056,12,4,2],[501,4068,0,2,1],[502,4074,0,3,1],[503,4080,12,1,2],[504,4080,0,5,1],[505,4092,0,3,1],[506,4098,12,1,2],[507,4104,0,3,1],[508,4110,12,2,2],[509,4116,0,4,1],[510,4122,12,1,2],[511,4128,0,3,1],[512,4134,12,2,2],[513,4140,0,4,1],[514,4152,12,1,2],[515,4152,0,5,1],[516,4164,0,3,1],[517,4170,0,2,1],[518,4170,0,5,1],[519,4182,0,0,1],[520,4182,0,3,1],[521,4188,0,2,1],[522,4194,30,4,2],[523,4200,0,2,1],[524,4236,12,0,2],[525,4248,0,2,1],[526,4248,0,3,1],[527,4272,0,0,1],[528,4272,0,3,1],[529,4284,0,2,1],[530,4284,0,5,1],[531,4290,0,0,1],[532,4290,0,3,1],[533,4296,0,2,1],[534,4302,0,3,1],[535,4320,0,2,1],[536,4320,0,5,1],[537,4332,0,3,1],[538,4338,18,1,2],[539,4338,0,5,1],[540,4356,0,3,1],[541,4368,0,2,1],[542,4380,0,3,1],[543,4392,0,2,1],[544,4398,0,3,1],[545,4416,0,2,1],[546,4422,0,3,1],[547,4434,0,2,1],[548,4440,0,0,1],[549,4440,0,3,1],[550,4446,0,2,1],[551,4458,0,3,1],[552,4464,0,2,1],[553,4476,0,0,1],[554,4476,0,3,1],[555,4482,18,1,2],[556,4482,0,5,1],[557,4488,0,3,1],[558,4500,0,2,1],[559,4500,0,5,1],[560,4506,0,3,1],[561,4512,0,2,1],[562,4518,18,4,2],[563,4524,0,2,1],[564,4536,0,0,1],[565,4536,60,3,2],[566,4560,0,1,1],[567,4584,0,1,1],[568,4608,0,2,1],[569,4614,0,3,1],[570,4620,0,2,1],[571,4620,0,5,1],[572,4626,0,3,1],[573,4632,0,2,1],[574,4632,0,5,1],[575,4644,0,3,1],[576,4650,18,1,2],[577,4668,0,3,1],[578,4674,0,2,1],[579,4686,0,3,1],[580,4698,18,1,2],[581,4722,0,3,1],[582,4728,0,2,1],[583,4728,0,5,1],[584,4740,0,3,1],[585,4752,0,2,1],[586,4752,0,5,1],[587,4764,0,3,1],[588,4770,18,1,2],[589,4776,0,3,1],[590,4800,0,2,1],[591,4806,0,3,1],[592,4818,0,2,1],[593,4824,0,0,1],[594,4824,0,3,1],[595,4836,0,2,1],[596,4842,0,3,1],[597,4848,0,2,1],[598,4860,0,3,1],[599,4866,0,2,1],[600,4872,0,3,1],[601,4878,30,1,2],[602,4896,0,3,1],[603,4920,0,2,1],[604,4920,0,5,1],[605,4926,0,3,1],[606,4938,0,2,1],[607,4944,0,0,1],[608,4944,0,3,1],[609,4950,0,2,1],[610,4962,0,3,1],[611,4968,48,1,2],[612,4968,0,5,1],[613,5016,0,3,1],[614,5040,0,2,1],[615,5064,0,3,1],[616,5088,12,1,2],[617,5100,12,4,2],[618,5112,12,1,2],[619,5112,0,3,1],[620,5136,0,0,1],[621,5136,12,4,2],[622,5148,0,2,1],[623,5148,0,3,1],[624,5154,12,4,2],[625,5160,0,2,1],[626,5166,0,3,1],[627,5172,0,2,1],[628,5184,0,0,1],[629,5184,0,3,1],[630,5196,0,2,1],[631,5196,0,5,1],[632,5208,0,0,1],[633,5208,0,3,1],[634,5220,0,2,1],[635,5220,0,5,1],[636,5232,0,0,1],[637,5232,0,3,1],[638,5244,0,2,1],[639,5244,0,5,1],[640,5250,0,3,1],[641,5256,0,2,1],[642,5262,0,3,1],[643,5268,0,1,1],[644,5268,0,5,1],[645,5280,0,0,1],[646,5280,12,4,2],[647,5292,12,1,2],[648,5292,0,3,1],[649,5304,0,2,1],[650,5304,18,4,2],[651,5328,0,1,1],[652,5328,0,5,1],[653,5340,0,0,1],[654,5340,0,4,1],[655,5346,0,1,1],[656,5352,0,4,1],[657,5358,0,1,1],[658,5364,0,4,1],[659,5370,0,1,1],[660,5376,0,4,1],[661,5382,18,1,2],[662,5388,0,4,1],[663,5400,0,2,1],[664,5400,0,5,1],[665,5406,0,4,1],[666,5418,18,1,2],[667,5424,0,4,1],[668,5436,9,2,2],[669,5436,0,5,1],[670,5445,9,4,2],[671,5454,12,1,2],[672,5466,18,4,2],[673,5484,12,1,2],[674,5496,0,2,1],[675,5496,18,4,2],[676,5520,12,1,2],[677,5532,0,4,1],[678,5538,12,1,2],[679,5550,18,4,2],[680,5568,0,1,1],[681,5580,0,4,1],[682,5586,18,1,2],[683,5592,0,4,1],[684,5604,0,2,1],[685,5616,0,4,1],[686,5628,0,1,1],[687,5640,0,0,1],[688,5640,0,4,1],[689,5646,0,1,1],[690,5664,0,4,1],[691,5670,0,1,1],[692,5676,0,4,1],[693,5688,0,1,1],[694,5688,0,5,1],[695,5694,0,4,1],[696,5706,18,1,2],[697,5712,0,4,1],[698,5724,0,2,1],[699,5730,18,4,2],[700,5736,0,1,1],[701,5748,0,3,1],[702,5754,0,1,1],[703,5760,0,4,1],[704,5766,18,1,2],[705,5766,0,5,1],[706,5784,0,2,1],[707,5784,48,4,2],[708,5796,0,1,1],[709,5808,0,2,1],[710,5820,0,1,1],[711,5832,0,0,1],[712,5832,0,3,1],[713,5844,0,1,1],[714,5856,0,0,1],[715,5856,12,4,2],[716,5868,12,1,2],[717,5880,0,2,1],[718,5880,12,4,2],[719,5904,0,1,1],[720,5916,0,4,1],[721,5922,0,1,1],[722,5934,0,4,1],[723,5952,0,1,1],[724,5964,0,4,1],[725,5970,12,1,2],[726,5976,0,4,1],[727,5982,0,2,1],[728,6000,0,4,1],[729,6006,0,1,1],[730,6018,0,4,1],[731,6024,0,1,1],[732,6030,0,4,1],[733,6036,0,1,1],[734,6042,0,4,1],[735,6048,0,1,1],[736,6057,0,4,1],[737,6066,0,1,1],[738,6072,0,0,1],[739,6072,0,4,1],[740,6081,0,1,1],[741,6090,24,4,2],[742,6096,0,1,1],[743,6120,0,0,1],[744,6120,0,4,1],[745,6126,0,1,1],[746,6138,0,0,1],[747,6138,12,4,2],[748,6150,12,1,2],[749,6162,30,4,2],[750,6168,0,1,1],[751,6192,0,3,1],[752,6198,0,1,1],[753,6198,0,5,1],[754,6204,0,4,1],[755,6210,0,1,1],[756,6216,0,0,1],[757,6216,0,4,1],[758,6240,12,1,2],[759,6240,0,5,1],[760,6252,12,4,2],[761,6264,12,1,2],[762,6264,0,3,1],[763,6288,0,0,1],[764,6288,12,4,2],[765,6300,0,1,1],[766,6306,12,4,2],[767,6312,0,1,1],[768,6318,0,3,1],[769,6336,12,1,2],[770,6336,0,5,1],[771,6348,0,4,1],[772,6354,18,1,2],[773,6360,0,4,1],[774,6372,0,2,1],[775,6378,0,4,1],[776,6384,0,1,1],[777,6390,0,4,1],[778,6402,24,1,2],[779,6408,0,4,1],[780,6450,0,1,1],[781,6456,0,0,1],[782,6456,18,4,2],[783,6474,12,1,2],[784,6486,12,4,2],[785,6498,0,1,1],[786,6504,0,4,1],[787,6516,0,1,1],[788,6522,0,4,1],[789,6534,12,1,2],[790,6534,0,5,1],[791,6546,54,4,2],[792,6552,0,1,1],[793,6576,0,2,1],[794,6582,0,1,1],[795,6588,0,2,1],[796,6594,0,1,1],[797,6642,0,4,1],[798,6651,12,1,2],[799,6663,12,4,2],[800,6675,15,1,2],[801,6696,0,4,1],[802,6705,0,1,1],[803,6717,12,4,2],[804,6729,63,1,2],[805,6738,0,4,1],[806,6741,0,3,1],[807,6744,0,4,1],[808,6747,0,3,1],[809,6816,0,4,1],[810,6828,0,1,1],[811,6840,0,0,1],[812,6840,18,5,2],[813,6852,0,1,1],[814,6858,18,2,2],[815,6864,0,0,1],[816,6876,24,1,2],[817,6876,48,5,2],[818,6900,60,0,2],[819,6900,0,2,1],[820,6912,0,2,1],[821,6924,0,2,1],[822,6924,12,4,2],[823,6936,0,2,1],[824,6936,18,5,2],[825,6954,12,3,2],[826,6960,0,2,1],[827,6966,60,0,2],[828,6984,0,4,1],[829,6996,0,3,1],[830,7008,0,4,1],[831,7026,6,2,2],[832,7032,0,0,1],[833,7032,12,4,2],[834,7044,12,1,2],[835,7056,0,0,1],[836,7056,18,4,2],[837,7074,24,1,2],[838,7080,0,4,1],[839,7098,42,2,2],[840,7110,0,4,1],[841,7140,36,1,2],[842,7161,0,4,1],[843,7164,0,3,1],[844,7167,0,4,1],[845,7176,0,2,1],[846,7179,0,4,1],[847,7182,0,1,1],[848,7182,0,5,1],[849,7194,0,4,1],[850,7206,0,1,1],[851,7224,0,4,1]];
+const SEED_MARKS = [
+  { b: 429, kind: "demo", text: "演示开始：双钟（判定线钟 + 假键钟）" },
+  { b: 1930, kind: "rotate", text: "判定线旋转开始：在 ±10° 之间来回徘徊，不要停" },
+  { b: 3028, kind: "rotate", text: "旋转结束，判定线回平" },
+  { b: 3832, kind: "rotate", text: "判定线旋转开始：在 ±10° 之间来回徘徊，不要停" },
+  { b: 6914, kind: "rotate", text: "旋转结束 + 演示结束，判定线回平" }
+];
+const AUDIO_CHUNKS = /*__ACHUNKS__*/3;
+const KIND_COLOR = { rotate: "#ff9f43", demo: "#c56cff", section: "#19d3da", other: "#cccccc" };
+const $ = id => document.getElementById(id);
+const au = $("au");
+function toast(s, ms) { const t = $("toast"); t.textContent = s; t.style.opacity = 1; clearTimeout(t._h); t._h = setTimeout(() => t.style.opacity = 0, ms || 1800); }
+function fmt(sec) { if (sec < 0) sec = 0; const m = Math.floor(sec / 60), s = sec - m * 60; return String(m).padStart(2, "0") + ":" + s.toFixed(3).padStart(6, "0"); }
+/* ============ 项目状态 ============ */
+let P = null;                 // 当前项目 {pid,title,bpm,off,audioName,audioBlob,notes,marks,nextId,nextMarkId,updatedAt}
+let mode = "edit", addType = 1, addHoldStart = null;
+let ppb = 36, scrollB = 0, follow = true, speed = 1, playing = false;
+let audioReady = false, playheadSec = 0, totalB = 628;
+const SPB = () => 60 / P.bpm;
+const beatToSec = b12 => b12 / 12 * SPB();
+function curBeat12() { return (au.currentTime - (P ? P.off : 0)) / SPB() * 12; }
+function recalcTotal() {
+  let m = 156;   // 至少 13 小节
+  for (const n of P.notes) m = Math.max(m, (n.b + n.l) / 12);
+  for (const k of P.marks) m = Math.max(m, k.b / 12);
+  if (audioReady && isFinite(au.duration) && au.duration > 0) m = Math.max(m, (au.duration - P.off) / SPB());
+  totalB = Math.ceil(m) + 8;
+}
+/* ============ IndexedDB ============ */
+let dbOK = true;
+function withTimeout(p, ms) { return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("db timeout")), ms))]); }
+function idbOpen() { return new Promise((res, rej) => { if (!window.indexedDB) { rej(new Error("no indexedDB")); return; } const r = indexedDB.open("collabdb", 1); r.onupgradeneeded = () => { r.result.createObjectStore("projects", { keyPath: "pid" }); }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); r.onblocked = () => rej(new Error("db blocked")); }); }
+async function idbAll() { const db = await idbOpen(); return new Promise((res, rej) => { const q = db.transaction("projects").objectStore("projects").getAll(); q.onsuccess = () => res(q.result || []); q.onerror = () => rej(q.error); }); }
+async function idbPut(p) { if (!dbOK) return; const db = await idbOpen(); return new Promise((res, rej) => { const q = db.transaction("projects", "readwrite").objectStore("projects").put(p); q.onsuccess = () => res(); q.onerror = () => rej(q.error); }); }
+async function idbDel(pid) { if (!dbOK) return; const db = await idbOpen(); return new Promise((res, rej) => { const q = db.transaction("projects", "readwrite").objectStore("projects").delete(pid); q.onsuccess = () => res(); q.onerror = () => rej(q.error); }); }
+let saveTimer = null;
+function saveP() { if (!P) return; P.updatedAt = Date.now(); clearTimeout(saveTimer); saveTimer = setTimeout(() => { idbPut(P).catch(() => {}); }, 200); refreshCounts(); renderMarks(); }
+async function fetchSeedAudio() {
+  try {
+    if (window.__AB64) { const bin = atob(window.__AB64), by = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) by[i] = bin.charCodeAt(i); return new Blob([by], { type: "audio/mp4" }); }
+    let b64 = "";
+    for (let i = 0; i < AUDIO_CHUNKS; i++) { const r = await fetch("seed-audio" + i + ".b64"); if (!r.ok) throw new Error("chunk"); b64 += await r.text(); }
+    b64 = b64.replace(/\s+/g, ""); const bin = atob(b64), by = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) by[i] = bin.charCodeAt(i);
+    return new Blob([by], { type: "audio/mp4" });
+  } catch (e) { return null; }
+}
+function seedProject(audioBlob) {
+  return { pid: "tuofeilun", title: "陀飞轮", bpm: 134, off: 0.0709, audioName: "陀飞轮.m4a", audioBlob: audioBlob || null,
+    notes: SEED_NOTES.map(a => ({ id: a[0], b: a[1], l: a[2], lane: a[3], t: a[4] })),
+    marks: SEED_MARKS.map((k, i) => ({ id: i + 1, b: k.b, kind: k.kind, text: k.text })),
+    nextId: Math.max(...SEED_NOTES.map(a => a[0])) + 1, nextMarkId: SEED_MARKS.length + 1, updatedAt: Date.now() };
+}
+let audioURL = null;
+function attachAudio() {
+  if (audioURL) { URL.revokeObjectURL(audioURL); audioURL = null; }
+  audioReady = false;
+  if (P && P.audioBlob) { audioURL = URL.createObjectURL(P.audioBlob); au.src = audioURL; au.playbackRate = speed; audioReady = true; }
+  else { au.removeAttribute("src"); au.load(); }
+  playheadSec = 0;
+}
+au.addEventListener("loadedmetadata", () => { recalcTotal(); });
+au.addEventListener("play", () => { playing = true; $("playBtn").textContent = "⏸ 暂停"; });
+au.addEventListener("pause", () => { playing = false; $("playBtn").textContent = "▶ 播放"; });
+au.addEventListener("ended", () => { playing = false; });
+function openProject(p) {
+  P = p; attachAudio(); scrollB = 0; playheadSec = 0; undoStack = []; syncUndo();
+  $("projTitle").textContent = P.title;
+  $("projMeta").textContent = "BPM " + P.bpm + " · 偏移 " + Math.round(P.off * 1000) + "ms";
+  recalcTotal(); refreshCounts(); renderMarks(); draw();
+}
+function refreshCounts() {
+  if (!P) return;
+  let tap = 0, drag = 0, flick = 0, hold = 0;
+  for (const n of P.notes) { if (n.t === 1) tap++; else if (n.t === 4) drag++; else if (n.t === 3) flick++; else hold++; }
+  $("cTap").textContent = tap; $("cDrag").textContent = drag; $("cFlick").textContent = flick; $("cHold").textContent = hold;
+  $("cMark").textContent = P.marks.length;
+}
+/* ============ 编辑器渲染 ============ */
+const wrap = $("gridwrap"), cv = $("grid"), ctx = cv.getContext("2d");
+const rail = $("rail"), rcv = $("railCanvas"), rctx = rcv.getContext("2d");
+let W = 0, H = 0, DPR = 1;
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = wrap.clientWidth; H = wrap.clientHeight;
+  cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  rcv.width = rail.clientWidth * DPR; rcv.height = rail.clientHeight * DPR; rctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  draw();
+}
+window.addEventListener("resize", resize);
+function yOf(b12) { return H - (b12 / 12 - scrollB) * ppb; }
+function beat12AtY(y) { return (scrollB + (H - y) / ppb) * 12; }
+function laneAtX(x) { return Math.max(0, Math.min(LANES - 1, Math.floor(x / (W / LANES)))); }
+const TYPE_COLOR = { 1: "#19d3da", 4: "#ffd21f", 3: "#ff4757" };
+function draw() {
+  if (!W || !P) return;
+  ctx.clearRect(0, 0, W, H);
+  const laneW = W / LANES, top12 = beat12AtY(0), bot12 = beat12AtY(H);
+  for (let g = Math.floor(bot12); g <= Math.ceil(top12); g++) {
+    if (g < 0 || g > totalB * 12) continue;
+    const y = Math.round(yOf(g)) + 0.5;
+    if (g % 48 === 0) { ctx.strokeStyle = "rgba(255,255,255,0.45)"; ctx.lineWidth = 1.4; }
+    else if (g % 12 === 0) { ctx.strokeStyle = "rgba(255,255,255,0.17)"; ctx.lineWidth = 1; }
+    else { ctx.strokeStyle = "rgba(190,170,255,0.07)"; ctx.lineWidth = 1; }
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  ctx.strokeStyle = "rgba(255,255,255,0.14)"; ctx.lineWidth = 1;
+  for (let i = 1; i < LANES; i++) { const x = Math.round(i * laneW) + 0.5; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  /* 标记线（横贯谱面） */
+  for (const k of P.marks) {
+    if (k.b < bot12 - 4 || k.b > top12 + 4) continue;
+    const y = Math.round(yOf(k.b)) + 0.5;
+    ctx.strokeStyle = KIND_COLOR[k.kind]; ctx.globalAlpha = 0.55; ctx.setLineDash([7, 5]); ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.fillStyle = KIND_COLOR[k.kind]; ctx.font = "10px sans-serif"; ctx.textAlign = "left";
+    ctx.fillText("⚑ " + k.text.slice(0, 16), 6, y - 4);
+  }
+  const cellH = ppb / 12; /* Malody 式：一个键的高度正好等于一格（1/12 拍） */
+  for (const n of P.notes) {
+    const e12 = n.b + n.l;
+    if (e12 < bot12 - 24 || n.b > top12 + 24) continue;
+    const x = n.lane * laneW + 5, w = laneW - 10, yTop = yOf(e12), yBot = yOf(n.b);
+    if (n.t === 2) {
+      ctx.fillStyle = "rgba(64,140,255,0.75)"; ctx.fillRect(x, yTop, w, Math.max(3, yBot - yTop));
+      ctx.fillStyle = "#9cc8ff"; ctx.fillRect(x, yBot - cellH, w, cellH);
+    } else {
+      ctx.fillStyle = TYPE_COLOR[n.t];
+      ctx.fillRect(x, yBot - cellH, w, cellH);
+      ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.fillRect(x, yBot - cellH, w, Math.min(2.5, cellH * 0.3));
+    }
+  }
+  if (addHoldStart !== null) {
+    const x = addHoldStart.lane * laneW + 5, y = yOf(addHoldStart.b);
+    ctx.fillStyle = "#9cc8ff"; ctx.fillRect(x, y - cellH, laneW - 10, cellH);
+  }
+  const pb = audioReady ? curBeat12() : playheadSec / SPB() * 12;
+  if (pb >= bot12 && pb <= top12) {
+    const y = Math.round(yOf(pb)) + 0.5;
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); ctx.lineWidth = 1;
+  }
+  drawRail(bot12, top12);
+}
+function drawRail(bot12, top12) {
+  const rw = rail.clientWidth, rh = rail.clientHeight;
+  rctx.clearRect(0, 0, rw, rh);
+  rctx.fillStyle = "#050505"; rctx.fillRect(0, 0, rw, rh);
+  for (let bar = Math.floor(bot12 / 48); bar <= Math.ceil(top12 / 48); bar++) {
+    const g = bar * 48; if (g < 0 || g > totalB * 12) continue;
+    const y = yOf(g);
+    rctx.strokeStyle = "rgba(255,255,255,0.45)"; rctx.beginPath(); rctx.moveTo(34, Math.round(y) + 0.5); rctx.lineTo(58, Math.round(y) + 0.5); rctx.stroke();
+    rctx.fillStyle = "#ddd"; rctx.font = "13px sans-serif"; rctx.textAlign = "center";
+    rctx.fillText(String(bar + 1), 17, y - 6);
+    rctx.save(); rctx.translate(48, y - 8); rctx.rotate(-Math.PI / 2); rctx.textAlign = "right";
+    rctx.fillStyle = "#9adfe3"; rctx.font = "10px monospace"; rctx.fillText(fmt(beatToSec(g)), 0, 3); rctx.restore();
+  }
+  /* 标记旗 */
+  for (const k of P.marks) {
+    if (k.b < bot12 - 4 || k.b > top12 + 4) continue;
+    const y = yOf(k.b), c = KIND_COLOR[k.kind];
+    rctx.strokeStyle = c; rctx.beginPath(); rctx.moveTo(58, Math.round(y) + 0.5); rctx.lineTo(rw, Math.round(y) + 0.5); rctx.stroke();
+    rctx.fillStyle = c; rctx.beginPath(); rctx.moveTo(62, y - 5); rctx.lineTo(74, y); rctx.lineTo(62, y + 5); rctx.closePath(); rctx.fill();
+    rctx.fillStyle = "#eee"; rctx.font = "10px sans-serif"; rctx.textAlign = "left";
+    rctx.fillText(k.text.slice(0, 7), 78, y + 3);
+  }
+}
+function tick() {
+  keyTick();
+  if (playing && audioReady && P) {
+    const b = curBeat12() / 12;
+    if (follow) { const vb = H / ppb; scrollB = Math.max(0, Math.min(Math.max(0, totalB - vb), b - vb * 0.28)); }
+    $("timeLbl").textContent = fmt(Math.max(0, au.currentTime - P.off));
+    draw();
+  }
+  requestAnimationFrame(tick);
+}
+function renderMarks() {
+  if (!P) return;
+  const el = $("markList"); el.innerHTML = "";
+  const sorted = P.marks.slice().sort((a, b) => a.b - b.b);
+  for (const k of sorted) {
+    const d = document.createElement("div");
+    d.className = "markItem"; d.style.borderLeftColor = KIND_COLOR[k.kind];
+    d.innerHTML = '<span class="mt">' + fmt(beatToSec(k.b)) + "</span> " + k.text.replace(/</g, "&lt;");
+    d.onclick = () => { scrollB = Math.max(0, k.b / 12 - (H / ppb) * 0.4); draw(); openMark(k); };
+    el.appendChild(d);
+  }
+  $("cMark").textContent = P.marks.length;
+}
+/* ============ 键音与撤销 ============ */
+let keyOn = true, actx = null, lastKeyB12 = null, undoStack = [], mutedLanes = new Set();
+function ensureAC() { try { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === "suspended") actx.resume(); } catch (e) {} }
+function clack(t) {
+  if (!actx || !keyOn) return; const t0 = actx.currentTime;
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = "square"; const f0 = t === 3 ? 2150 : t === 4 ? 1150 : t === 2 ? 1350 : 1650;
+  o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(280, t0 + 0.03);
+  g.gain.setValueAtTime(0.45, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.055);
+  o.connect(g); g.connect(actx.destination); o.start(t0); o.stop(t0 + 0.06);
+  const len = Math.max(1, Math.floor(actx.sampleRate * 0.02)), buf = actx.createBuffer(1, len, actx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const s = actx.createBufferSource(); s.buffer = buf;
+  const hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 2400;
+  const g2 = actx.createGain(); g2.gain.value = 0.5;
+  s.connect(hp); hp.connect(g2); g2.connect(actx.destination); s.start(t0);
+}
+function keyTick() {
+  if (!playing || !audioReady || !P || pvOn) { lastKeyB12 = null; return; }
+  const now = curBeat12();
+  if (lastKeyB12 === null || now < lastKeyB12 - 1) { lastKeyB12 = now; return; }
+  if (now > lastKeyB12) { for (const n of P.notes) { if (n.b > lastKeyB12 && n.b <= now && !mutedLanes.has(n.lane)) clack(n.t); } lastKeyB12 = now; }
+}
+function pushUndo() { if (!P) return; undoStack.push(JSON.stringify({ n: P.notes, m: P.marks, i: P.nextId, j: P.nextMarkId })); if (undoStack.length > 120) undoStack.shift(); syncUndo(); }
+function doUndo() {
+  if (!P || !undoStack.length) return;
+  const o = JSON.parse(undoStack.pop());
+  P.notes = o.n; P.marks = o.m; P.nextId = o.i; P.nextMarkId = o.j; addHoldStart = null;
+  recalcTotal(); refreshCounts(); renderMarks(); saveP(); draw(); syncUndo(); toast("已撤销");
+}
+function syncUndo() { const b = $("undoBtn"); if (b) b.style.opacity = undoStack.length ? "1" : "0.45"; }
+/* ============ 编辑手势 ============ */
+function noteAt(px, py) {
+  const b = beat12AtY(py), lane = laneAtX(px);
+  let best = null;
+  for (const n of P.notes) {
+    if (n.t === 2) { if (n.lane === lane && b >= n.b - 3 && b <= n.b + n.l + 3) { if (!best || n.b > best.b) best = n; } }
+    else if (n.lane === lane && Math.abs(b - n.b) <= 6) best = n;
+  }
+  return best;
+}
+let gesture = null;
+cv.addEventListener("pointerdown", e => {
+  if (!P) return;
+  cv.setPointerCapture(e.pointerId);
+  const r = cv.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
+  const b = beat12AtY(py), lane = laneAtX(px);
+  if (mode === "add") {
+    if (addType === 2) {
+      if (addHoldStart === null) { addHoldStart = { b: Math.round(b), lane }; toast("已定长条头，再点一处定尾"); }
+      else {
+        const s = Math.min(addHoldStart.b, Math.round(b)), en = Math.max(addHoldStart.b, Math.round(b));
+        if (en - s >= 1) { pushUndo(); P.notes.push({ id: P.nextId++, b: s, l: en - s, lane: addHoldStart.lane, t: 2 }); recalcTotal(); saveP(); }
+        addHoldStart = null;
+      }
+    } else { pushUndo(); P.notes.push({ id: P.nextId++, b: Math.round(b), l: 0, lane, t: addType }); saveP(); }
+    draw(); return;
+  }
+  const hit = noteAt(px, py);
+  if (mode === "del") { if (hit) { pushUndo(); P.notes = P.notes.filter(n => n !== hit); recalcTotal(); saveP(); draw(); toast("已删除"); } return; }
+  if (hit) { pushUndo();
+    const onTail = hit.t === 2 && (hit.b + hit.l) - b <= 3 && b <= hit.b + hit.l + 3;
+    gesture = { kind: onTail ? "tail" : "note", n: hit, startB: b, x0: px, y0: py, moved: false, ob: hit.b, ol: hit.l };
+  } else gesture = { kind: "scroll", y0: py, scroll0: scrollB };
+});
+cv.addEventListener("pointermove", e => {
+  if (!gesture) return;
+  const r = cv.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
+  const b = beat12AtY(py);
+  if (Math.abs(px - gesture.x0) + Math.abs(py - gesture.y0) > 7) gesture.moved = true;
+  if (gesture.kind === "scroll") { scrollB = Math.max(0, Math.min(totalB, gesture.scroll0 + (py - gesture.y0) / ppb)); draw(); }
+  else if (gesture.kind === "note" && gesture.moved) { gesture.n.b = Math.max(0, gesture.ob + Math.round(b - gesture.startB)); gesture.n.lane = laneAtX(px); draw(); }
+  else if (gesture.kind === "tail" && gesture.moved) { gesture.n.l = Math.max(1, gesture.ol + Math.round(b - gesture.startB)); draw(); }
+});
+cv.addEventListener("pointerup", () => {
+  if (!gesture) return;
+  const g = gesture; gesture = null;
+  if (g.kind === "note") {
+    if (!g.moved) { if (g.n.t !== 2) { g.n.t = g.n.t === 1 ? 4 : g.n.t === 4 ? 3 : 1; saveP(); } else toast("长条：拖动移位，拖尾端改长度"); }
+    else { recalcTotal(); saveP(); }
+    draw();
+  } else if (g.kind === "tail") { if (g.moved) { recalcTotal(); saveP(); } draw(); }
+});
+cv.addEventListener("pointercancel", () => { gesture = null; draw(); });
+wrap.addEventListener("wheel", e => { e.preventDefault(); scrollB = Math.max(0, Math.min(totalB, scrollB + e.deltaY / ppb)); draw(); }, { passive: false });
+rail.addEventListener("pointerdown", e => {
+  if (!P) return;
+  const r = rail.getBoundingClientRect(), py = e.clientY - r.top, b = beat12AtY(py);
+  for (const k of P.marks) if (Math.abs(yOf(k.b) - py) <= 10) { openMark(k); return; }
+  playheadSec = Math.max(0, b / 12 * SPB());
+  if (audioReady) au.currentTime = playheadSec + P.off;
+  $("timeLbl").textContent = fmt(playheadSec);
+  draw();
+});
+/* ============ 播放与菜单 ============ */
+$("keyBtn").onclick = () => { keyOn = !keyOn; ensureAC(); $("keyBtn").textContent = keyOn ? "🔔 键音：开" : "🔕 键音：关"; $("keyBtn").classList.toggle("on", keyOn); if (keyOn) clack(1); };
+$("laneMuteRow").addEventListener("click", e => {
+  const c = e.target.closest("[data-l]"); if (!c) return;
+  const l = parseInt(c.dataset.l, 10);
+  if (mutedLanes.has(l)) { mutedLanes.delete(l); c.classList.remove("muted"); } else { mutedLanes.add(l); c.classList.add("muted"); ensureAC(); }
+});
+$("undoBtn").onclick = () => doUndo();
+document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "Z")) { const tag = (e.target.tagName || "").toLowerCase(); if (tag !== "input" && tag !== "textarea") { e.preventDefault(); doUndo(); } } });
+$("playBtn").onclick = () => {
+  if (!P) return;
+  ensureAC();
+  if (!audioReady) { toast("本项目还没有音频，去项目设置里添加"); return; }
+  if (au.paused) au.play(); else { playheadSec = Math.max(0, au.currentTime - P.off); au.pause(); }
+};
+$("speedRow").addEventListener("click", e => {
+  const c = e.target.closest("[data-s]"); if (!c) return;
+  speed = parseFloat(c.dataset.s); au.playbackRate = speed;
+  $("speedRow").querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x === c));
+});
+$("followBtn").onclick = () => { follow = !follow; $("followBtn").textContent = "播放头跟随：" + (follow ? "开" : "关"); $("followBtn").classList.toggle("on", follow); };
+$("zoom").oninput = e => { ppb = parseInt(e.target.value, 10); draw(); };
+$("modeRow").addEventListener("click", e => {
+  const c = e.target.closest("[data-m]"); if (!c) return;
+  mode = c.dataset.m; addHoldStart = null;
+  $("modeRow").querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x === c)); draw();
+});
+$("addRow").addEventListener("click", e => {
+  const c = e.target.closest("[data-t]"); if (!c) return;
+  addType = parseInt(c.dataset.t, 10); addHoldStart = null;
+  $("addRow").querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x === c)); draw();
+});
+$("resetBtn").onclick = () => {
+  if (!P) return;
+  if (!confirm("清空《" + P.title + "》的谱面和标记？音频和设置保留。")) return;
+  if (P.pid === "tuofeilun") { const ab = P.audioBlob; P = seedProject(ab); }
+  else { P.notes = []; P.marks = []; P.nextId = 1; P.nextMarkId = 1; }
+  recalcTotal(); saveP(); openProject(P); toast("已清空");
+};
+/* ============ 标记对话框 ============ */
+let mkEdit = null;
+function openMark(k) {
+  if (k && k.id) pushUndo();
+  mkEdit = k;
+  $("mkTime").textContent = "时间 " + fmt(beatToSec(k.b)) + " · 第 " + (Math.floor(k.b / 48) + 1) + " 小节 · beat12 " + k.b;
+  $("mkText").value = k.text || "";
+  $("mkKinds").querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x.dataset.k === k.kind));
+  $("mkDel").style.display = k.id ? "block" : "none";
+  $("markOv").style.display = "block";
+}
+$("mkKinds").addEventListener("click", e => {
+  const c = e.target.closest("[data-k]"); if (!c || !mkEdit) return;
+  mkEdit.kind = c.dataset.k;
+  $("mkKinds").querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x === c));
+});
+$("mkMinus").onclick = () => { if (mkEdit) { mkEdit.b = Math.max(0, mkEdit.b - 1); openMarkRefresh(); } };
+$("mkPlus").onclick = () => { if (mkEdit) { mkEdit.b += 1; openMarkRefresh(); } };
+function openMarkRefresh() { $("mkTime").textContent = "时间 " + fmt(beatToSec(mkEdit.b)) + " · 第 " + (Math.floor(mkEdit.b / 48) + 1) + " 小节 · beat12 " + mkEdit.b; draw(); }
+$("mkSave").onclick = () => {
+  if (!mkEdit) return;
+  mkEdit.text = $("mkText").value.trim() || "（无说明）";
+  if (!mkEdit.id) { pushUndo(); mkEdit.id = P.nextMarkId++; P.marks.push(mkEdit); }
+  mkEdit = null; $("markOv").style.display = "none";
+  recalcTotal(); saveP(); draw(); toast("标记已保存");
+};
+$("mkDel").onclick = () => {
+  if (!mkEdit || !mkEdit.id) return;
+  P.marks = P.marks.filter(k => k !== mkEdit);
+  mkEdit = null; $("markOv").style.display = "none";
+  saveP(); draw(); toast("标记已删除");
+};
+$("mkClose").onclick = () => { mkEdit = null; $("markOv").style.display = "none"; draw(); };
+$("markPlayBtn").onclick = () => { if (!P) return; const b = audioReady || au.currentTime ? Math.round(curBeat12()) : Math.round(playheadSec / SPB() * 12); openMark({ id: null, b: Math.max(0, b), kind: "other", text: "" }); };
+$("markViewBtn").onclick = () => { if (!P) return; openMark({ id: null, b: Math.max(0, Math.round(scrollB * 12)), kind: "other", text: "" }); };
+/* ============ 项目抽屉与设置 ============ */
+let npFile = null, stFile = null;
+async function renderProjList() {
+  const all = (await idbAll()).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  const el = $("projList"); el.innerHTML = "";
+  for (const p of all) {
+    const d = document.createElement("div");
+    d.className = "projItem" + (P && p.pid === P.pid ? " cur" : "");
+    d.innerHTML = '<div class="pi-t"><b>' + p.title.replace(/</g, "&lt;") + '</b><div>BPM ' + p.bpm + " · " + p.notes.length + ' 键 · ' + (p.audioName || "无音频") + "</div></div>";
+    const open = document.createElement("button"); open.className = "tbtn"; open.textContent = "打开";
+    open.onclick = () => { openProject(p); $("drawerOv").style.display = "none"; };
+    d.appendChild(open);
+    if (!P || p.pid !== P.pid) {
+      const del = document.createElement("button"); del.className = "tbtn"; del.textContent = "删";
+      del.onclick = async () => { if (confirm("删除项目《" + p.title + "》？")) { await idbDel(p.pid); renderProjList(); } };
+      d.appendChild(del);
+    }
+    el.appendChild(d);
+  }
+}
+$("projBtn").onclick = () => { renderProjList(); $("drawerOv").style.display = "block"; };
+$("drawerClose").onclick = () => { $("drawerOv").style.display = "none"; };
+$("npAudioBtn").onclick = () => $("npAudio").click();
+$("npAudio").addEventListener("change", e => { npFile = e.target.files[0] || null; $("npAudioName").textContent = npFile ? npFile.name : "未选择音频"; });
+$("npCreate").onclick = async () => {
+  const title = $("npTitle").value.trim(), bpm = parseFloat($("npBpm").value), offMs = parseFloat($("npOff").value || "0");
+  if (!title) { toast("先填歌名"); return; }
+  if (!bpm || bpm < 20 || bpm > 400) { toast("BPM 不对"); return; }
+  const p = { pid: "p" + Date.now(), title, bpm, off: (isFinite(offMs) ? offMs : 0) / 1000, audioName: npFile ? npFile.name : "", audioBlob: npFile || null, notes: [], marks: [], nextId: 1, nextMarkId: 1, updatedAt: Date.now() };
+  await idbPut(p); npFile = null; $("npAudioName").textContent = "未选择音频";
+  openProject(p); $("drawerOv").style.display = "none"; toast("项目已创建，开始采音吧");
+};
+$("setBtn").onclick = () => {
+  if (!P) return;
+  $("stTitle").value = P.title; $("stBpm").value = P.bpm; $("stOff").value = Math.round(P.off * 1000);
+  $("stAudioName").textContent = P.audioName || "无音频"; stFile = null;
+  $("setOv").style.display = "block";
+};
+$("setClose").onclick = () => { $("setOv").style.display = "none"; };
+$("setOv").addEventListener("click", e => {
+  const c = e.target.closest("[data-nudge]"); if (!c) return;
+  $("stOff").value = (parseInt($("stOff").value || "0", 10) + parseInt(c.dataset.nudge, 10));
+});
+$("stAudioBtn").onclick = () => $("stAudio").click();
+$("stAudio").addEventListener("change", e => { stFile = e.target.files[0] || null; if (stFile) $("stAudioName").textContent = stFile.name; });
+$("setSave").onclick = () => {
+  const bpm = parseFloat($("stBpm").value), offMs = parseFloat($("stOff").value || "0");
+  if (!bpm || bpm < 20 || bpm > 400) { toast("BPM 不对"); return; }
+  P.title = $("stTitle").value.trim() || P.title; P.bpm = bpm; P.off = (isFinite(offMs) ? offMs : 0) / 1000;
+  if (stFile) { P.audioBlob = stFile; P.audioName = stFile.name; stFile = null; attachAudio(); }
+  $("projTitle").textContent = P.title;
+  $("projMeta").textContent = "BPM " + P.bpm + " · 偏移 " + Math.round(P.off * 1000) + "ms";
+  recalcTotal(); saveP(); draw();
+  $("setOv").style.display = "none"; toast("设置已保存");
+};
+/* ============ 导出 / 导入 ============ */
+$("expBtn").onclick = () => {
+  if (!P) return;
+  const out = { kind: "collab-project", version: 2, title: P.title, bpm: P.bpm, offset_sec: P.off, audio_name: P.audioName || "", exported_at: new Date().toISOString(),
+    notes: P.notes.slice().sort((a, b) => a.b - b.b || a.lane - b.lane).map(n => ({ id: n.id, beat12: n.b, len12: n.l, lane: n.lane, x: LANE_X[n.lane], type: n.t })),
+    marks: P.marks.slice().sort((a, b) => a.b - b.b).map(k => ({ id: k.id, beat12: k.b, sec: +beatToSec(k.b).toFixed(3), kind: k.kind, text: k.text })) };
+  const blob = new Blob([JSON.stringify(out, null, 1)], { type: "application/json" });
+  const a = document.createElement("a");
+  const d = new Date(), p2 = v => String(v).padStart(2, "0");
+  a.href = URL.createObjectURL(blob);
+  a.download = "collab-" + P.title.replace(/[^\w\u4e00-\u9fa5]+/g, "_") + "-" + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) + "-" + p2(d.getHours()) + p2(d.getMinutes()) + ".json";
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  toast("已导出项目文件，把它（和新歌的音频）发给小帕");
+};
+$("impBtn").onclick = () => $("impFile").click();
+$("impFile").addEventListener("change", e => {
+  const f = e.target.files[0]; if (!f) return;
+  f.text().then(async txt => {
+    try {
+      const d = JSON.parse(txt);
+      if (!d || !Array.isArray(d.notes)) throw new Error("格式不对");
+      const p = { pid: "p" + Date.now(), title: d.title || "导入的项目", bpm: d.bpm || 120, off: d.offset_sec || 0, audioName: d.audio_name || "", audioBlob: null,
+        notes: d.notes.map(n => ({ id: n.id, b: n.beat12, l: n.len12, lane: n.lane, t: n.type })),
+        marks: (d.marks || []).map(k => ({ id: k.id, b: k.beat12, kind: k.kind || "other", text: k.text || "" })),
+        nextId: Math.max(0, ...d.notes.map(n => n.id)) + 1, nextMarkId: Math.max(0, ...(d.marks || []).map(k => k.id)) + 1, updatedAt: Date.now() };
+      await idbPut(p); openProject(p);
+      toast("导入成功：" + p.notes.length + " 键" + (p.audioName ? "，去项目设置里添加音频《" + p.audioName + "》" : ""), 3200);
+    } catch (err) { toast("导入失败：文件格式不对", 2600); }
+  });
+  e.target.value = "";
+});
+/* ============ 预览试打（无事件） ============ */
+const pv = $("preview"), pvc = $("previewCanvas"), pvx = pvc.getContext("2d");
+let pvOn = false, pvHitSet = new Set(), pvMissSet = new Set(), pvHoldAcc = new Map();
+let pvCombo = 0, pvMaxCombo = 0, pvHits = 0, pvMiss = 0, pvLastNoteSec = 0, pvLastFrame = 0;
+const pvPointers = new Map(), pvKeys = new Set();
+const FALL = 1.6;
+function pvLanesHeld() { const s = new Set(pvPointers.values()); for (const l of pvKeys) s.add(l); return s; }
+function pvTNow() { return au.currentTime - P.off; }
+$("pvBtn").onclick = () => {
+  if (!P) return;
+  if (!audioReady) { toast("本项目还没有音频，不能预览"); return; }
+  if (!P.notes.length) { toast("还没有键，先采音再试打"); return; }
+  const startB12 = Math.max(Math.round(scrollB * 12) - 24, Math.ceil(1.6 / SPB() * 12));
+  pvHitSet = new Set(); pvMissSet = new Set(); pvHoldAcc = new Map();
+  pvCombo = 0; pvMaxCombo = 0; pvHits = 0; pvMiss = 0; pvHud();
+  pvLastNoteSec = Math.max(...P.notes.map(n => beatToSec(n.b + n.l)));
+  pv.style.display = "block"; pvOn = true;
+  pvc.width = pv.clientWidth * DPR; pvc.height = pv.clientHeight * DPR; pvx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  au.currentTime = beatToSec(startB12) - FALL + P.off; au.playbackRate = speed; au.play();
+  pvLastFrame = performance.now();
+  requestAnimationFrame(pvTick);
+  toast("预览：从画面底部附近开始，点/按住对应列打键");
+};
+function pvEnd(msg) {
+  pvOn = false; pv.style.display = "none"; au.pause(); playheadSec = Math.max(0, pvTNow());
+  if (msg) toast(msg, 3200);
+  draw();
+}
+$("pvExit").onclick = () => pvEnd("已退出预览");
+function pvJudgeTap(lane, t) {
+  let best = null, bd = 1e9;
+  for (const n of P.notes) {
+    if (n.t === 2 || n.lane !== lane || pvHitSet.has(n.id) || pvMissSet.has(n.id)) continue;
+    const d = Math.abs(beatToSec(n.b) - t);
+    if (d <= 0.15 && d < bd) { bd = d; best = n; }
+  }
+  if (best) { pvHitSet.add(best.id); pvCombo++; pvMaxCombo = Math.max(pvMaxCombo, pvCombo); pvHits++; pvHud(); }
+}
+function pvHud() { $("pvCombo").textContent = pvCombo; $("pvHit").textContent = pvHits; $("pvMiss").textContent = pvMiss; }
+pvc.addEventListener("pointerdown", e => {
+  const r = pvc.getBoundingClientRect(), lane = Math.max(0, Math.min(LANES - 1, Math.floor((e.clientX - r.left) / (r.width / LANES))));
+  pvPointers.set(e.pointerId, lane); pvJudgeTap(lane, pvTNow());
+});
+pvc.addEventListener("pointerup", e => pvPointers.delete(e.pointerId));
+pvc.addEventListener("pointercancel", e => pvPointers.delete(e.pointerId));
+const KEYLANE = { d: 0, f: 1, g: 2, j: 3, k: 4, l: 5 };
+window.addEventListener("keydown", e => { if (pvOn && KEYLANE[e.key.toLowerCase()] !== undefined) { const L = KEYLANE[e.key.toLowerCase()]; if (!pvKeys.has(L)) { pvKeys.add(L); pvJudgeTap(L, pvTNow()); } } });
+window.addEventListener("keyup", e => { if (KEYLANE[e.key.toLowerCase()] !== undefined) pvKeys.delete(KEYLANE[e.key.toLowerCase()]); });
+function pvTick(now) {
+  if (!pvOn) return;
+  const w = pv.clientWidth, h = pv.clientHeight, lineY = h * 0.84, laneW = w / LANES;
+  const t = pvTNow(), dt = Math.min(0.05, (now - pvLastFrame) / 1000); pvLastFrame = now;
+  const held = pvLanesHeld();
+  for (const n of P.notes) {
+    const s = beatToSec(n.b);
+    if (n.t !== 2 && !pvHitSet.has(n.id) && !pvMissSet.has(n.id) && s < t - 0.16) { pvMissSet.add(n.id); pvCombo = 0; pvMiss++; pvHud(); }
+    if (n.t === 2 && !pvHitSet.has(n.id) && !pvMissSet.has(n.id)) {
+      const en = beatToSec(n.b + n.l);
+      if (s <= t && t <= en && held.has(n.lane)) pvHoldAcc.set(n.id, (pvHoldAcc.get(n.id) || 0) + dt);
+      if (t > en) { const need = (en - s) * 0.7, got = pvHoldAcc.get(n.id) || 0; if (got >= need) { pvHitSet.add(n.id); pvCombo++; pvMaxCombo = Math.max(pvMaxCombo, pvCombo); pvHits++; } else { pvMissSet.add(n.id); pvCombo = 0; pvMiss++; } pvHud(); }
+    }
+  }
+  if (t > pvLastNoteSec + 0.6) { pvEnd("预览结束：命中 " + pvHits + " · 漏 " + pvMiss + " · 最大连击 " + pvMaxCombo); return; }
+  pvx.clearRect(0, 0, w, h);
+  for (let i = 0; i < LANES; i++) if (held.has(i)) { pvx.fillStyle = "rgba(255,255,255,0.08)"; pvx.fillRect(i * laneW, 0, laneW, h); }
+  pvx.strokeStyle = "rgba(255,255,255,0.15)";
+  for (let i = 1; i < LANES; i++) { pvx.beginPath(); pvx.moveTo(i * laneW + 0.5, 0); pvx.lineTo(i * laneW + 0.5, h); pvx.stroke(); }
+  pvx.strokeStyle = "#fff"; pvx.lineWidth = 2; pvx.beginPath(); pvx.moveTo(0, lineY); pvx.lineTo(w, lineY); pvx.stroke(); pvx.lineWidth = 1;
+  const pxPerSec = lineY / FALL;
+  for (const n of P.notes) {
+    const s = beatToSec(n.b); if (s > t + FALL + 0.1 || beatToSec(n.b + n.l) < t - 0.3) continue;
+    const x = n.lane * laneW + 5, nw = laneW - 10, yHead = lineY - (s - t) * pxPerSec;
+    const done = pvHitSet.has(n.id), missed = pvMissSet.has(n.id);
+    if (n.t === 2) {
+      const yTail = lineY - (beatToSec(n.b + n.l) - t) * pxPerSec;
+      pvx.fillStyle = done ? "rgba(64,140,255,0.25)" : missed ? "rgba(120,120,120,0.4)" : "rgba(64,140,255,0.8)";
+      pvx.fillRect(x, yTail, nw, Math.max(3, yHead - yTail));
+      pvx.fillStyle = done ? "rgba(156,200,255,0.3)" : "#9cc8ff"; pvx.fillRect(x, yHead - 7, nw, 7);
+    } else {
+      if (done) continue;
+      pvx.fillStyle = missed ? "rgba(120,120,120,0.5)" : TYPE_COLOR[n.t];
+      pvx.fillRect(x, yHead - 14, nw, 14);
+    }
+  }
+  requestAnimationFrame(pvTick);
+}
+/* ============ 初始化 ============ */
+(async function init() {
+  try {
+    let all = [];
+    $("projTitle").textContent = "加载中…（1/3 读本地项目）";
+    try { all = await withTimeout(idbAll(), 2500); } catch (e) { dbOK = false; }
+    if (!all.length) {
+      $("projTitle").textContent = "加载中…（2/3 载入内置音频）";
+      const ab = await fetchSeedAudio();
+      const p0 = seedProject(ab);
+      if (dbOK) { try { await idbPut(p0); } catch (e) {} }
+      all = [p0];
+    }
+    all.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    $("projTitle").textContent = "加载中…（3/3 打开项目）";
+    resize();
+    openProject(all[0]);
+    requestAnimationFrame(tick);
+    if (!dbOK) setTimeout(() => toast("⚠ 本机存储不可用：改动不会自动保存，请勤用『导出项目』备份"), 600);
+  } catch (err) {
+    $("projTitle").textContent = "加载失败：" + (err && err.message ? err.message : err);
+    try { toast("加载失败：" + (err && err.message ? err.message : err)); } catch (e) {}
+  }
+})();
+</script>
+</body>
+</html>
