@@ -129,7 +129,7 @@
   <button class="btn" id="impBtn">⬆ 导入项目</button>
   <input type="file" id="impFile" accept=".json,application/json" style="display:none">
   <button class="btn warn" id="resetBtn">清空本项目谱面</button>
-  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-r（蓝色定位线＋键高一格＋导航钮）</div>
+  <div class="sub">流程：导入音频 → 在项目设置里定 BPM 和偏移 → 采音 → 在时间栏打标记写事件需求 → 导出项目发小帕，小帕加事件出 pez。<br>版本 1105-s（谱面已重铺进编辑器）</div>
   <button class="btn" id="moreClose">关闭</button>
 </div></div>
 
@@ -207,6 +207,7 @@ const SEED_MARKS = [
   { b: 6914, kind: "rotate", text: "旋转结束 + 演示结束，判定线回平" }
 ];
 const AUDIO_CHUNKS = /*__ACHUNKS__*/3;
+const SEED_REV = 2; /* 谱面重铺版本号：调高一次，打开时把内置《陀飞轮》项目的键和标记强制刷新为干净版（保留她本地音频） */
 const KIND_COLOR = { rotate: "#ff9f43", demo: "#c56cff", section: "#19d3da", other: "#cccccc" };
 const $ = id => document.getElementById(id);
 const au = $("au");
@@ -248,7 +249,7 @@ async function fetchSeedAudio() {
   } catch (e) { return null; }
 }
 function seedProject(audioBlob) {
-  return { pid: "tuofeilun", title: "陀飞轮", bpm: 134, off: 0.0709, audioName: "陀飞轮.m4a", audioBlob: audioBlob || null,
+  return { pid: "tuofeilun", title: "陀飞轮", bpm: 134, off: 0.0709, audioName: "陀飞轮.m4a", audioBlob: audioBlob || null, seedRev: SEED_REV,
     notes: SEED_NOTES.map(a => ({ id: a[0], b: a[1], l: a[2], lane: a[3], t: a[4] })),
     marks: SEED_MARKS.map((k, i) => ({ id: i + 1, b: k.b, kind: k.kind, text: k.text })),
     nextId: Math.max(...SEED_NOTES.map(a => a[0])) + 1, nextMarkId: SEED_MARKS.length + 1, updatedAt: Date.now() };
@@ -822,6 +823,13 @@ function pvTick(now) {
       const p0 = seedProject(ab);
       if (dbOK) { try { await idbPut(p0); } catch (e) {} }
       all = [p0];
+    }
+    const oldSeed = all.find(x => x.pid === "tuofeilun");
+    if (oldSeed && (oldSeed.seedRev || 0) < SEED_REV) {
+      const fresh = seedProject(oldSeed.audioBlob || await fetchSeedAudio());
+      fresh.updatedAt = oldSeed.updatedAt || Date.now();
+      all = all.map(x => x.pid === "tuofeilun" ? fresh : x);
+      if (dbOK) { try { await idbPut(fresh); } catch (e) {} }
     }
     all.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
     $("projTitle").textContent = "加载中…（3/3 打开项目）";
