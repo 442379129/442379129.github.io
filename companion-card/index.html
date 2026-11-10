@@ -290,6 +290,22 @@
       .timer-face .tstate { color: var(--ink-soft); font-size: 0.9rem; min-height: 1.5em; }
       .presets-min { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
       .presets-min button { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); font-weight: 500; }
+      .wake-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+      .switch {
+        flex: none; width: 52px; height: 30px; border-radius: 999px; padding: 0;
+        background: var(--surface-2); border: 1px solid var(--line); position: relative;
+        transition: background 0.2s ease;
+      }
+      .switch span {
+        position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%;
+        background: var(--surface); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+        transition: left 0.2s ease;
+      }
+      .switch.on { background: var(--sage); border-color: transparent; }
+      .switch.on span { left: 25px; }
+      .switch:disabled { opacity: 0.45; cursor: default; }
+      .wake-label { font-weight: 700; }
+      .wake-state { color: var(--ink-soft); font-size: 0.9rem; }
 
       /* ---------- 呼吸 ---------- */
       .breath-stage { display: grid; place-items: center; padding: 14px 0 6px; }
@@ -544,6 +560,14 @@
           <div id="alarmList"></div>
           <p class="alarm-empty" id="alarmEmpty">未有鬧鐘，加返個啦。</p>
           <div class="note">提你一句：張卡要<strong>開住</strong>先會準時響——閂咗頁面，或者部手機鎖屏擺得太耐，系統可能會凍住個計時。真係要靠佢叫起身，記得開埋手機本身個鬧鐘兜底。</div>
+
+          <div class="wake-row">
+            <button type="button" class="switch" id="wakeLockToggle" role="switch" aria-checked="false" aria-label="屏幕常亮"><span></span></button>
+            <span class="wake-label">屏幕常亮</span>
+            <span class="wake-state" id="wakeLockState">閂咗</span>
+          </div>
+          <p class="hint" id="wakeLockHint">開住佢，計時嗰陣屏幕唔會自己熄，你唔使下下撳返著佢。不過講明先：熄咗屏、鎖咗機，又或者切咗去第二個 app，系統一樣會凍住個計時——呢個係部機嘅規矩，唔係張卡壞咗。真係要嚟叫起身，照舊開埋手機本身嘅鬧鐘兜底。</p>
+          <p class="hint" id="wakeLockUnsupported" style="display:none;">你呢個瀏覽器唔支持屏幕常亮呢樣嘢，呢度開唔到，我幫你唔到。想計時嗰陣個屏唔好熄，去手機「設定」度將自動鎖定時間調長啲。</p>
 
           <label class="flabel" for="ringtoneFile">鈴聲 · 用自己揀嘅聲叫醒自己</label>
           <p style="margin:0 0 8px; color:var(--ink-soft); font-size:0.9rem;">預設嗶嗶聲太單調，可以入返首 MP3 做鈴聲。鬧鐘同倒計時到點，都會用佢嚟響。個檔案只會留喺今次開住嘅頁面，閂咗頁面就要入過。</p>
@@ -820,7 +844,7 @@
               periodEntries: periodEntries, periodSeq: periodSeq,
               periodRemindOn: periodRemindOn, periodCycle: $("periodCycle").value,
               ledgers: ledgers, ledgerSeq: ledgerSeq, txSeq: txSeq, activeLedgerId: activeLedgerId,
-              goals: goals, goalSeq: goalSeq
+              goals: goals, goalSeq: goalSeq, wakeLockOn: wakeLockOn
             }));
           } catch (e) { storageOk = false; showStorageWarn(); }
         }
@@ -1316,6 +1340,65 @@
           $("pauseTimer").disabled = true; $("resetTimer").disabled = timerTotal === 0;
         });
         showTimer();
+
+        /* ---------- 屏幕常亮（Screen Wake Lock） ----------
+           開住嗰陣用 Wake Lock 頂住個屏唔畀佢熄；切去後台系統會自動收返，
+           返嚟前台嗰陣如果開關仲開住，就自動攞過。
+           API 唔支持或者申請失敗，一律靜靜降級，唔准彈錯、唔准卡頁面。 */
+        var wakeLockOn = false;
+        var wakeLockObj = null;
+        var wakeLockSupported = ("wakeLock" in navigator);
+        function renderWakeLock() {
+          var btn = $("wakeLockToggle");
+          btn.classList.toggle("on", wakeLockOn);
+          btn.setAttribute("aria-checked", wakeLockOn ? "true" : "false");
+          $("wakeLockState").textContent = wakeLockOn ? "開住" : "閂咗";
+        }
+        function requestWakeLock() {
+          if (!wakeLockOn || !wakeLockSupported) return;
+          if (document.visibilityState !== "visible") return;
+          try {
+            var p = navigator.wakeLock.request("screen");
+            if (p && p.then) {
+              p.then(function (wl) {
+                wakeLockObj = wl;
+                try {
+                  wl.addEventListener("release", function () { if (wakeLockObj === wl) wakeLockObj = null; });
+                } catch (e) {}
+                if (!wakeLockOn) releaseWakeLock(); // 申請期間畀人閂咗，就即刻放返
+              }).catch(function () { /* 唔畀就唔畀，靜靜降級 */ });
+            }
+          } catch (e) { /* 同上 */ }
+        }
+        function releaseWakeLock() {
+          if (wakeLockObj) {
+            try { var rp = wakeLockObj.release(); if (rp && rp.catch) rp.catch(function () {}); } catch (e) {}
+            wakeLockObj = null;
+          }
+        }
+        $("wakeLockToggle").addEventListener("click", function () {
+          wakeLockOn = !wakeLockOn;
+          renderWakeLock();
+          storageSave();
+          if (wakeLockOn) {
+            requestWakeLock();
+            toast("屏幕常亮開咗。計時嗰陣，個屏唔會自己熄");
+          } else {
+            releaseWakeLock();
+            toast("屏幕常亮閂咗。個屏會跟返系統設定，自己熄");
+          }
+        });
+        document.addEventListener("visibilitychange", function () {
+          if (document.visibilityState === "visible" && wakeLockOn) requestWakeLock();
+        });
+        if (!wakeLockSupported) {
+          $("wakeLockToggle").disabled = true;
+          $("wakeLockHint").style.display = "none";
+          $("wakeLockUnsupported").style.display = "block";
+        }
+        if (savedData && typeof savedData.wakeLockOn === "boolean") wakeLockOn = savedData.wakeLockOn;
+        renderWakeLock();
+        if (wakeLockOn) requestWakeLock();
 
         /* ---------- 呼吸 ---------- */
         var breathing = false, breathTimers = [];
