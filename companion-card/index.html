@@ -4,8 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
-    <link rel="icon" href="data:," />
-    <title>粉絲陪伴卡</title>
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="王副总陪伴卡" />
+    <title>王副总陪伴卡</title>
     <!-- 本頁唔載入任何外部資源（包括網絡字體）：全部用系統字體。
          之前試過延後注入網絡字體，喺字體服務長時間無回應嘅設備上
          仍然會卡住渲染、令頁面一直白屏。零外部請求，先保證開得到。 -->
@@ -104,6 +106,11 @@
         margin: 4px 0 6px; line-height: 1.3; font-weight: 700;
       }
       .hello p { margin: 0; color: var(--ink-soft); max-width: 34em; }
+      .hello .greeting-line {
+        font-family: "Noto Serif TC", "Songti TC", "Songti SC", "PMingLiU", serif;
+        font-size: clamp(1.18rem, 4.2vw, 1.5rem);
+        margin: 0 0 6px; line-height: 1.4; font-weight: 700;
+      }
       .daily {
         margin-top: 18px;
         background: var(--surface);
@@ -417,7 +424,8 @@
 
       <header class="hello">
         <div class="date" id="todayDate">今日</div>
-        <h1 id="greeting">坐低。搞掂今日先，其他嘢之後再講</h1>
+        <h1>王副总陪伴卡</h1>
+        <div class="greeting-line" id="greeting">坐低。搞掂今日先，其他嘢之後再講</div>
         <p>嚟到就坐低。唔開心可以講，唔想講都得。呢度冇人氹你，我亦唔氹——我淨係做兩件事：幫你搞掂啲事，同睇實你。喺我面前，唔使死撐。</p>
         <div class="daily">
           <div class="mark" aria-hidden="true">
