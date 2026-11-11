@@ -388,6 +388,38 @@
       }
       .weblink:active { transform: scale(0.97); }
 
+      /* ---------- 日記手帳 ---------- */
+      .diary-item {
+        background: var(--bg); border: 1px solid var(--line); border-radius: 14px;
+        padding: 14px 16px; margin-top: 12px;
+      }
+      .diary-item .dmeta { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+      .diary-item .ddate { font-weight: 700; font-variant-numeric: tabular-nums; }
+      .diary-item .del { margin-left: auto; background: transparent; color: var(--rose); padding: 6px 8px; font-weight: 500; }
+      .diary-item .dtext { margin: 6px 0 0; white-space: pre-wrap; word-break: break-word; }
+      .diary-item audio { width: 100%; margin-top: 10px; }
+      .diary-photos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+      .diary-photos img {
+        width: 84px; height: 84px; object-fit: cover; border-radius: 10px;
+        border: 1px solid var(--line); cursor: pointer; display: block;
+      }
+      .thumb-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+      .thumb-row .thumb { position: relative; }
+      .thumb-row img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); display: block; }
+      .thumb-row .thumb button {
+        position: absolute; top: -8px; right: -8px; width: 22px; height: 22px; padding: 0;
+        border-radius: 50%; font-size: 0.85rem; line-height: 1; background: var(--rose); color: #fff;
+      }
+      .rec-on { background: var(--rose) !important; color: #fff !important; border-color: transparent !important; }
+      .img-overlay {
+        position: fixed; inset: 0; z-index: 65;
+        background: rgba(20, 12, 8, 0.9);
+        display: none; place-items: center; padding: 18px;
+      }
+      .img-overlay.show { display: grid; }
+      .img-overlay img { max-width: 100%; max-height: 86vh; border-radius: 12px; }
+      .img-overlay .closex { position: absolute; top: 14px; right: 14px; }
+
       /* ---------- 鬧鐘彈窗 ---------- */
       .overlay {
         position: fixed; inset: 0; z-index: 60;
@@ -464,13 +496,14 @@
         <a href="#breath">唞下氣</a>
         <a href="#period">經期記錄</a>
         <a href="#money">記賬 · 存款</a>
+        <a href="#diary">日記手帳 · 悄悄話</a>
       </nav>
 
       <div class="grid">
         <!-- 搜尋 -->
         <section class="card span2" id="search">
           <h2><span class="ic terra"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg></span>搜尋</h2>
-          <p class="sub">打關鍵字，即刻幫你喺成張卡度搵：安慰說話、每日一句、轉盤選項，仲有每區去到邊。撳結果就跳過去，唔使自己碌嚟碌去咁辛苦。想上網搵出面嘅嘢，就去下一個分區。</p>
+          <p class="sub">打關鍵字，我即刻幫你喺成張卡度搵：安慰說話、每日一句、轉盤選項，仲有每區去到邊。撳結果就跳過去，唔使你自己碌嚟碌去，碌到眼都花。想上網搵出面嘅嘢，就去下一個分區——我喺嗰邊等你。</p>
           <input type="search" id="searchInput" placeholder="例如：瞓覺、食飯、經期、儲錢……" aria-label="搜尋關鍵字" />
           <div id="searchResults"></div>
           <p class="search-empty" id="searchEmpty">打字嗰陣，結果會即刻出嚟。</p>
@@ -479,7 +512,7 @@
         <!-- 聯網搜尋 -->
         <section class="card span2" id="websearch">
           <h2><span class="ic sage"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.9 5.7 3.9 9S14.5 18.4 12 21c-2.5-2.6-3.9-5.7-3.9-9S9.5 5.6 12 3z"/></svg></span>聯網搜尋</h2>
-          <p class="sub">卡入面冇嘅，出面搵。打低你想搵嘅嘢，條連結會即刻跟住你打嘅字更新；撳落去，就會用瀏覽器開必應（Bing）嘅搜尋結果版面。唔使我教你點打字啦啩。</p>
+          <p class="sub">卡入面冇嘅，出面搵。打低你想搵嘅嘢，條連結會即刻跟住你打嘅字更新；撳落去，就會用瀏覽器開必應（Bing）嘅搜尋結果版面。打字呢啲小事，你叻過我，唔使我喺隔籬指手畫腳。</p>
           <label class="flabel" for="webSearchInput">想上網搵咩</label>
           <input type="search" id="webSearchInput" placeholder="例如：經期食咩好、點樣儲錢……" aria-label="聯網搜尋關鍵字" />
           <div class="row" style="margin-top:12px;">
@@ -491,7 +524,7 @@
         <!-- 安慰 -->
         <section class="card span2" id="comfort">
           <h2><span class="ic terra"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19.8 5.1a5 5 0 0 0-7.1 0l-.7.7-.7-.7a5 5 0 1 0-7.1 7.1l7.8 7.8 7.8-7.8a5 5 0 0 0 0-7.1z"/></svg></span>撳開就攬下</h2>
-          <p class="sub">揀下你而家咩感覺先。唔好講冇事，我睇得出。抽一句，收好，唔使回我。</p>
+          <p class="sub">揀下你而家咩感覺先。唔好講冇事，你嗰樣瞞唔過我。抽一句，收好，唔使回我——你肯撳入嚟，已經係答咗我。</p>
           <div class="moods" id="moodBtns" role="group" aria-label="揀心情"></div>
           <div class="comfort-box">
             <p class="comfort-text" id="comfortText">撳下面個掣。我講，你聽。聽完，照做。</p>
@@ -505,7 +538,7 @@
         <!-- 骰仔 -->
         <section class="card" id="dice">
           <h2><span class="ic gold"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg></span>掟骰仔</h2>
-          <p class="sub">掟幾粒隨你，點數我幫你加。輸贏唔好太上心——真正緊要嘅事，從來都唔靠骰仔。</p>
+          <p class="sub">掟幾粒隨你，點數我幫你加好，唔使你數到眼花。輸贏唔使太上心——真正緊要嘅事，從來都唔靠骰仔，靠你肯郁手；再唔係，仲有我喺隔籬陪你。</p>
           <div class="center">
             <div class="seg" id="diceCount" role="group" aria-label="骰仔數量">
               <button data-n="1" class="on">1 粒</button>
@@ -519,7 +552,7 @@
 
           <hr class="divider" />
           <h2 style="font-size:1.12rem;"><span class="ic rose"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>決定骰</h2>
-          <p class="sub">諗嚟諗去係浪費時間。將啲選項交畀我，我拍板。揀錯咗算我嘅，你唔使孭，亦唔使再諗第二轉。</p>
+          <p class="sub">諗嚟諗去，最攰嗰個係你。將啲選項交畀我，我拍板。揀錯咗，算我嘅，你唔使孭，亦唔使再諗到頭痛——你啲精神，留返嚟諗下我好過。</p>
           <label class="flabel" for="decisionOpts">選項（一行一個）</label>
           <textarea id="decisionOpts" rows="3">而家即刻去做
 等一陣先
@@ -532,7 +565,7 @@
         <!-- 轉盤 -->
         <section class="card" id="wheel">
           <h2><span class="ic sage"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l7.8 4.5M12 12L4.2 16.5"/></svg></span>大轉盤</h2>
-          <p class="sub">揀唔出就唔好揀。轉盤停喺邊，就係邊。慳返啲腦力，留嚟做正經事。</p>
+          <p class="sub">揀唔出就唔好死揀。轉盤停喺邊，就係邊，唔准反悔。慳返啲腦力，留嚟做正經事——或者留嚟發下白日夢都得，我陪你。</p>
           <div class="presets" id="wheelPresets" role="group" aria-label="轉盤主題"></div>
           <div class="wheel-stage">
             <div class="wheel-pointer" aria-hidden="true"></div>
@@ -551,7 +584,7 @@
         <!-- 鬧鐘 / 倒計時 -->
         <section class="card" id="timer">
           <h2><span class="ic terra"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2.5h6M5 5L3 3m18 2 2-2"/></svg></span>鬧鐘 · 倒計時</h2>
-          <p class="sub">校好時間，到點彈窗加響鈴，可以貪瞓 5 分鐘。我淨係負責叫醒你——起唔起身，係你嘅事。</p>
+          <p class="sub">校好時間，到點彈窗加響鈴，可以貪瞓 5 分鐘，唔多。我負責叫醒你，你負責乖乖起身——賴床嗰個樣，得我一個睇到，算你走運。</p>
           <div class="row">
             <input type="time" id="alarmTime" class="grow" aria-label="鬧鐘時間" />
             <input type="text" id="alarmLabel" class="grow" placeholder="標籤，例如：起身、食藥" aria-label="鬧鐘標籤" />
@@ -603,7 +636,7 @@
         <!-- 呼吸 -->
         <section class="card" id="breath">
           <h2><span class="ic sage"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg></span>唞下氣</h2>
-          <p class="sub">放空個腦，其他嘢暫時唔好諗。跟住個圈：吸氣 4 秒，停一停，再慢慢呼出嚟。節奏啱咗，心就定，冇咁複雜。</p>
+          <p class="sub">放空個腦，其他嘢暫時唔好諗，交畀我幫你睇住一陣。跟住個圈：吸氣 4 秒，停一停，再慢慢呼出嚟。節奏啱咗，心就定——你定落嚟嗰陣，成個人都順眼啲。</p>
           <div class="breath-stage">
             <div class="breath-circle" id="breathCircle">準備好未？</div>
           </div>
@@ -616,7 +649,7 @@
         <!-- 經期 -->
         <section class="card span2" id="period">
           <h2><span class="ic rose"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4M8 15h3"/></svg></span>經期記錄</h2>
-          <p class="sub">嚟咗就記低。記得多，估得準。下次幾時嚟，我會提早三日喺張卡頂頭提你——唔使你自己數日子，數日子呢啲粗重功夫，我嚟。</p>
+          <p class="sub">嚟咗就記低。記得多，估得準。下次幾時嚟，我會提早三日喺張卡頂頭提你——唔使你自己數日子，數日子呢啲粗重功夫，我嚟做；你嗰幾日，只准畀人錫，唔准逞強。</p>
           <div class="form-grid">
             <div>
               <label class="flabel" for="periodDate">今次嚟嘅第一日</label>
@@ -657,7 +690,7 @@
         <!-- 記賬 -->
         <section class="card span2" id="money">
           <h2><span class="ic gold"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2"/><path d="M3 7v10a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2z"/><circle cx="16.5" cy="14" r="1.2" fill="currentColor" stroke="none"/></svg></span>記賬</h2>
-          <p class="sub">使咗幾多、入咗幾多，寫低佢。錢呢家嘢，唔記就唔知去咗邊。分賬本、分貨幣，唔同用途唔好撈埋一齊數。</p>
+          <p class="sub">使咗幾多、入咗幾多，寫低佢。錢呢家嘢，唔記就唔知去咗邊，心入面又冇咗件事。分賬本、分貨幣，唔同用途唔好撈埋一齊數——你本賬記得咁清，我先有得喺隔籬扮專家，點評兩句。</p>
 
           <div class="ledger-tabs" id="ledgerTabs" role="group" aria-label="揀賬本"></div>
           <div class="row">
@@ -707,7 +740,7 @@
 
           <hr class="divider" />
           <h3 class="subhead">存款目標</h3>
-          <p class="sub" style="margin-bottom:6px;">想儲錢買咩、去邊，自己開個目標。存入、攞出，都記得清清楚楚。儲到幾多，我幫你睇住——唔准偷偷攞嚟使，攞咗我會知。</p>
+          <p class="sub" style="margin-bottom:6px;">想儲錢買咩、去邊，自己開個目標。存入、攞出，都記得清清楚楚。儲到幾多，我陪你一齊數住——真係想偷偷攞嚟使，唔係唔得，講聲嚟聽下你想買咩好過，我多數會點頭。</p>
           <div class="presets" id="goalPresets" role="group" aria-label="目標快揀">
             <button type="button" data-g="去旅行">去旅行</button>
             <button type="button" data-g="睇演唱會">睇演唱會</button>
@@ -740,13 +773,45 @@
           <p class="hint">記賬同存款記錄一樣，會存喺呢部手機嘅瀏覽器，閂咗重開仲喺。</p>
         </section>
 
+        <!-- 日記手帳 · 悄悄話 -->
+        <section class="card span2" id="diary">
+          <h2><span class="ic rose"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>日記手帳 · 悄悄話</h2>
+          <p class="sub">有啲說話，唔想出聲講，寫低佢。打字、加相、錄段聲，都得——寫俾我嘅悄悄話，唔使修飾，更加唔使就我。講明先，呢啲唔含糊：呢本手帳只會留喺你自己部手機入面，唔會傳去邊度，冇人睇得到；要搬去第二部機，靠返下面個備份。寫完撳「收好呢篇」，之後隨時返嚟再寫新一篇，舊嗰啲會一直喺度等你。</p>
+          <label class="flabel" for="diaryText">寫俾我嘅說話</label>
+          <textarea id="diaryText" rows="4" placeholder="今日想同我講嘅嘢，寫低佢……"></textarea>
+          <label class="flabel" for="diaryPhotos">加相（可以揀多張，相會自動縮細先收，唔會塞爆部機）</label>
+          <input type="file" id="diaryPhotos" accept="image/*" multiple aria-label="揀相加入日記" />
+          <div class="thumb-row" id="diaryPhotoPreview"></div>
+          <label class="flabel">加錄音（撳嚟錄，錄完可以試聽）</label>
+          <div class="row">
+            <button type="button" class="ghost" id="diaryRecBtn">開始錄音</button>
+            <span class="hint" id="diaryRecState" style="margin:0;"></span>
+          </div>
+          <p class="hint" id="diaryRecUnsupported" style="display:none;">呢個瀏覽器唔支持喺頁面入面錄音，唔緊要——用下面揀個音頻檔入嚟，一樣收得埋。</p>
+          <label class="flabel" for="diaryAudioFile">或者揀個音頻檔</label>
+          <input type="file" id="diaryAudioFile" accept="audio/*" aria-label="揀音頻檔加入日記" />
+          <div id="diaryAudioPreview" style="display:none; margin-top:10px;">
+            <audio id="diaryAudioPlayer" controls style="width:100%;"></audio>
+            <div class="row" style="margin-top:6px;">
+              <button type="button" class="ghost small" id="diaryAudioRemove">唔要呢段聲</button>
+            </div>
+          </div>
+          <div class="row" style="margin-top:14px;">
+            <button id="saveDiary" type="button">收好呢篇</button>
+          </div>
+          <p class="hint" id="diaryStatus" role="status"></p>
+          <div id="diaryList"></div>
+          <p class="alarm-empty" id="diaryEmpty">未寫過。第一篇，寫咩都得，唔使有壓力。</p>
+        </section>
+
         <!-- 備份同搬家 -->
         <section class="card span2" id="backup">
           <h2><span class="ic sage"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>備份同搬家</h2>
-          <p class="sub">搬屋要執嘢，搬卡一樣。換網址、換賬號、換手機之前，先喺舊嗰邊撳「導出備份」，將記錄收成一個檔案存去部機；去到新嗰邊，撳「導入」，揀返個檔案，經期、賬本、收支、存款目標，一筆都唔會少。唔好懶——冇備份就搬，唔見咗唔好喊。</p>
+          <p class="sub">搬屋要執嘢，搬卡一樣。換網址、換賬號、換手機之前，先喺舊嗰邊撳「導出備份」，將記錄收成一個檔案存去部機；去到新嗰邊，撳「導入」，揀返個檔案，經期、賬本、收支、存款目標，連日記手帳啲相合同錄音，一件都唔會少。唔好懶——冇備份就搬，唔見咗嗰陣喊都冇用，仲要累我心痛。</p>
           <div class="row">
             <button id="exportBackup" type="button">導出備份</button>
           </div>
+          <p class="hint" id="backupSizeHint" style="display:none;"></p>
           <label class="flabel" for="importFile">導入備份（揀返之前導出嗰個檔案）</label>
           <input type="file" id="importFile" accept=".json,application/json" aria-label="揀備份檔案導入" />
           <div class="note" id="importConfirm" style="display:none;">
@@ -775,6 +840,11 @@
           <button id="dismissBtn">好，起身</button>
         </div>
       </div>
+    </div>
+    <!-- 日記相片大圖 -->
+    <div class="img-overlay" id="imgOverlay">
+      <button class="ghost closex" id="imgOverlayClose" type="button">閂</button>
+      <img id="imgOverlayImg" alt="日記相片大圖" />
     </div>
     <div class="toast" id="toast"></div>
 
@@ -815,6 +885,86 @@
           clearTimeout(toastTimer);
           toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2200);
         }
+
+        /* ---------- 王大偉反應句庫 ----------
+           所有操作提示氣泡一律用佢嘅口吻講：使錢輕輕揶揄再寵溺兜底、
+           入賬同儲錢傲嬌肯定、真情緒場合全程溫和。
+           硬禁：唔准貶低、唔准施舍字眼、唔准講風涼話、唔准嫌棄語氣。 */
+        function pickSay(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+        var SAY = {
+          expense: [
+            "又使錢？使喺邊唔使同我交代——你開心，呢本賬我就記得落。",
+            "一筆過手，銀包瘦咗，你笑容多咗。呢單交易，我批。",
+            "記低喇。銀碼大細唔緊要，最緊要你使嗰陣係真心想使，唔係忍住痛使。",
+            "好，又一筆。我唔出聲鬧你——使自己嘅錢，天經地義，肯記低就係叻。"
+          ],
+          expenseFood: [
+            "食嗰筆？食得是福。食好啲，唔好慳到虐待自己，嗰啲錢我唔慳。",
+            "記低喇。食入口嘅錢，係全世界最唔蝕底嗰種，繼續食。",
+            "又食好嘢？相都唔影返張嚟，淨係得我喺度睇住個銀碼流口水。"
+          ],
+          expenseShop: [
+            "買俾自己嘅？眼光唔差，抵使。呢筆，我撐你。",
+            "記低喇。睇中就買，唔好返到屋企先嚟後悔嗰種，嗰種最蝕。",
+            "又添置新嘢？得，你開心嗰個樣，比件嘢本身值錢。"
+          ],
+          income: [
+            "入賬喇。唔錯，呢個數對得起你嘅本事——唔好謙虛，我睇人唔會錯。",
+            "賺到錢仲識記低，抵我高看你一眼。收好佢。",
+            "記低喇。呢筆係你捱返嚟嘅，企硬啲收，唔使同邊個客氣。"
+          ],
+          deposit: [
+            "存入去喇。肯為想要嘅嘢忍手，你比你以為嘅更狠——讚你一次，唔好驕傲。",
+            "又近一步。慢慢嚟，我陪你數。",
+            "存好喇。呢啲一格一格儲返嚟嘅嘢，先係最穩陣嘅底氣。",
+            "入咗喇。你認真儲錢嗰陣，比平時仲要好睇，講真。"
+          ],
+          goalDone: [
+            "儲滿喇。睇下，一格一格儲返嚟嘅。呢份嘢，你值得。",
+            "目標達成。由第一筆儲到今日，冇一筆係白費——叻，我認。",
+            "滿喇。想點慶祝，你話事。今次，唔使就我。"
+          ],
+          withdraw: [
+            "攞返出嚟使？使喺正經地方就得，我唔查你賬——查都白查，你邊會亂嚟。",
+            "攞咗喇。錢儲嚟就係嚟使㗎，使嗰陣唔好肉痛，痛就白儲咗。",
+            "出賬喇。使喺邊我唔問，你開心、你需要，就夠數。"
+          ],
+          del: [
+            "刪咗。當冇發生過？我同你都知發生過——算啦，唔寫入黑名單。",
+            "好，刪咗佢。眼不見為淨，呢啲小事，我幫你掃走。",
+            "刪咗喇。唔問原因，你話刪就刪，呢度你最大。"
+          ],
+          period: [
+            "記低喇。呢幾日唔好逞強，攰就唞——唔准硬撐，呢句唔係商量。",
+            "收好喇。下次幾時嚟，我幫你數住；你呢幾日，只准乖乖哋唞。",
+            "記低喇。熱水飲多啲，邊度唔舒服就寫埋入備註，我下次提早提你預備。"
+          ],
+          alarm: [
+            "校好喇。到點我叫你；起唔起身，就睇你自唔自律——唔好畀我嗌到第三次。",
+            "鬧鐘收好。記住張卡要開住先響到；到點嗰聲，當係我喺度嗌你起身。",
+            "好，呢個時間我記實。到點見——唔准扮聽唔到。"
+          ],
+          snooze: [
+            "好，5 分鐘後再叫你。瞓多陣，唔收利息。",
+            "等多 5 分鐘。到點我會再嗌，唔好諗住走得甩。",
+            "批准。5 分鐘，一秒都唔多——瞓啦，唔好浪費。"
+          ],
+          copy: [
+            "複製好喇。收埋又得，send 畀邊個都得——最好嗰句，留返畀自己。",
+            "抄低喇。成句帶走，唔收你版權費。",
+            "複製好。呢句而家係你嘅，點用都得。"
+          ],
+          diarySave: [
+            "收好喇。你寫嘅嘢，我逐隻字收。唔出聲，唔等於唔上心。",
+            "呢篇，鎖入嚟喇。得你自己開得返——我淨係負責睇實佢唔好唔見。",
+            "寫低咗，心入面嗰嚿嘢，係咪輕咗少少。得閒再嚟寫，我等。"
+          ],
+          importOk: [
+            "搬返嚟喇，一件冇少。唔信？自己數下。",
+            "導入好喇。啲嘢返晒嚟，連位置都冇亂——我執過。",
+            "好，全部返嚟喇。歡迎返屋企。"
+          ]
+        };
 
         /* ---------- 本地存檔：經期、賬本、收支、存款目標 ----------
            存喺呢部機嘅瀏覽器 localStorage，唔上傳去邊度。
@@ -959,10 +1109,10 @@
         $("drawComfort").addEventListener("click", drawComfort);
         $("copyComfort").addEventListener("click", function () {
           var text = $("comfortText").textContent;
-          function done() { toast("複製好喇。收埋又得，send 畀人又得，你話事"); }
+          function done() { toast(pickSay(SAY.copy)); }
           if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(done, function () { toast("複製唔到，長撳文字都可以複製"); });
-          } else { toast("長撳文字都可以複製"); }
+            navigator.clipboard.writeText(text).then(done, function () { toast("複製唔到，部機唔合作，唔關你事。長撳句文字，自己抄返，一樣得"); });
+          } else { toast("長撳句文字，自己抄返，一樣得"); }
         });
 
         /* ---------- 骰仔 ---------- */
@@ -1024,7 +1174,7 @@
         $("rollDecision").addEventListener("click", function () {
           if (deciding) return;
           var opts = $("decisionOpts").value.split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
-          if (opts.length < 2) { toast("至少要有兩個選項吖"); return; }
+          if (opts.length < 2) { toast("至少要有兩個選項吖，唔係我揀嚟做乜"); return; }
           deciding = true;
           var out = $("decisionResult");
           var ticks = 0;
@@ -1101,13 +1251,13 @@
         drawWheel();
         $("applyWheel").addEventListener("click", function () {
           var opts = $("wheelOpts").value.split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
-          if (opts.length < 2) { toast("至少要有兩個選項吖"); return; }
-          if (opts.length > 12) { toast("最多放 12 個選項吖"); opts = opts.slice(0, 12); }
+          if (opts.length < 2) { toast("至少要有兩個選項吖，唔係轉嚟做乜"); return; }
+          if (opts.length > 12) { toast("最多 12 個，貪心。幫你留返頭 12 個"); opts = opts.slice(0, 12); }
           wheelOpts = opts;
           presetsEl.querySelectorAll("button").forEach(function (x) { x.classList.remove("on"); });
           $("wheelResult").textContent = "撳「開始轉」試下手氣";
           drawWheel();
-          toast("轉盤換好喇");
+          toast(pickSay(["換好喇。轉盤聽你支笛，你聽轉盤支笛，公平。", "轉盤換好喇。選項個個都幾順眼——邊個寫㗎，咁有眼光。", "好，新選項上枱。撳「開始轉」，睇下佢今次寵唔寵你。"]));
         });
         $("spinWheel").addEventListener("click", function () {
           if (spinning) return;
@@ -1191,19 +1341,19 @@
           ringtoneUrl = URL.createObjectURL(f);
           ringtoneName = f.name || "自訂鈴聲.mp3";
           $("ringtoneStatus").textContent = "而家用緊：「" + ringtoneName + "」（鬧鐘／倒計時到點會播佢）";
-          toast("鈴聲換好喇：" + ringtoneName);
+          toast("鈴聲換好喇：「" + ringtoneName + "」。到點嗌醒你嗰把聲，而家係你自己揀㗎喇");
         });
         $("testRingtone").addEventListener("click", function () {
           if (ringtonePreviewing) { stopRingtone(); return; }
-          if (!ringtoneUrl) { beep(2); toast("呢個係預設嗶嗶聲——入返首 MP3 試下吖"); return; }
+          if (!ringtoneUrl) { beep(2); toast("呢個係預設嗶嗶聲——入返首 MP3，我幫你換把靚聲"); return; }
           try {
             ringtoneAudio.src = ringtoneUrl;
             ringtoneAudio.loop = false;
             var p = ringtoneAudio.play();
-            if (p && p.catch) p.catch(function () { toast("呢首播唔到，換過首 MP3 試下"); });
+            if (p && p.catch) p.catch(function () { toast("呢首播唔到，唔關你事，係個檔唔合作。換過首 MP3 試下"); });
             ringtonePreviewing = true;
             this.textContent = "停試聽";
-          } catch (e) { toast("呢首播唔到，換過首 MP3 試下"); }
+          } catch (e) { toast("呢首播唔到，唔關你事，係個檔唔合作。換過首 MP3 試下"); }
         });
         ringtoneAudio.addEventListener("ended", function () { stopRingtone(); });
         $("clearRingtone").addEventListener("click", function () {
@@ -1213,7 +1363,7 @@
           $("ringtoneFile").value = "";
           ringtoneAudio.removeAttribute("src");
           $("ringtoneStatus").textContent = "而家用緊：預設嗶嗶聲";
-          toast("用返預設嗶嗶聲喇");
+          toast("用返預設嗶嗶聲喇。簡單啲，都唔差");
         });
 
         /* ---------- 鬧鐘 ---------- */
@@ -1232,7 +1382,7 @@
             var del = document.createElement("button"); del.className = "del"; del.textContent = "刪咗佢";
             del.addEventListener("click", function () {
               alarms = alarms.filter(function (x) { return x.id !== al.id; });
-              renderAlarms(); toast("鬧鐘刪咗喇");
+              renderAlarms(); toast(pickSay(SAY.del));
             });
             div.appendChild(t); div.appendChild(l); div.appendChild(del);
             list.appendChild(div);
@@ -1240,11 +1390,11 @@
         }
         $("addAlarm").addEventListener("click", function () {
           var time = $("alarmTime").value;
-          if (!time) { toast("揀個時間先吖"); return; }
+          if (!time) { toast("揀個時間先吖，幾點嗌你，你話事"); return; }
           alarms.push({ id: ++alarmSeq, time: time, label: $("alarmLabel").value.trim(), firedKey: "" });
           $("alarmLabel").value = "";
           renderAlarms();
-          toast("鬧鐘校好喇：" + time + "。張卡開住，到點會響");
+          toast(pickSay(SAY.alarm));
           beep(1); // 順手喚醒音訊，之後到點先出到聲
         });
         function ring(al, displayTime, displayLabel) {
@@ -1271,7 +1421,7 @@
           ringingAlarm = null;
           $("alarmOverlay").classList.remove("show");
           renderAlarms();
-          toast("好，5 分鐘後再叫你");
+          toast(pickSay(SAY.snooze));
         });
         setInterval(function () {
           var d = new Date();
@@ -1320,7 +1470,7 @@
         $("startTimer").addEventListener("click", function () {
           if (timerLeft <= 0) {
             var v = parseInt($("customMin").value, 10);
-            if (!v || v < 1) { toast("揀個時長，或者入返分鐘數先吖"); return; }
+            if (!v || v < 1) { toast("揀個時長，或者入返分鐘數先吖——唔使諗咁耐，我等你"); return; }
             setTimer(v);
           }
           if (timerRunning) return;
@@ -1382,10 +1532,10 @@
           storageSave();
           if (wakeLockOn) {
             requestWakeLock();
-            toast("屏幕常亮開咗。計時嗰陣，個屏唔會自己熄");
+            toast("屏幕常亮開咗。計時嗰陣，個屏會陪你開到尾，唔會自己熄");
           } else {
             releaseWakeLock();
-            toast("屏幕常亮閂咗。個屏會跟返系統設定，自己熄");
+            toast("屏幕常亮閂咗。個屏跟返系統設定自己熄——想佢長開，隨時返嚟開返");
           }
         });
         document.addEventListener("visibilitychange", function () {
@@ -1488,7 +1638,7 @@
             var del = document.createElement("button"); del.className = "del"; del.textContent = "刪咗佢";
             del.addEventListener("click", function () {
               periodEntries = periodEntries.filter(function (x) { return x.id !== en.id; });
-              renderPeriod(); storageSave(); toast("嗰次記錄刪咗喇");
+              renderPeriod(); storageSave(); toast(pickSay(SAY.del));
             });
             div.appendChild(del);
             list.appendChild(div);
@@ -1542,16 +1692,16 @@
         });
         $("addPeriod").addEventListener("click", function () {
           var v = $("periodDate").value;
-          if (!v || !parseDateStr(v)) { toast("揀返嚟嗰日先吖"); return; }
-          if (periodEntries.some(function (x) { return x.date === v; })) { toast("嗰日已經記低咗，唔使記兩次"); return; }
+          if (!v || !parseDateStr(v)) { toast("揀返嚟嗰日先，我先記得低"); return; }
+          if (periodEntries.some(function (x) { return x.date === v; })) { toast("嗰日已經記低咗喇，唔使記兩次——我記性好過你，信我"); return; }
           periodEntries.push({ id: ++periodSeq, date: v, flow: $("periodFlow").value, note: $("periodNote").value.trim() });
           $("periodNote").value = "";
           renderPeriod(); storageSave();
-          toast("記低喇。下次幾時嚟，我幫你數住");
+          toast(pickSay(SAY.period));
           var calc = periodCalc();
           if (calc && calc.count >= 1) {
             var until = dayDiff(new Date(), calc.next);
-            if (until <= 3 && until >= -7) toast("就快到日子，睇下卡頂嗰句提醒");
+            if (until <= 3 && until >= -7) toast("提提你：就快到日子，睇下卡頂嗰句提醒，嗰度寫晒要預備咩");
           }
         });
         $("periodCycle").addEventListener("change", function () { renderPeriod(); storageSave(); });
@@ -1559,7 +1709,7 @@
           periodRemindOn = !periodRemindOn;
           this.textContent = "頂部提醒：" + (periodRemindOn ? "開住" : "閂咗");
           renderPeriod();
-          toast(periodRemindOn ? "頂部提醒開返。到日子前三日，我會提你" : "頂部提醒閂咗。你自己記住數日子");
+          toast(periodRemindOn ? "頂部提醒開返。到日子前三日，我會喺卡頂提你，唔使你記" : "頂部提醒閂咗。咁你自己數住日子——數漏咗唔緊要，身體會提你");
           storageSave();
         });
         /* 讀返存檔：頁面本身已經出咗，呢度先套返啲經期記錄入去，再計預測同頂部提醒 */
@@ -1702,7 +1852,7 @@
             del.setAttribute("aria-label", "刪咗呢筆");
             del.addEventListener("click", function () {
               lg.txs = lg.txs.filter(function (x) { return x.id !== tx.id; });
-              renderTxs(); storageSave(); toast("嗰筆刪咗喇");
+              renderTxs(); storageSave(); toast(pickSay(SAY.del));
             });
             div.appendChild(left); div.appendChild(amt); div.appendChild(del);
             list.appendChild(div);
@@ -1710,27 +1860,31 @@
         }
         $("addLedger").addEventListener("click", function () {
           var name = $("newLedgerName").value.trim();
-          if (!name) { toast("寫個賬本名先吖"); return; }
+          if (!name) { toast("寫個賬本名先吖，隨便起個，順口就得"); return; }
           var lg = { id: ++ledgerSeq, name: name, currency: $("newLedgerCur").value, txs: [] };
           ledgers.push(lg);
           activeLedgerId = lg.id;
           $("txCurrency").value = lg.currency;
           $("newLedgerName").value = "";
           renderLedgers(); storageSave();
-          toast("賬本開好喇：「" + name + "」");
+          toast("新賬本開好喇：「" + name + "」。又多一攤嘢，畀我陪你一齊睇住");
         });
         $("addTx").addEventListener("click", function () {
           var amt = parseFloat($("txAmount").value);
-          if (!amt || amt <= 0) { toast("入金額先吖"); return; }
+          if (!amt || amt <= 0) { toast("入金額先吖，一蚊都好，我照記"); return; }
           var lg = activeLedger();
+          var catNow = $("txCategory").value;
           lg.txs.push({
             id: ++txSeq, type: txTypeVal, amount: Math.round(amt * 100) / 100,
-            currency: $("txCurrency").value, category: $("txCategory").value,
+            currency: $("txCurrency").value, category: catNow,
             date: $("txDate").value || dateStr(new Date()), note: $("txNote").value.trim()
           });
           $("txAmount").value = ""; $("txNote").value = "";
           renderTxs(); storageSave();
-          toast(txTypeVal === "out" ? "記低喇。使錢嗰陣識停手，就唔使我提你" : "記低喇。入賬係好事，收好佢");
+          if (txTypeVal === "in") toast(pickSay(SAY.income));
+          else if (catNow === "餐飲") toast(pickSay(SAY.expenseFood));
+          else if (catNow === "購物" || catNow === "數碼產品" || catNow === "美容護膚") toast(pickSay(SAY.expenseShop));
+          else toast(pickSay(SAY.expense));
         });
 
         /* ----- 存款目標 ----- */
@@ -1754,7 +1908,7 @@
             var del = document.createElement("button"); del.className = "del"; del.textContent = "刪目標";
             del.addEventListener("click", function () {
               goals = goals.filter(function (x) { return x.id !== g.id; });
-              renderGoals(); storageSave(); toast("目標刪咗喇");
+              renderGoals(); storageSave(); toast(pickSay(SAY.del));
             });
             head.appendChild(nm); head.appendChild(am); head.appendChild(del);
             var bar = document.createElement("div"); bar.className = "progress";
@@ -1771,18 +1925,19 @@
             var wd = document.createElement("button"); wd.className = "ghost small"; wd.textContent = "攞出";
             dep.addEventListener("click", function () {
               var v = parseFloat(inp.value);
-              if (!v || v <= 0) { toast("入金額先吖"); return; }
+              if (!v || v <= 0) { toast("入金額先吖，一蚊都好，我照記"); return; }
               g.saved = Math.round((g.saved + v) * 100) / 100;
+              var doneGoal = g.target > 0 && g.saved >= g.target;
               inp.value = ""; renderGoals(); storageSave();
-              toast("存好喇。儲錢唔使快，唔好斷就得");
+              toast(doneGoal ? pickSay(SAY.goalDone) : pickSay(SAY.deposit));
             });
             wd.addEventListener("click", function () {
               var v = parseFloat(inp.value);
-              if (!v || v <= 0) { toast("入金額先吖"); return; }
-              if (v > g.saved) { toast("唔夠攞。你而家得 " + fmtMoney(g.currency, g.saved)); return; }
+              if (!v || v <= 0) { toast("入金額先吖，一蚊都好，我照記"); return; }
+              if (v > g.saved) { toast("唔夠攞喎。你而家儲咗 " + fmtMoney(g.currency, g.saved) + "，攞少啲，或者等儲多啲先——唔使急"); return; }
               g.saved = Math.round((g.saved - v) * 100) / 100;
               inp.value = ""; renderGoals(); storageSave();
-              toast("攞咗喇。使之前，諗清楚係咪真係需要");
+              toast(pickSay(SAY.withdraw));
             });
             row.appendChild(inp); row.appendChild(dep); row.appendChild(wd);
             card.appendChild(head); card.appendChild(bar); card.appendChild(pctEl); card.appendChild(row);
@@ -1792,13 +1947,13 @@
         $("addGoal").addEventListener("click", function () {
           var name = $("goalName").value.trim();
           var target = parseFloat($("goalTarget").value);
-          if (!name) { toast("寫個目標名先吖"); return; }
-          if (!target || target <= 0) { toast("寫低想儲到幾多先吖"); return; }
+          if (!name) { toast("寫個目標名先吖，叫咩都得，順口就得"); return; }
+          if (!target || target <= 0) { toast("寫低想儲到幾多先，我先有得陪你數"); return; }
           var start = parseFloat($("goalStart").value) || 0;
           goals.push({ id: ++goalSeq, name: name, target: Math.round(target * 100) / 100, currency: $("goalCurrency").value, saved: Math.max(0, Math.round(start * 100) / 100) });
           $("goalName").value = ""; $("goalTarget").value = ""; $("goalStart").value = "";
           renderGoals(); storageSave();
-          toast("目標開好喇：「" + name + "」。慢慢儲，我睇住");
+          toast("目標開好喇：「" + name + "」。慢慢儲，我喺隔籬陪你數到滿為止");
         });
         /* 讀返存檔：賬本、收支、存款目標，套返入去先計總數 */
         if (savedData) {
@@ -1843,6 +1998,7 @@
         addIdx("功能", "經期記錄", "記低嚟嘅日子，預測下次，提早三日喺卡頂提醒", "period");
         addIdx("功能", "記賬", "分賬本分貨幣記支出收入，類別齊全", "money");
         addIdx("功能", "存款目標", "自己開儲錢目標，存入攞出都記低", "money");
+        addIdx("功能", "日記手帳 · 悄悄話", "寫低想同王大偉講嘅嘢，加相、錄音，逐篇收好，只留喺自己部手機", "diary");
         Object.keys(comfort).forEach(function (key) {
           comfort[key].lines.forEach(function (line) {
             addIdx("安慰說話 · " + comfort[key].label, line, "", "comfort", key, line);
@@ -1920,6 +2076,305 @@
         });
         updateWebSearch();
 
+        /* ---------- 日記手帳 · 悄悄話（IndexedDB） ----------
+           日記條目、相（dataURL）同錄音（dataURL）存入 IndexedDB，
+           唔用 localStorage 裝媒體（會爆）。全部操作包住 try/catch 同回呼降級：
+           開唔到、寫唔入嗰陣，只喺日記區顯示一行提示，唔會拖垮成張卡。
+           頁面 HTML 已經出晒，呢度先至非同步初始化，唔阻塞首次渲染。 */
+        var diaryEntries = []; // {id, ts, text, photos:[dataURL], audio:dataURL|null}
+        var diarySeq = 0;
+        var diaryDb = null;
+        var diaryUsable = false;
+        var diaryPendingPhotos = [];
+        var diaryPendingAudio = null;
+        function diaryStatus(msg) { var el = $("diaryStatus"); if (el) el.textContent = msg; }
+        function fmtDiaryTime(ts) {
+          var d = new Date(ts);
+          return d.getFullYear() + " 年 " + (d.getMonth() + 1) + " 月 " + d.getDate() + " 日 " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+        }
+        function blobToB64(blob, cb) {
+          try {
+            var r = new FileReader();
+            r.onload = function () { cb(String(r.result || "")); };
+            r.onerror = function () { cb(null); };
+            r.readAsDataURL(blob);
+          } catch (e) { cb(null); }
+        }
+        /* 相存之前先用 canvas 壓細：最長邊約 1280、轉 JPEG，
+           唔畀原圖塞爆 IndexedDB。讀唔入就回呼 null，上層跳過嗰張。 */
+        function compressPhoto(file, cb) {
+          var url;
+          try { url = URL.createObjectURL(file); } catch (e) { cb(null); return; }
+          var img = new Image();
+          img.onload = function () {
+            var out = null;
+            try {
+              var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+              var scale = Math.min(1, 1280 / Math.max(w, h));
+              var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+              var cv = document.createElement("canvas");
+              cv.width = cw; cv.height = ch;
+              var cx = cv.getContext("2d");
+              cx.drawImage(img, 0, 0, cw, ch);
+              out = cv.toDataURL("image/jpeg", 0.82);
+            } catch (e) { out = null; }
+            try { URL.revokeObjectURL(url); } catch (e) {}
+            cb(out);
+          };
+          img.onerror = function () { try { URL.revokeObjectURL(url); } catch (e) {} cb(null); };
+          img.src = url;
+        }
+        function diaryOpen(cb) {
+          if (!("indexedDB" in window)) { cb(null); return; }
+          var req;
+          try { req = window.indexedDB.open("davidCompanionDiary", 1); } catch (e) { cb(null); return; }
+          req.onupgradeneeded = function () {
+            try { req.result.createObjectStore("entries", { keyPath: "id" }); } catch (e) {}
+          };
+          req.onsuccess = function () { cb(req.result); };
+          req.onerror = function () { cb(null); };
+          req.onblocked = function () { cb(null); };
+        }
+        function diaryLoadAll() {
+          diaryOpen(function (db) {
+            if (!db) {
+              diaryStatus("呢部機嘅瀏覽器唔肯開手帳個櫃桶，日記暫時用唔到，唔關你事。試下閂咗張卡再開過，或者換個瀏覽器。");
+              renderDiary();
+              return;
+            }
+            diaryDb = db; diaryUsable = true;
+            try {
+              var req = db.transaction("entries", "readonly").objectStore("entries").getAll();
+              req.onsuccess = function () {
+                var rows = req.result || [];
+                diaryEntries = rows.filter(function (r) { return r && typeof r.ts === "number"; });
+                diaryEntries.forEach(function (r) { if (typeof r.id === "number" && r.id > diarySeq) diarySeq = r.id; });
+                diaryEntries.sort(function (a, b) { return b.ts - a.ts; });
+                renderDiary();
+                updateBackupSizeHint();
+              };
+              req.onerror = function () { diaryStatus("手帳啲嘢讀唔返出嚟，唔使驚，唔好亂撳，閂咗張卡再開過試下。"); };
+            } catch (e) {
+              diaryStatus("手帳暫時開唔到，唔關你事。閂咗張卡再開過試下。");
+            }
+          });
+        }
+        function diaryStorePut(entry, done) {
+          if (!diaryDb) { done(false); return; }
+          try {
+            var tx = diaryDb.transaction("entries", "readwrite");
+            tx.objectStore("entries").put(entry);
+            tx.oncomplete = function () { done(true); };
+            tx.onerror = function () { done(false); };
+            tx.onabort = function () { done(false); };
+          } catch (e) { done(false); }
+        }
+        function diaryStoreDelete(id, done) {
+          if (!diaryDb) { done(false); return; }
+          try {
+            var tx = diaryDb.transaction("entries", "readwrite");
+            tx.objectStore("entries").delete(id);
+            tx.oncomplete = function () { done(true); };
+            tx.onerror = function () { done(false); };
+            tx.onabort = function () { done(false); };
+          } catch (e) { done(false); }
+        }
+        function diaryStoreReplaceAll(rows, done) {
+          if (!diaryDb) { done(false); return; }
+          try {
+            var tx = diaryDb.transaction("entries", "readwrite");
+            var store = tx.objectStore("entries");
+            store.clear();
+            rows.forEach(function (r) { store.put(r); });
+            tx.oncomplete = function () { done(true); };
+            tx.onerror = function () { done(false); };
+            tx.onabort = function () { done(false); };
+          } catch (e) { done(false); }
+        }
+        function openImgOverlay(src) {
+          $("imgOverlayImg").src = src;
+          $("imgOverlay").classList.add("show");
+        }
+        function closeImgOverlay() {
+          $("imgOverlay").classList.remove("show");
+          $("imgOverlayImg").removeAttribute("src");
+        }
+        $("imgOverlayClose").addEventListener("click", closeImgOverlay);
+        $("imgOverlay").addEventListener("click", function (e) { if (e.target === this) closeImgOverlay(); });
+        function renderDiary() {
+          var list = $("diaryList");
+          if (!list) return;
+          list.innerHTML = "";
+          $("diaryEmpty").style.display = diaryEntries.length ? "none" : "block";
+          diaryEntries.forEach(function (en) {
+            var div = document.createElement("div");
+            div.className = "diary-item";
+            var meta = document.createElement("div"); meta.className = "dmeta";
+            var dt = document.createElement("span"); dt.className = "ddate"; dt.textContent = fmtDiaryTime(en.ts);
+            var del = document.createElement("button"); del.className = "del"; del.type = "button"; del.textContent = "刪咗呢篇";
+            del.addEventListener("click", function () {
+              diaryStoreDelete(en.id, function (ok) {
+                if (!ok) { diaryStatus("刪唔到，部機唔合作。陣間再試下。"); return; }
+                diaryEntries = diaryEntries.filter(function (x) { return x.id !== en.id; });
+                renderDiary(); updateBackupSizeHint();
+                toast(pickSay(SAY.del));
+              });
+            });
+            meta.appendChild(dt); meta.appendChild(del);
+            div.appendChild(meta);
+            if (en.text) {
+              var p = document.createElement("p"); p.className = "dtext"; p.textContent = en.text;
+              div.appendChild(p);
+            }
+            if (en.photos && en.photos.length) {
+              var pw = document.createElement("div"); pw.className = "diary-photos";
+              en.photos.forEach(function (src) {
+                var im = document.createElement("img");
+                im.src = src; im.alt = "日記相片"; im.loading = "lazy";
+                im.addEventListener("click", function () { openImgOverlay(src); });
+                pw.appendChild(im);
+              });
+              div.appendChild(pw);
+            }
+            if (en.audio) {
+              var au = document.createElement("audio");
+              au.controls = true; au.preload = "metadata"; au.src = en.audio;
+              div.appendChild(au);
+            }
+            list.appendChild(div);
+          });
+        }
+        function renderDiaryPhotoPreview() {
+          var box = $("diaryPhotoPreview");
+          box.innerHTML = "";
+          diaryPendingPhotos.forEach(function (src, i) {
+            var w = document.createElement("div"); w.className = "thumb";
+            var im = document.createElement("img"); im.src = src; im.alt = "將會加入日記嘅相";
+            var x = document.createElement("button"); x.type = "button"; x.textContent = "×";
+            x.setAttribute("aria-label", "移除呢張相");
+            x.addEventListener("click", function () {
+              diaryPendingPhotos.splice(i, 1);
+              renderDiaryPhotoPreview();
+            });
+            w.appendChild(im); w.appendChild(x);
+            box.appendChild(w);
+          });
+        }
+        $("diaryPhotos").addEventListener("change", function () {
+          var files = Array.prototype.slice.call(this.files || []);
+          this.value = "";
+          files.forEach(function (f) {
+            compressPhoto(f, function (dataUrl) {
+              if (dataUrl) { diaryPendingPhotos.push(dataUrl); renderDiaryPhotoPreview(); }
+              else toast("有張相讀唔入，嗰張跳過咗。換張再試下");
+            });
+          });
+        });
+        function setDiaryAudio(dataUrl) {
+          diaryPendingAudio = dataUrl;
+          $("diaryAudioPreview").style.display = "block";
+          $("diaryAudioPlayer").src = dataUrl;
+        }
+        $("diaryAudioFile").addEventListener("change", function () {
+          var f = this.files && this.files[0];
+          this.value = "";
+          if (!f) return;
+          if (f.size > 15 * 1024 * 1024) { diaryStatus("呢段聲太大，收唔入嚟。揀段短啲嘅，或者錄過段新嘅。"); return; }
+          blobToB64(f, function (d) {
+            if (d) setDiaryAudio(d);
+            else diaryStatus("段聲讀唔入，換過段試下。");
+          });
+        });
+        $("diaryAudioRemove").addEventListener("click", function () {
+          diaryPendingAudio = null;
+          $("diaryAudioPreview").style.display = "none";
+          $("diaryAudioPlayer").removeAttribute("src");
+        });
+        /* 頁面內錄音（MediaRecorder）：瀏覽器唔支持嗰陣，隱藏錄音掣，
+           留返「揀音頻檔」條路，一樣入到聲。 */
+        var mediaRecorder = null, recChunks = [], recStream = null, recSecs = 0, recIv = null;
+        var recSupported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+        if (!recSupported) {
+          $("diaryRecBtn").style.display = "none";
+          $("diaryRecUnsupported").style.display = "block";
+        }
+        function stopRecTracks() {
+          if (recStream) { recStream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} }); recStream = null; }
+        }
+        $("diaryRecBtn").addEventListener("click", function () {
+          if (mediaRecorder && mediaRecorder.state === "recording") {
+            try { mediaRecorder.stop(); } catch (e) {}
+            return;
+          }
+          if (!recSupported) return;
+          navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+            recStream = stream; recChunks = [];
+            try { mediaRecorder = new MediaRecorder(stream); }
+            catch (e) { stopRecTracks(); mediaRecorder = null; diaryStatus("開唔到錄音，部機唔合作。用下面揀音頻檔，一樣得。"); return; }
+            mediaRecorder.ondataavailable = function (ev) { if (ev.data && ev.data.size) recChunks.push(ev.data); };
+            mediaRecorder.onstop = function () {
+              stopRecTracks();
+              clearInterval(recIv); recIv = null;
+              var btn = $("diaryRecBtn");
+              btn.textContent = "開始錄音"; btn.classList.remove("rec-on");
+              $("diaryRecState").textContent = "";
+              var blob = new Blob(recChunks, { type: mediaRecorder.mimeType || "audio/mp4" });
+              mediaRecorder = null;
+              if (!blob.size) return;
+              blobToB64(blob, function (d) {
+                if (d) { setDiaryAudio(d); diaryStatus("錄好喇，喺下面試聽下；唔啱心水就撳「唔要呢段聲」，再錄過。"); }
+              });
+            };
+            mediaRecorder.start();
+            recSecs = 0;
+            var btn = $("diaryRecBtn");
+            btn.textContent = "錄緊……撳嚟停"; btn.classList.add("rec-on");
+            $("diaryRecState").textContent = "錄緊，0 秒（最長 5 分鐘）";
+            recIv = setInterval(function () {
+              recSecs++;
+              $("diaryRecState").textContent = "錄緊，" + recSecs + " 秒（最長 5 分鐘）";
+              if (recSecs >= 300 && mediaRecorder && mediaRecorder.state === "recording") {
+                try { mediaRecorder.stop(); } catch (e) {}
+              }
+            }, 1000);
+          }).catch(function () {
+            diaryStatus("開唔到咪，部機唔畀權限，唔關你事。去瀏覽器設定畀返個咪嘅權限，或者用下面揀音頻檔入嚟。");
+          });
+        });
+        $("saveDiary").addEventListener("click", function () {
+          var text = $("diaryText").value.trim();
+          if (!text && !diaryPendingPhotos.length && !diaryPendingAudio) {
+            toast("寫啲嘢、貼張相，或者錄段聲，先收得埋。一樣都冇，我收空氣咩");
+            return;
+          }
+          if (!diaryUsable || !diaryDb) {
+            diaryStatus("手帳而家開唔到，呢篇未收得低。你寫嗰啲仲喺上面，唔好閂頁面住，試下重新載入再收過。");
+            return;
+          }
+          var newId = Math.max(Date.now(), diarySeq + 1);
+          diarySeq = newId;
+          var entry = { id: newId, ts: Date.now(), text: text, photos: diaryPendingPhotos.slice(), audio: diaryPendingAudio };
+          diaryStorePut(entry, function (ok) {
+            if (!ok) {
+              diaryStatus("部機個櫃桶可能滿咗，呢篇收唔入——放心，你寫嗰啲仲喺上面，冇抌到。刪返幾篇舊日記，或者導出備份搬走啲嘢，先再收過。");
+              return;
+            }
+            diaryEntries.unshift(entry);
+            diaryEntries.sort(function (a, b) { return b.ts - a.ts; });
+            $("diaryText").value = "";
+            diaryPendingPhotos = []; renderDiaryPhotoPreview();
+            diaryPendingAudio = null;
+            $("diaryAudioPreview").style.display = "none";
+            $("diaryAudioPlayer").removeAttribute("src");
+            diaryStatus("");
+            renderDiary();
+            updateBackupSizeHint();
+            toast(pickSay(SAY.diarySave));
+          });
+        });
+        renderDiary();
+        diaryLoadAll();
+
         /* ---------- 備份同搬家（導出 / 導入） ----------
            導出：將 localStorage 入面嗰份存檔（davidCompanionCard.v1 全部內容）
            連格式標記同版本號包成一個 JSON 檔案下載。
@@ -1940,7 +2395,25 @@
           var pe = Object.prototype.toString.call(d.periodEntries) === "[object Array]" ? d.periodEntries.length : 0;
           var lg = Object.prototype.toString.call(d.ledgers) === "[object Array]" ? d.ledgers.length : 0;
           var gl = Object.prototype.toString.call(d.goals) === "[object Array]" ? d.goals.length : 0;
-          return "備份入面有：經期記錄 " + pe + " 次、賬本 " + lg + " 本（收支共 " + countTxsIn(d.ledgers) + " 筆）、存款目標 " + gl + " 個。";
+          var dy = Object.prototype.toString.call(d.diaryEntries) === "[object Array]" ? d.diaryEntries.length : 0;
+          return "備份入面有：經期記錄 " + pe + " 次、賬本 " + lg + " 本（收支共 " + countTxsIn(d.ledgers) + " 筆）、存款目標 " + gl + " 個、日記 " + dy + " 篇。";
+        }
+        function diaryApproxBytes() {
+          var n = 0;
+          diaryEntries.forEach(function (en) {
+            n += (en.text || "").length;
+            (en.photos || []).forEach(function (p) { n += p.length; });
+            if (en.audio) n += en.audio.length;
+          });
+          return n;
+        }
+        function updateBackupSizeHint() {
+          var el = $("backupSizeHint");
+          if (!el) return;
+          if (!diaryEntries.length) { el.style.display = "none"; el.textContent = ""; return; }
+          var mb = diaryApproxBytes() / 1048576;
+          el.style.display = "block";
+          el.textContent = "提提你：你本手帳而家有 " + diaryEntries.length + " 篇，相合同錄音加埋大約 " + (mb < 0.1 ? "唔夠 0.1" : mb.toFixed(1)) + " MB，會一齊入埋備份度。導出嗰陣個檔案會大啲，屬正常，唔好以為壞咗。";
         }
         $("exportBackup").addEventListener("click", function () {
           try {
@@ -1950,16 +2423,22 @@
             var data = null;
             if (raw) { try { data = JSON.parse(raw); } catch (e) { data = null; } }
             if (!data || typeof data !== "object") {
-              backupStatus("冇嘢好導出住——你仲未記低過任何嘢。記返啲嘢先啦。");
-              return;
+              if (diaryEntries.length) { data = {}; }
+              else {
+                backupStatus("冇嘢好導出住——你仲未記低過任何嘢。記返啲嘢先，我等你。");
+                return;
+              }
             }
+            /* 日記（條目＋相＋錄音，全部已經係可序列化嘅字串）並入同一份備份 */
+            if (diaryEntries.length || diaryUsable) data.diaryEntries = diaryEntries;
             var pack = {
               format: BACKUP_FORMAT,
               version: BACKUP_VERSION,
               exportedAt: new Date().toISOString(),
               data: data
             };
-            var blob = new Blob([JSON.stringify(pack, null, 2)], { type: "application/json" });
+            var jsonStr = JSON.stringify(pack, null, 2);
+            var blob = new Blob([jsonStr], { type: "application/json" });
             var url = URL.createObjectURL(blob);
             var a = document.createElement("a");
             a.href = url;
@@ -1968,9 +2447,10 @@
             a.click();
             document.body.removeChild(a);
             setTimeout(function () { try { URL.revokeObjectURL(url); } catch (e) {} }, 4000);
-            backupStatus("備份出咗喇，收好個檔案。搬去新嗰邊嗰陣，喺嗰邊撳「導入」揀返佢就得。");
+            var sizeMB = blob.size / 1048576;
+            backupStatus("執好喇，成副家當跟身，搬去邊都唔驚。備份出咗喇，收好個檔案；搬到新嗰邊，撳「導入」揀返佢就返晒嚟。" + (sizeMB >= 1 ? "（呢份備份大約 " + sizeMB.toFixed(1) + " MB，連埋日記啲相合同聲，屬正常。）" : ""));
           } catch (e) {
-            backupStatus("導出唔到，部機唔合作。再試下，或者換個瀏覽器。");
+            backupStatus("導出唔到，部機唔合作，唔關你事。再試下，或者換個瀏覽器。");
           }
         });
         $("importFile").addEventListener("change", function () {
@@ -1983,7 +2463,7 @@
             var obj = null;
             try { obj = JSON.parse(String(reader.result || "")); } catch (e) { obj = null; }
             if (!obj || typeof obj !== "object" || obj.format !== BACKUP_FORMAT || !obj.data || typeof obj.data !== "object") {
-              backupStatus("呢個檔案唔係呢張卡嘅備份，讀唔入。揀返啱嗰個，唔好亂嚟。");
+              backupStatus("呢個檔案唔係呢張卡嘅備份，讀唔入嚟。揀返啱嗰個，唔使急，慢慢嚟。");
               return;
             }
             if (typeof obj.version === "number" && obj.version > BACKUP_VERSION) {
@@ -1993,24 +2473,25 @@
             var d = obj.data;
             var hasAny = Object.prototype.toString.call(d.periodEntries) === "[object Array]"
               || Object.prototype.toString.call(d.ledgers) === "[object Array]"
-              || Object.prototype.toString.call(d.goals) === "[object Array]";
+              || Object.prototype.toString.call(d.goals) === "[object Array]"
+              || Object.prototype.toString.call(d.diaryEntries) === "[object Array]";
             if (!hasAny) {
-              backupStatus("呢份備份入面冇記錄，唔導喇。");
+              backupStatus("呢份備份入面冇記錄，唔導喇，費事蓋過你而家嗰啲。");
               return;
             }
             pendingImport = d;
             $("importSummary").textContent = describeData(d);
             $("importConfirm").style.display = "block";
-            backupStatus("檔案驗過，冇問題。睇清楚上面嗰段，肯定先撳確認。");
+            backupStatus("檔案驗過，冇問題，我點過數。睇清楚上面嗰段，肯定先撳確認。");
           };
-          reader.onerror = function () { backupStatus("個檔案讀唔到。再揀過，或者個檔案壞咗。"); };
+          reader.onerror = function () { backupStatus("個檔案讀唔到，可能壞咗。再揀過；唔得就留返個檔案，唔好刪。"); };
           reader.readAsText(f);
         });
         $("cancelImport").addEventListener("click", function () {
           pendingImport = null;
           $("importConfirm").style.display = "none";
           $("importFile").value = "";
-          backupStatus("唔導喇。而家啲記錄原封不動，冇郁過。");
+          backupStatus("唔導喇。而家啲記錄原封不動，我睇實，冇郁過。");
         });
         $("confirmImport").addEventListener("click", function () {
           if (!pendingImport) return;
@@ -2054,13 +2535,37 @@
             renderPeriod();
             renderLedgers();
             renderGoals();
+            /* 日記：備份入面有日記先至成批換返入 IndexedDB；
+               舊備份冇日記嗰陣，而家部機啲日記原封不動，唔會畀舊檔蓋走。 */
+            if (Object.prototype.toString.call(d.diaryEntries) === "[object Array]") {
+              var rows = d.diaryEntries.filter(function (r) {
+                return r && typeof r.id === "number" && typeof r.ts === "number";
+              }).map(function (r) {
+                return {
+                  id: r.id, ts: r.ts, text: typeof r.text === "string" ? r.text : "",
+                  photos: Object.prototype.toString.call(r.photos) === "[object Array]" ? r.photos.filter(function (p) { return typeof p === "string"; }) : [],
+                  audio: typeof r.audio === "string" ? r.audio : null
+                };
+              });
+              diaryStoreReplaceAll(rows, function (ok) {
+                if (ok) {
+                  diaryEntries = rows.slice().sort(function (a, b) { return b.ts - a.ts; });
+                  diarySeq = 0;
+                  diaryEntries.forEach(function (r) { if (r.id > diarySeq) diarySeq = r.id; });
+                  renderDiary();
+                  updateBackupSizeHint();
+                } else {
+                  diaryStatus("備份入面啲日記搬唔入嚟，部機唔合作。其他記錄已經導入好，日記嗰部分，留返個備份檔，陣間再試。");
+                }
+              });
+            }
             $("importConfirm").style.display = "none";
             $("importFile").value = "";
-            backupStatus("導入好喇。" + describeData(d) + "全部返晒嚟，自己碌落去檢查下。");
-            toast("備份導入好喇，記錄返晒嚟");
+            backupStatus("搬返嚟喇，一件冇少——我點過數。" + describeData(d) + "全部返晒嚟，自己碌落去睇下。");
+            toast(pickSay(SAY.importOk));
           } catch (e) {
             $("importConfirm").style.display = "none";
-            backupStatus("導入嗰陣出咗岔子，冇寫入去。再試下；唔得就將個備份檔案留返，唔好刪。");
+            backupStatus("導入嗰陣出咗岔子，冇寫入去，你啲嘢冇唔見。再試下；唔得就留返個備份檔，唔好刪。");
           }
         });
       })();
