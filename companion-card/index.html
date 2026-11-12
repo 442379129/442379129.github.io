@@ -144,6 +144,12 @@
       }
       .persona-item .p-check { color: var(--accent); font-weight: 700; flex: none; }
       .persona-item .p-del { flex: none; background: transparent; color: var(--rose); padding: 6px 8px; font-weight: 500; }
+      .persona-item { flex-wrap: wrap; }
+      .persona-item .p-actions { display: flex; gap: 6px; flex: none; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
+      .persona-item .p-badge {
+        display: inline-block; margin-top: 3px; font-size: 0.78rem; font-weight: 700;
+        color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 1px 8px;
+      }
 
       .daily {
         margin-top: 18px;
@@ -641,6 +647,34 @@
               <button type="button" class="ghost" id="personaDeleteNo">算數，留返</button>
             </div>
           </div>
+          <div id="personaEditPanel" style="display:none; margin-top:10px;">
+            <p class="persona-panel-title" id="personaEditTitle">改人设</p>
+            <p class="hint" id="personaEditStatus" role="status"></p>
+            <label class="flabel" for="personaEditText">人設內容（改完只存喺你部機，傾計嗰陣會用你改呢版）</label>
+            <textarea id="personaEditText" rows="6" maxlength="4000" aria-label="人設內容"></textarea>
+            <p class="hint" id="personaEditCount" style="margin-top:4px;">0 / 4000</p>
+            <div class="row" style="margin-top:8px;">
+              <button type="button" id="personaEditSave">保存</button>
+              <button type="button" class="ghost" id="personaEditReset">还原预设</button>
+              <button type="button" class="ghost" id="personaEditCancel">取消</button>
+            </div>
+          </div>
+          <div class="note" id="personaResetConfirm" style="display:none;">
+            <p style="margin:0 0 6px;" id="personaResetText"></p>
+            <div class="row">
+              <button type="button" id="personaResetYes">確認還原</button>
+              <button type="button" class="ghost" id="personaResetNo">算數，留返</button>
+            </div>
+          </div>
+          <div class="note" id="avatarResetConfirm" style="display:none;">
+            <p style="margin:0 0 6px;" id="avatarResetText"></p>
+            <div class="row">
+              <button type="button" id="avatarResetYes">確認還原</button>
+              <button type="button" class="ghost" id="avatarResetNo">算數，留返</button>
+            </div>
+          </div>
+          <p class="hint" id="avatarStatus" role="status"></p>
+          <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" aria-label="揀頭像相片" />
         </div>
         <div class="greeting-line" id="greeting">坐低。搞掂今日先，其他嘢之後再講</div>
         <p>嚟到就坐低。唔開心可以講，唔想講都得。呢度冇人氹你，我亦唔氹——我淨係做兩件事：幫你搞掂啲事，同睇實你。喺我面前，唔使死撐。</p>
@@ -1403,6 +1437,8 @@
            對話記錄按陪伴者分開存入 chatHistories（id -> 訊息陣列，各自上限 200 條）；
            chatHistory 變量永遠指向而家揀中嗰位陪伴者嗰份記錄。 */
         var customPersonas = []; // {id, name, desc}
+        var personaOverrides = {}; // 預設人設嘅本機改版 {presetId: 人設全文}，唔入備份
+        var avatarOverrides = {}; // 本機自訂頭像 {personaId: data URL}，唔入備份
         var activePersonaId = "david";
         var chatHistories = {}; // { personaId: [{role:"user"|"assistant", content:"..."}] }
         if (savedData) {
@@ -1429,6 +1465,20 @@
               return p && typeof p.id === "string" && typeof p.name === "string" && typeof p.desc === "string";
             });
           }
+          try {
+            if (savedData.personaOverrides && typeof savedData.personaOverrides === "object") {
+              Object.keys(savedData.personaOverrides).forEach(function (k) {
+                var v = savedData.personaOverrides[k];
+                if (typeof v === "string" && v.trim() && v.length <= 4000) personaOverrides[k] = v;
+              });
+            }
+            if (savedData.avatarOverrides && typeof savedData.avatarOverrides === "object") {
+              Object.keys(savedData.avatarOverrides).forEach(function (k) {
+                var v = savedData.avatarOverrides[k];
+                if (typeof v === "string" && v.indexOf("data:image/") === 0 && v.length <= 400000) avatarOverrides[k] = v;
+              });
+            }
+          } catch (e) { personaOverrides = {}; avatarOverrides = {}; }
           if (savedData.chatHistories && typeof savedData.chatHistories === "object") {
             Object.keys(savedData.chatHistories).forEach(function (pid) {
               var arr = savedData.chatHistories[pid];
@@ -1456,7 +1506,8 @@
               periodRemindOn: periodRemindOn, periodCycle: $("periodCycle").value,
               ledgers: ledgers, ledgerSeq: ledgerSeq, txSeq: txSeq, activeLedgerId: activeLedgerId,
               goals: goals, goalSeq: goalSeq, wakeLockOn: wakeLockOn,
-              chatSettings: chatSettings, chatHistories: chatHistories, customPersonas: customPersonas, activePersonaId: activePersonaId
+              chatSettings: chatSettings, chatHistories: chatHistories, customPersonas: customPersonas, activePersonaId: activePersonaId,
+              personaOverrides: personaOverrides, avatarOverrides: avatarOverrides
             }));
           } catch (e) { storageOk = false; showStorageWarn(); }
         }
@@ -1558,6 +1609,10 @@
         });
         function drawComfort() {
           var lines = comfort[currentMood].lines;
+          try {
+            var packed = activeComfortLines(currentMood);
+            if (packed && packed.length) lines = packed;
+          } catch (e) {}
           var i;
           do { i = Math.floor(Math.random() * lines.length); } while (lines.length > 1 && i === lastIdx);
           lastIdx = i;
@@ -3257,6 +3312,8 @@
                兩樣都唔跟住個檔案周圍走。剩低服務商、接口地址同模型名先入。 */
             delete data.chatHistory;
             delete data.chatHistories;
+            delete data.personaOverrides;
+            delete data.avatarOverrides;
             if (data.chatSettings && typeof data.chatSettings === "object") {
               var csCopy = {};
               ["preset", "provider", "baseUrl", "model", "modelManual", "city"].forEach(function (k) {
@@ -3410,11 +3467,117 @@
            而係經已部署好嘅聊天接口轉發；人設提示詞住喺接口嗰頭，卡入面唔再寫。
            發邊位陪伴者，就自動帶返佢嘅 personaId（預設人設）或者 persona
            （粉絲自訂人設全文），唔使人手再設。日記內容永遠唔會掟入嚟。 */
+
+        /* ---------- 文案包：功能介紹 + 安慰說話跟陪伴者走 ----------
+           DAVID 包就係頁面原本嗰套：介紹喺頁面載入嗰陣由 DOM 原文抄低，
+           安慰說話就係上面 comfort 物件，一隻字都冇改過。
+           小叔包同中性包（自訂人設用）寫死喺下面；揀邊位就用邊包，
+           某包欠咗某句嗰陣，自動用返 DAVID 包嗰句兜底。 */
+        var INTRO_KEYS = ["search", "websearch", "comfort", "chat", "dice", "decision", "wheel", "timer", "breath", "period", "money", "diary", "applock", "checkin", "backup"];
+        function introElFor(key) {
+          try {
+            if (key === "decision") {
+              var h = $("decision");
+              var n = h ? h.nextElementSibling : null;
+              return (n && n.classList && n.classList.contains("sub")) ? n : null;
+            }
+            return document.querySelector("#" + key + " > p.sub");
+          } catch (e) { return null; }
+        }
+        var DAVID_INTROS = {};
+        try {
+          INTRO_KEYS.forEach(function (k) {
+            var el = introElFor(k);
+            if (el) DAVID_INTROS[k] = el.textContent;
+          });
+        } catch (e) {}
+        var INTRO_PACKS = {
+          david: DAVID_INTROS,
+          xiaoshu: {
+            search: "想搵咩，打低关键字。卡里嘅嘢，我帮你一次定位，唔准乱翻。",
+            websearch: "呢度搵唔到嘅，就去出面搵。开必应，查完返嚟同我讲。",
+            comfort: "唔开心，唔使忍。按落去，我喺度。",
+            chat: "有嘢讲就讲，唔准吞吞吐吐。我喺度听。",
+            dice: "拎不定主意？掟。掟完唔准反悔。",
+            decision: "把选项写低，掟到边个就边个，唔准耍赖。",
+            wheel: "转一次，命中注定。唔准转完唔认数。",
+            timer: "时间定好就唔准赖。闹钟响，起身。唔准按掉再瞓。",
+            breath: "停低。跟住我嘅节奏，吸气，呼气。乱咗嘅节拍，重新对准。",
+            period: "日期记低，唔准靠估。痛就出声，唔准硬撑。生理期，冰嘅唔准掂。",
+            money: "使咗几多，入咗几多，一笔一笔记清楚。账目乱，就係生活乱。",
+            diary: "有嘢想讲又唔想讲出口？写低。呢度淨係你自己睇到。",
+            applock: "边个 App 最攞命？锁咗佢。锁咗就唔准偷睇。",
+            checkin: "到点就问你喺度做咩。截图畀我，唔准作假。",
+            backup: "资料备份好，换机唔使惊。导出，收好，唔准偷懒。"
+          },
+          neutral: {
+            search: "输入关键字，喺卡里搵内容。",
+            websearch: "用必应上网搜寻，查完返回呢度。",
+            comfort: "按心情选一句，陪你缓一缓。",
+            chat: "喺度同陪伴者倾计，先喺下面填好服务设定。",
+            dice: "掟一到三粒骰仔，随机出结果。",
+            decision: "写低选项，掟骰帮你决定。",
+            wheel: "转动转盘，随机抽一个结果。",
+            timer: "设定闹钟同倒计时，页面开住先会响。",
+            breath: "跟住节奏吸气呼气，放松一下。",
+            period: "记录经期日期，估算下一次，估算只供参考。",
+            money: "记收支、管账本、定存款目标。",
+            diary: "写日记、贴相、录音，只存喺你自己手机。",
+            applock: "生成锁文件，配合捷径同日历锁定指定 App。",
+            checkin: "定时截屏发去接口，由模型回一句，须先确认。",
+            backup: "导出备份，换机换浏览器时导入还原。"
+          }
+        };
+        var COMFORT_PACKS = {
+          xiaoshu: {
+            tired: ["攰就瞓。唔准再撑，听话。", "今日够了。剩低嘅嘢，听日再讲。今晚你嘅任务淨係瞓觉。", "过来，挨住。咩都唔使讲，唞阵先。"],
+            sad: ["边个畀你委屈受？讲我知，唔准自己吞。", "唔准喊。过来，我喺度，慢慢讲。", "委屈唔係你嘅错。讲出嚟，剩低嘅我嚟。"],
+            stuck: ["唔想做就唞阵。唞够再讲，唔准逼自己逼到走音。", "节拍乱咗唔紧要，重新对准就得。一样一样嚟。", "今日做一样就够。做完，我批你休息。"],
+            down: ["唔开心唔使理由。过来，挨住我，咩都唔使讲。", "底噪大咗啲啫，唔係你坏咗。降下噪，听日再讲。", "今日唔开心，係今日嘅事。听日嘅你，自有听日嘅节拍。"]
+          },
+          neutral: {
+            tired: ["攰就休息，剩低嘅听日再讲。", "你已经做得够多，先唞阵。", "放低手机，合埋眼唞一会。"],
+            sad: ["受委屈就讲出嚟，会好啲。", "唔係你嘅错，唔好自己扛。", "深呼吸，慢慢讲，我喺度听。"],
+            stuck: ["冇动力就唞阵，唔使逼自己。", "由最细嘅一件开始，一件就够。", "休息都係进度嘅一部分。"],
+            down: ["唔开心唔使理由，唞阵就好。", "今日唔开心，就由得今日过去。", "陪你坐阵，咩都唔使讲。"]
+          }
+        };
+        function activePackKey() {
+          try {
+            var p = currentPersona();
+            if (p.custom) return "neutral";
+            if (INTRO_PACKS[p.id]) return p.id;
+            return "david";
+          } catch (e) { return "david"; }
+        }
+        function activeComfortLines(moodKey) {
+          try {
+            var key = activePackKey();
+            if (key === "david") return comfort[moodKey] ? comfort[moodKey].lines : [];
+            var pack = COMFORT_PACKS[key];
+            if (pack && pack[moodKey] && pack[moodKey].length) return pack[moodKey];
+            return comfort[moodKey] ? comfort[moodKey].lines : [];
+          } catch (e) { return comfort[moodKey] ? comfort[moodKey].lines : []; }
+        }
+        function applyCopyPack() {
+          try {
+            var key = activePackKey();
+            var pack = INTRO_PACKS[key] || {};
+            INTRO_KEYS.forEach(function (k) {
+              var el = introElFor(k);
+              if (!el) return;
+              var txt = (typeof pack[k] === "string" && pack[k]) ? pack[k] : DAVID_INTROS[k];
+              if (typeof txt === "string") el.textContent = txt;
+            });
+          } catch (e) {}
+          try { lastIdx = -1; drawComfort(); } catch (e) {}
+        }
         var CHAT_API_BASE = "https://ixybgwvppukutcawkhxe.supabase.co/functions/v1/david-chat";
         /* 預設陪伴者清單：以後要加新嘅預設人設，喺呢度加多一項就得
            （id 會做 personaId 傳去接口，name 顯示名，blurb 一句簡介，avatar 頭像網址）。 */
         var COMPANION_PRESETS = [
-          { id: "david", name: "王大偉", blurb: "伦敦志诚资本掌舵人", avatar: "https://drive.google.com/thumbnail?id=13q9LnzpLvhTpX9R92GiUGRAwFo7kCmvS&sz=w180" }
+          { id: "david", name: "王大偉", blurb: "众信集团副总裁", avatar: "https://drive.google.com/thumbnail?id=13q9LnzpLvhTpX9R92GiUGRAwFo7kCmvS&sz=w180" },
+          { id: "xiaoshu", name: "小叔", blurb: "易思音乐总裁，绝对音准的陈阎王", avatar: "https://drive.google.com/thumbnail?id=1PmgHYrDnc7Ka4YN1nHosDEXUvnd6bJN8&sz=w180" }
         ];
         function allPersonas() {
           var list = COMPANION_PRESETS.map(function (p) {
@@ -3436,9 +3599,10 @@
           if (!chatHistories[activePersonaId]) chatHistories[activePersonaId] = [];
           chatHistory = chatHistories[activePersonaId];
         }
-        /* 提示文字：王大偉嗰陣用返佢口吻；揀咗自訂人設嗰陣，用中性直白講法 */
+        /* 提示文字：得王大偉嗰陣先用返佢口吻；其他陪伴者（預設定自訂）一律用中性直白講法 */
         function chatT(davidText, neutralText) {
-          return currentPersona().custom ? neutralText : davidText;
+          try { return currentPersona().id === "david" ? davidText : neutralText; }
+          catch (e) { return neutralText; }
         }
         var CHAT_PRESETS = {
           deepseek: { provider: "openai", baseUrl: "https://api.deepseek.com" },
@@ -3762,7 +3926,14 @@
             model: chatEffectiveModel(),
             messages: context
           };
-          if (p.custom) body.persona = p.desc; else body.personaId = p.id;
+          if (p.custom) body.persona = p.desc;
+          else {
+            body.personaId = p.id;
+            try {
+              var pov = personaOverrides[p.id];
+              if (typeof pov === "string" && pov) body.persona = pov;
+            } catch (e) {}
+          }
           var mcp = chatEnabledMcpServers();
           if (mcp.length) body.mcpServers = mcp;
           if (confirmations && confirmations.length) body.confirmations = confirmations;
@@ -4112,9 +4283,11 @@
           btn.innerHTML = "";
           btn.title = "而家陪你傾計嘅係：" + p.name + "（撳嚟切換陪伴者）";
           btn.setAttribute("aria-label", "而家陪你傾計嘅係 " + p.name + "，撳嚟切換陪伴者");
-          if (p.avatar) {
+          var headAvatar = p.avatar;
+          try { if (avatarOverrides[p.id]) headAvatar = avatarOverrides[p.id]; } catch (e) {}
+          if (headAvatar) {
             var img = document.createElement("img");
-            img.src = p.avatar;
+            img.src = headAvatar;
             img.alt = p.name;
             img.onerror = function () {
               btn.innerHTML = "";
@@ -4139,9 +4312,11 @@
             row.className = "persona-item" + (p.id === activePersonaId ? " on" : "");
             var av = document.createElement("span");
             av.className = "p-avatar";
-            if (p.avatar) {
+            var rowAvatar = p.avatar;
+            try { if (avatarOverrides[p.id]) rowAvatar = avatarOverrides[p.id]; } catch (e) {}
+            if (rowAvatar) {
               var img = document.createElement("img");
-              img.src = p.avatar;
+              img.src = rowAvatar;
               img.alt = "";
               img.onerror = function () {
                 av.innerHTML = "";
@@ -4167,6 +4342,14 @@
             bl.textContent = p.blurb || "";
             tx.appendChild(nm);
             tx.appendChild(bl);
+            try {
+              if (!p.custom && typeof personaOverrides[p.id] === "string" && personaOverrides[p.id]) {
+                var bd = document.createElement("span");
+                bd.className = "p-badge";
+                bd.textContent = "已修改";
+                tx.appendChild(bd);
+              }
+            } catch (e) {}
             row.appendChild(av);
             row.appendChild(tx);
             if (p.id === activePersonaId) {
@@ -4188,6 +4371,7 @@
               });
               row.appendChild(del);
             }
+            try { buildPersonaRowActions(row, p); } catch (e) {}
             row.addEventListener("click", function () { switchPersona(p.id); });
             list.appendChild(row);
           });
@@ -4203,10 +4387,265 @@
           renderPersonaAvatar();
           renderPersonaPanel();
           renderChat();
+          try { applyCopyPack(); } catch (e) {}
           chatStatus("");
           $("personaPanel").style.display = "none";
           $("personaAvatar").setAttribute("aria-expanded", "false");
         }
+        /* ---------- 改人设（預設限定）＋ 换头像（全部陪伴者） ----------
+           改人设：去接口 GET /personas 攞返預設人設原文（回傳形狀以
+           {personas:[{id, persona}]} 為準，另外幾種形狀都防禦式兼容），
+           粉絲改完只存喺本機 personaOverrides，唔入備份；傾計嗰陣會連同
+           personaId 一齊帶出去。换头像：相片只喺本機壓縮成細圖存低，
+           唔會上傳去任何地方，一樣唔入備份。成段包住 try/catch，
+           出咩岔子都唔會拖冧頁面同傾計。 */
+        var editingPersonaId = "";
+        var pendingAvatarForId = "";
+        var pendingAvatarResetId = "";
+        function avatarFeatureOk() {
+          try {
+            if (!window.FileReader) return false;
+            var c = document.createElement("canvas");
+            return !!(c && c.getContext && c.toDataURL);
+          } catch (e) { return false; }
+        }
+        function personaById(id) {
+          try {
+            var list = allPersonas();
+            for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
+          } catch (e) {}
+          return null;
+        }
+        function buildPersonaRowActions(row, p) {
+          var box = document.createElement("span");
+          box.className = "p-actions";
+          if (!p.custom) {
+            var editBtn = document.createElement("button");
+            editBtn.type = "button";
+            editBtn.className = "ghost small";
+            editBtn.textContent = "改人设";
+            editBtn.addEventListener("click", function (e) {
+              if (e && e.stopPropagation) e.stopPropagation();
+              try { openPersonaEditor(p.id); } catch (err) {}
+            });
+            box.appendChild(editBtn);
+          }
+          if (avatarFeatureOk()) {
+            var avBtn = document.createElement("button");
+            avBtn.type = "button";
+            avBtn.className = "ghost small";
+            avBtn.textContent = "换头像";
+            avBtn.addEventListener("click", function (e) {
+              if (e && e.stopPropagation) e.stopPropagation();
+              try {
+                pendingAvatarForId = p.id;
+                var inp = $("avatarFileInput");
+                if (inp) { inp.value = ""; inp.click(); }
+              } catch (err) {}
+            });
+            box.appendChild(avBtn);
+            var hasOv = false;
+            try { hasOv = !!avatarOverrides[p.id]; } catch (e2) {}
+            if (hasOv) {
+              var rsBtn = document.createElement("button");
+              rsBtn.type = "button";
+              rsBtn.className = "ghost small";
+              rsBtn.textContent = "还原头像";
+              rsBtn.addEventListener("click", function (e) {
+                if (e && e.stopPropagation) e.stopPropagation();
+                try {
+                  pendingAvatarResetId = p.id;
+                  $("avatarResetText").textContent = "真係還原「" + p.name + "」個頭像？會用返預設嗰張，你上傳嗰張會清走。";
+                  $("avatarResetConfirm").style.display = "block";
+                } catch (err) {}
+              });
+              box.appendChild(rsBtn);
+            }
+          }
+          if (box.childNodes.length) row.appendChild(box);
+        }
+        function personaEditStatus(msg) { try { var el = $("personaEditStatus"); if (el) el.textContent = msg; } catch (e) {} }
+        function avatarStatusMsg(msg) { try { var el = $("avatarStatus"); if (el) el.textContent = msg; } catch (e) {} }
+        function personaEditCountUpdate() {
+          try {
+            var ta = $("personaEditText");
+            $("personaEditCount").textContent = (ta ? ta.value.length : 0) + " / 4000";
+          } catch (e) {}
+        }
+        function parsePersonasMap(data) {
+          var map = {};
+          try {
+            if (!data || typeof data !== "object") return map;
+            var src = (data.personas !== undefined && data.personas !== null) ? data.personas : data;
+            if (Object.prototype.toString.call(src) === "[object Array]") {
+              src.forEach(function (en) {
+                if (en && typeof en.id === "string") {
+                  var t = "";
+                  if (typeof en.persona === "string") t = en.persona;
+                  else if (typeof en.text === "string") t = en.text;
+                  else if (typeof en.prompt === "string") t = en.prompt;
+                  if (t) map[en.id] = t;
+                }
+              });
+            } else if (src && typeof src === "object") {
+              Object.keys(src).forEach(function (k) {
+                if (typeof src[k] === "string" && src[k]) map[k] = src[k];
+              });
+            }
+          } catch (e) {}
+          return map;
+        }
+        function openPersonaEditor(id) {
+          editingPersonaId = id;
+          var p = personaById(id);
+          var name = p ? p.name : id;
+          try { $("personaResetConfirm").style.display = "none"; } catch (e) {}
+          try { $("personaEditTitle").textContent = "改人设：" + name; } catch (e) {}
+          try { $("personaEditPanel").style.display = "block"; } catch (e) {}
+          var ta = $("personaEditText");
+          var existing = "";
+          try { existing = (typeof personaOverrides[id] === "string") ? personaOverrides[id] : ""; } catch (e) {}
+          if (existing) {
+            if (ta) ta.value = existing;
+            personaEditCountUpdate();
+            personaEditStatus("呢位而家用緊你改過嗰版（只存喺你部機）。想用返預設，撳下面「还原预设」。");
+            return;
+          }
+          if (ta) ta.value = "";
+          personaEditCountUpdate();
+          personaEditStatus("拉緊預設人設……");
+          try {
+            fetch(CHAT_API_BASE + "/personas", { method: "GET" }).then(function (res) {
+              return res.json().then(function (data) { return data; }, function () { return null; });
+            }).then(function (data) {
+              if (editingPersonaId !== id) return;
+              var map = parsePersonasMap(data);
+              var txt = (typeof map[id] === "string") ? map[id] : "";
+              if (txt) {
+                if (ta) ta.value = txt.slice(0, 4000);
+                personaEditCountUpdate();
+                personaEditStatus("拉到喇。改完撳「保存」，之後傾計就會用你改呢版；唔改就撳「取消」。");
+              } else {
+                personaEditStatus(id === "david"
+                  ? "接口嗰邊冇返到呢位嘅人設原文返嚟。你可以照樣喺下面打字改，打完撳保存，一樣生效。"
+                  : "沒有拉到這位的人設原文。你可以照樣在下面輸入，保存後一樣生效。");
+              }
+            }, function () {
+              if (editingPersonaId !== id) return;
+              personaEditStatus(id === "david"
+                ? "拉唔到接口嗰邊嘅預設人設——多數係網絡問題。你可以照樣喺下面打字改，打完撳保存，一樣生效。"
+                : "拉不到預設人設，可能是網絡問題。你可以照樣在下面輸入，保存後一樣生效。");
+            });
+          } catch (e) {
+            personaEditStatus("拉不到預設人設，可能是網絡問題。你可以照樣在下面輸入，保存後一樣生效。");
+          }
+        }
+        function closePersonaEditor() {
+          editingPersonaId = "";
+          try { $("personaEditPanel").style.display = "none"; } catch (e) {}
+          try { $("personaResetConfirm").style.display = "none"; } catch (e) {}
+        }
+        function compressAvatarFile(file, done) {
+          var reader = new FileReader();
+          reader.onload = function () {
+            try {
+              var img = new Image();
+              img.onload = function () {
+                try {
+                  function render(size, quality) {
+                    var cv = document.createElement("canvas");
+                    cv.width = size; cv.height = size;
+                    var ctx = cv.getContext("2d");
+                    var side = Math.min(img.naturalWidth || img.width, img.naturalHeight || img.height);
+                    var sx = ((img.naturalWidth || img.width) - side) / 2;
+                    var sy = ((img.naturalHeight || img.height) - side) / 2;
+                    ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+                    return cv.toDataURL("image/jpeg", quality);
+                  }
+                  var url = render(256, 0.8);
+                  if (url.length > 300 * 1024) url = render(160, 0.7);
+                  if (url.length > 300 * 1024) { done(null, "張相壓完都太大，換張細啲嘅再試。"); return; }
+                  done(url, "");
+                } catch (e) { done(null, "張相處理唔到，換一張再試。"); }
+              };
+              img.onerror = function () { done(null, "張相讀唔到，換一張再試。"); };
+              img.src = String(reader.result || "");
+            } catch (e) { done(null, "張相處理唔到，換一張再試。"); }
+          };
+          reader.onerror = function () { done(null, "張相讀唔到，換一張再試。"); };
+          try { reader.readAsDataURL(file); } catch (e) { done(null, "張相讀唔到，換一張再試。"); }
+        }
+        try {
+          $("personaEditText").addEventListener("input", personaEditCountUpdate);
+          $("personaEditCancel").addEventListener("click", function () { closePersonaEditor(); });
+          $("personaEditSave").addEventListener("click", function () {
+            try {
+              var id = editingPersonaId;
+              if (!id) { closePersonaEditor(); return; }
+              var v = $("personaEditText").value.slice(0, 4000);
+              if (v.trim()) personaOverrides[id] = v; else delete personaOverrides[id];
+              storageSave();
+              closePersonaEditor();
+              renderPersonaPanel();
+              toast("人設保存好喇，傾計嗰陣會用你改呢版。");
+            } catch (e) { personaEditStatus("保存唔到，部機唔合作，再試下。"); }
+          });
+          $("personaEditReset").addEventListener("click", function () {
+            try {
+              var p = personaById(editingPersonaId);
+              $("personaResetText").textContent = "真係還原「" + (p ? p.name : "") + "」嘅預設人設？你改過嗰版會清走，冇得返轉頭。";
+              $("personaResetConfirm").style.display = "block";
+            } catch (e) {}
+          });
+          $("personaResetNo").addEventListener("click", function () {
+            try { $("personaResetConfirm").style.display = "none"; } catch (e) {}
+          });
+          $("personaResetYes").addEventListener("click", function () {
+            try {
+              if (editingPersonaId) delete personaOverrides[editingPersonaId];
+              storageSave();
+              closePersonaEditor();
+              renderPersonaPanel();
+              toast("還原好喇，用返預設人設。");
+            } catch (e) {}
+          });
+          $("avatarResetNo").addEventListener("click", function () {
+            pendingAvatarResetId = "";
+            try { $("avatarResetConfirm").style.display = "none"; } catch (e) {}
+          });
+          $("avatarResetYes").addEventListener("click", function () {
+            try {
+              if (pendingAvatarResetId) delete avatarOverrides[pendingAvatarResetId];
+              pendingAvatarResetId = "";
+              storageSave();
+              $("avatarResetConfirm").style.display = "none";
+              renderPersonaAvatar();
+              renderPersonaPanel();
+              avatarStatusMsg("頭像還原好喇，用返預設嗰張。");
+            } catch (e) {}
+          });
+          $("avatarFileInput").addEventListener("change", function () {
+            try {
+              var f = this.files && this.files[0];
+              var id = pendingAvatarForId;
+              pendingAvatarForId = "";
+              this.value = "";
+              if (!f || !id) return;
+              if (f.type && f.type.indexOf("image/") !== 0) { avatarStatusMsg("呢個唔係相嚟，揀返張相再試。"); return; }
+              avatarStatusMsg("壓緊張相……");
+              compressAvatarFile(f, function (url, err) {
+                try {
+                  if (!url) { avatarStatusMsg(err || "張相處理唔到，換一張再試。"); return; }
+                  avatarOverrides[id] = url;
+                  storageSave();
+                  renderPersonaAvatar();
+                  renderPersonaPanel();
+                  avatarStatusMsg("頭像換好喇，得你部機睇得到，冇上傳去邊度。");
+                } catch (e) { avatarStatusMsg("換唔到，部機唔合作，再試下。"); }
+              });
+            } catch (e) {}
+          });
+        } catch (e) {}
         $("personaAvatar").addEventListener("click", function () {
           var panel = $("personaPanel");
           var open = panel.style.display !== "none";
@@ -4258,6 +4697,7 @@
           storageSave();
           renderPersonaAvatar();
           renderPersonaPanel();
+          try { applyCopyPack(); } catch (e) {}
         });
 
         /* 初始化聊天區 */
@@ -4276,6 +4716,7 @@
         renderPersonaAvatar();
         renderPersonaPanel();
         renderChat();
+        try { applyCopyPack(); } catch (e) {}
       })();
     </script>
     <script>
