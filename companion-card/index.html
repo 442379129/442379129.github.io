@@ -1091,6 +1091,10 @@
             <button class="ghost" id="checkinCopyAll" type="button">複製全部（JSON）</button>
           </div>
           <p class="hint" id="checkinCfgStatus" role="status"></p>
+          <div id="checkinCopyFallback" style="display:none;">
+            <label class="flabel" for="checkinCopyBox">自動複製唔到嗰陣，內容放咗喺呢度：撳落去全選，自己複製返就得</label>
+            <textarea id="checkinCopyBox" readonly rows="5" aria-label="手動複製用嘅查崗配置內容"></textarea>
+          </div>
           <p class="hint" style="color:var(--rose);">提你一句，好認真嗰種：呢份配置入面有你嘅 API 鎖匙。搭好條快捷指令之後，千祈唔好將佢分享畀任何人——邊個攞到，邊個就花到你賬戶入面嘅錢，呢樣嘢唔講得笑。</p>
           <h3 class="subhead">快捷指令，點樣搭</h3>
           <p class="sub" style="margin-bottom:6px;">未搭過都唔使驚，照住下面一步步撳就得：</p>
@@ -1098,7 +1102,7 @@
             <li>打開「快捷指令」App，新增一個自動化，觸發條件揀「特定时间（繁體：特定時間）」，定好你想畀我查崗嘅鐘點。想要日曆通知觸發嘅，就配合下面個日程生成器——觸發嗰陣，篩日曆入面標題包含「你在干什么」嗰啲事件。</li>
             <li>第一個動作加「显示提示（繁體：顯示提示）」——加動作嗰陣搜「提示」就揾到。內容寫「现在可以截屏吗？」：撳「好」，就繼續落去；撳「取消」，成條快捷指令即刻停，唔使另外加分支，佢自己識停。</li>
             <li>加「等待」動作（簡體繁體都係呢個名），等 2 秒，等你收拾好個畫面先。</li>
-            <li>加截屏嗰個動作：搜「截」字，揀截屏嗰個就得。繁體系統入面，佢個名可能係「截圖」、「截取螢幕快照」一類，名點寫都好，認準相機／屏幕嗰個圖標，唔好揀錯。</li>
+            <li>加「截屏（繁體：拍攝螢幕截圖）」動作：搜「截」字就揾到，揀相機圖標嗰個，佢會即刻影低而家個屏幕。唔好揀錯其他嗰啲——例如「取得最新的螢幕截圖」係去相簿攞返舊嗰張，唔係即刻影嗰個。</li>
             <li>加「Base64 编码（繁體：Base64 編碼）」動作，搜「Base64」就揾到，將頭先嗰張截圖編碼。</li>
             <li>加「词典（繁體：詞典）」動作，搜「典」字就揾到。照上面「查崗配置」嗰啲欄位逐個填入去：provider、baseUrl、apiKey、model、personaId、mime，一欄一個，照抄就得；再加多一欄 image，值揀返上一步個 Base64 編碼結果。</li>
             <li>加「获取 URL 内容（繁體：取得 URL 內容）」動作，搜「URL」就揾到：網址填返上面嗰個接口地址，方法揀 POST，請求正文用返上一步嗰個詞典。</li>
@@ -2936,15 +2940,47 @@
           };
         }
         function checkinCfgStatus(msg) { $("checkinCfgStatus").textContent = msg; }
+        /* 複製要有後備：App 內置瀏覽器成日擋 clipboard API，寫入失敗嗰陣，
+           先試舊式 execCommand；再唔得，就將內容原封放落配置區下面個唯讀
+           文本框，畀粉絲自己全選手動複製。成功失敗都要出聲（狀態行＋toast），
+           唔准靜默冇反應。 */
+        function showCheckinCopyFallback(text) {
+          var box = $("checkinCopyBox");
+          box.value = text;
+          $("checkinCopyFallback").style.display = "";
+          box.focus();
+          box.select();
+          try { box.setSelectionRange(0, text.length); } catch (e) {}
+        }
         function copyCheckinText(text, okMsg) {
+          function done() {
+            $("checkinCopyFallback").style.display = "none";
+            checkinCfgStatus(okMsg);
+            toast(okMsg);
+          }
+          function fail() {
+            showCheckinCopyFallback(text);
+            var msg = "你部機唔畀自動複製，唔關你事。內容放咗喺下面個框度——撳落去已經全選好，你自己撳「複製」貼返過去，一樣得。";
+            checkinCfgStatus(msg);
+            toast(msg);
+          }
+          function legacy() {
+            var ta = document.createElement("textarea");
+            ta.value = text;
+            ta.setAttribute("readonly", "");
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            var ok = false;
+            try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+            document.body.removeChild(ta);
+            if (ok) done(); else fail();
+          }
           if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(function () {
-              checkinCfgStatus(okMsg);
-            }, function () {
-              checkinCfgStatus("複製唔到，部機唔合作，唔關你事。長撳嗰行字，自己抄返，一樣得。");
-            });
+            navigator.clipboard.writeText(text).then(done, legacy);
           } else {
-            checkinCfgStatus("你部機唔畀自動複製。長撳嗰行字，自己抄返，一樣得。");
+            legacy();
           }
         }
         function maskCheckinKey(k) {
@@ -2953,6 +2989,23 @@
           return k.slice(0, 4) + "••••••" + k.slice(-4);
         }
         function renderCheckinCfg() {
+          try {
+            renderCheckinCfgInner();
+          } catch (e) {
+            /* 點都唔好畀呢區成片空白：出返句提示，複製掣收起，等粉絲知下一步點做 */
+            var box = $("checkinCfg");
+            if (box && !box.firstChild) {
+              var p = document.createElement("p");
+              p.className = "hint";
+              p.style.marginTop = "2px";
+              p.textContent = "配置暫時讀唔到。去上面「同我傾下計」嗰區撳一次「保存設定」，再返嚟呢度睇下。";
+              box.appendChild(p);
+            }
+            var b = $("checkinCopyAll");
+            if (b) b.style.display = "none";
+          }
+        }
+        function renderCheckinCfgInner() {
           var box = $("checkinCfg");
           var cfg = checkinConfig();
           var btnAll = $("checkinCopyAll");
@@ -2990,7 +3043,16 @@
             box.appendChild(row);
           });
         }
-        renderCheckinCfg();
+        /* 首次渲染要押後：checkinConfig 會經 currentPersona 讀人設清單
+           COMPANION_PRESETS，而嗰份清單喺呢段程式碼之後先至賦值；而家即刻
+           渲染會拋錯，成段腳本喺呢度斷尾——配置區空白、「複製全部」冇接線、
+           連下面日程日期都冇初始化，就係咁嚟。等成段腳本跑完先渲染，
+           次序問題即刻冇晒；之後撳「保存設定」嗰陣嘅刷新唔受影響。 */
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", renderCheckinCfg);
+        } else {
+          setTimeout(renderCheckinCfg, 0);
+        }
         /* 喺聊天區撳完「保存設定」，呢邊即刻跟住刷新一次 */
         $("chatSaveSettings").addEventListener("click", function () { setTimeout(renderCheckinCfg, 0); });
         $("checkinCopyAll").addEventListener("click", function () {
