@@ -151,27 +151,6 @@
         color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 1px 8px;
       }
 
-      /* ---------- mreasonchan 雙模式揀關係卡（遮罩＋頁內卡片） ---------- */
-      .mode-overlay {
-        position: fixed; inset: 0; z-index: 66;
-        background: rgba(30, 18, 10, 0.55);
-        display: none; place-items: center; padding: 20px;
-      }
-      .mode-overlay.show { display: grid; }
-      .mode-overlay .mode-card {
-        background: var(--gold-soft); border-radius: 12px; padding: 18px;
-        max-width: 340px; width: 100%; box-shadow: var(--shadow); color: var(--ink);
-      }
-      .mode-overlay .mode-title { margin: 0 0 4px; font-weight: 700; font-size: 1.05rem; }
-      .mode-overlay .mode-sub { margin: 0 0 10px; font-size: 0.92rem; color: var(--ink-soft); }
-      .mode-overlay .mode-opt {
-        display: block; width: 100%; text-align: left; margin-top: 10px;
-        padding: 12px 14px;
-      }
-      .mode-overlay .mode-opt-name { display: block; font-weight: 700; }
-      .mode-overlay .mode-opt-sub { display: block; font-size: 0.85rem; font-weight: 500; opacity: 0.85; margin-top: 2px; }
-      .mode-overlay .mode-cancel { display: block; width: 100%; margin-top: 12px; }
-
       .daily {
         margin-top: 18px;
         background: var(--surface);
@@ -1370,22 +1349,6 @@
       <button class="ghost closex" id="imgOverlayClose" type="button">閂</button>
       <img id="imgOverlayImg" alt="日記相片大圖" />
     </div>
-    <!-- mreasonchan 雙模式：揀關係卡（撳卡外面只閂卡，唔切換） -->
-    <div class="mode-overlay" id="personaModeOverlay" role="dialog" aria-modal="true" aria-labelledby="personaModeTitle">
-      <div class="mode-card">
-        <p class="mode-title" id="personaModeTitle">mreasonchan</p>
-        <p class="mode-sub" id="personaModeSub">拣一种关系：</p>
-        <button type="button" class="mode-opt" id="personaModeOpt1">
-          <span class="mode-opt-name">1.0 · 亲密关系</span>
-          <span class="mode-opt-sub">Daddy 同小朋友</span>
-        </button>
-        <button type="button" class="mode-opt" id="personaModeOpt2">
-          <span class="mode-opt-name">2.0 · 偶像粉丝</span>
-          <span class="mode-opt-sub">歌手 Eason 同歌迷</span>
-        </button>
-        <button type="button" class="ghost mode-cancel" id="personaModeCancel">取消</button>
-      </div>
-    </div>
     <div class="toast" id="toast"></div>
 
     <!-- 懸浮導航球：去到邊都撳得到，唔使碌嚟碌去 -->
@@ -1568,6 +1531,7 @@
            對話記錄按陪伴者分開存入 chatHistories（id -> 訊息陣列，各自上限 200 條）；
            chatHistory 變量永遠指向而家揀中嗰位陪伴者嗰份記錄。 */
         var customPersonas = []; // {id, name, desc}
+        var copiedPersonas = []; // 复制出嚟嘅陪伴者 {id, name, blurb, avatar, baseId, rootKey, rootName, version, basePersona}，跟自訂一樣只存本機
         var personaOverrides = {}; // 預設人設嘅本機改版 {presetId: 人設全文}，唔入備份
         var avatarOverrides = {}; // 本機自訂頭像 {personaId: data URL}，唔入備份
         var activePersonaId = "david";
@@ -1631,6 +1595,22 @@
           if (Object.prototype.toString.call(savedData.customPersonas) === "[object Array]") {
             customPersonas = savedData.customPersonas.filter(function (p) {
               return p && typeof p.id === "string" && typeof p.name === "string" && typeof p.desc === "string";
+            });
+          }
+          if (Object.prototype.toString.call(savedData.copiedPersonas) === "[object Array]") {
+            copiedPersonas = savedData.copiedPersonas.filter(function (p) {
+              return p && typeof p.id === "string" && typeof p.name === "string";
+            }).map(function (p) {
+              return {
+                id: p.id, name: p.name,
+                blurb: typeof p.blurb === "string" ? p.blurb : "",
+                avatar: (typeof p.avatar === "string" && p.avatar.length <= 400000) ? p.avatar : "",
+                baseId: typeof p.baseId === "string" ? p.baseId : "",
+                rootKey: (typeof p.rootKey === "string" && p.rootKey) ? p.rootKey : p.id,
+                rootName: (typeof p.rootName === "string" && p.rootName) ? p.rootName : p.name,
+                version: (typeof p.version === "number" && p.version >= 1) ? Math.floor(p.version) : 1,
+                basePersona: (typeof p.basePersona === "string") ? p.basePersona.slice(0, 4000) : ""
+              };
             });
           }
           try {
@@ -1713,7 +1693,7 @@
             periodRemindOn: periodRemindOn, periodCycle: $("periodCycle").value,
             ledgers: ledgers, ledgerSeq: ledgerSeq, txSeq: txSeq, activeLedgerId: activeLedgerId,
             goals: goals, goalSeq: goalSeq, wakeLockOn: wakeLockOn,
-            chatSettings: chatSettings, chatHistories: chatHistories, customPersonas: customPersonas, activePersonaId: activePersonaId,
+            chatSettings: chatSettings, chatHistories: chatHistories, customPersonas: customPersonas, copiedPersonas: copiedPersonas, activePersonaId: activePersonaId,
             personaOverrides: personaOverrides, avatarOverrides: avatarOverrides,
             chatProfiles: chatProfiles, activeChatProfileId: activeChatProfileId, chatBgId: chatBgId
           };
@@ -3319,12 +3299,13 @@
            （VALARM，TRIGGER -PT5M），時間用 UTC Z 格式，UID 每次唯一。 */
         var CHECKIN_API_URL = "https://ixybgwvppukutcawkhxe.supabase.co/functions/v1/david-chat/checkin";
         function checkinConfig() {
+          var cp = currentPersona();
           return {
             provider: chatSettings.provider || "",
             baseUrl: chatApiBase(),
             apiKey: chatSettings.apiKey || "",
             model: (chatSettings.modelManual || "").trim() || (chatSettings.model || "").trim(),
-            personaId: currentPersona().id,
+            personaId: (cp.copy && cp.baseId) ? cp.baseId : cp.id,
             mime: "image/png"
           };
         }
@@ -4019,8 +4000,7 @@
             if (txt) el.textContent = txt;
           } catch (e) {}
         }
-        /* 載入提示跟陪伴者顯示名：mreasonchan2 經 currentPersona() 會攞返
-           mreasonchan 嗰個名；自訂陪伴者就用返自訂名。 */
+        /* 載入提示跟陪伴者顯示名：邊位都係直接用佢個名。 */
         function renderBootLine() {
           try {
             var el = $("bootLine");
@@ -4033,6 +4013,10 @@
         function activePackKey() {
           try {
             var p = currentPersona();
+            if (p.copy) {
+              if (p.baseId && INTRO_PACKS[p.baseId]) return p.baseId;
+              return p.baseId ? "david" : "neutral";
+            }
             if (p.custom) return "neutral";
             if (INTRO_PACKS[p.id]) return p.id;
             return "david";
@@ -4072,7 +4056,8 @@
           { id: "xiaoshu", name: "小叔", blurb: "易思音乐总裁，绝对音准的陈阎王", avatar: "https://drive.google.com/thumbnail?id=1PmgHYrDnc7Ka4YN1nHosDEXUvnd6bJN8&sz=w180" },
           { id: "pg", name: "pg", blurb: "乐坛吹神，烟火气爹系陈生", avatar: "https://drive.google.com/thumbnail?id=1n2rdGZqGw8M1tEPr0jHQoze3qMhFDgfF&sz=w180" },
           { id: "qingsong", name: "霍青松", blurb: "红油起家的金融巨鳄，笑面虎霍生", avatar: "https://drive.google.com/thumbnail?id=1DjLOCZ9W3vdBUpQ9OHee3VW3V6ukTpJs&sz=w180" },
-          { id: "mreasonchan", name: "mreasonchan", blurb: "半百歌神，叠衫煲汤的管家 Daddy", avatar: "https://drive.google.com/thumbnail?id=1t6uH_FPcDgjvzlui39p6dQwMEZj9LaAA&sz=w180" }
+          { id: "mreasonchan", name: "mreasonchan（角色线）", blurb: "半百歌神，叠衫煲汤的管家 Daddy", avatar: "https://drive.google.com/thumbnail?id=1t6uH_FPcDgjvzlui39p6dQwMEZj9LaAA&sz=w180" },
+          { id: "mreasonchan2", name: "mreasonchan（陪伴线）", blurb: "半百歌神，叠衫煲汤的管家 Daddy", avatar: "https://drive.google.com/thumbnail?id=1t6uH_FPcDgjvzlui39p6dQwMEZj9LaAA&sz=w180" }
         ];
         function allPersonas() {
           var list = COMPANION_PRESETS.map(function (p) {
@@ -4081,29 +4066,18 @@
           customPersonas.forEach(function (p) {
             list.push({ id: p.id, name: p.name, blurb: p.desc, avatar: "", desc: p.desc, custom: true });
           });
+          copiedPersonas.forEach(function (p) {
+            list.push({ id: p.id, name: p.name, blurb: p.blurb, avatar: p.avatar || "", desc: "", custom: false, copy: true, baseId: p.baseId, rootKey: p.rootKey, rootName: p.rootName, version: p.version, basePersona: p.basePersona });
+          });
           return list;
         }
-        /* mreasonchan 雙模式：mreasonchan2（2.0 偶像）唔喺預設清單入面，
-           顯示一律歸返 mreasonchan 預設（名／簡介／頭像），但 id 保留
-           mreasonchan2，聊天同查崗發出去嘅 personaId 先至分得開兩個模式。 */
-        function mrModePersona(id) {
-          try {
-            var list = allPersonas();
-            for (var i = 0; i < list.length; i++) {
-              if (list[i].id === "mreasonchan") {
-                return { id: id, name: list[i].name, blurb: list[i].blurb, avatar: list[i].avatar, desc: list[i].desc || "", custom: false };
-              }
-            }
-          } catch (e) {}
+        function copyById(id) {
+          for (var i = 0; i < copiedPersonas.length; i++) { if (copiedPersonas[i].id === id) return copiedPersonas[i]; }
           return null;
         }
-        /* 兩個模式共用一個頭像：自訂頭像一律存喺 "mreasonchan" 呢個 key */
+        /* 兩條 mreasonchan 線共用一個頭像：自訂頭像一律存喺 "mreasonchan" 呢個 key */
         function personaAvatarKey(id) { return id === "mreasonchan2" ? "mreasonchan" : id; }
         function currentPersona() {
-          if (activePersonaId === "mreasonchan2") {
-            var mr = mrModePersona("mreasonchan2");
-            if (mr) return mr;
-          }
           var list = allPersonas();
           for (var i = 0; i < list.length; i++) { if (list[i].id === activePersonaId) return list[i]; }
           return list[0];
@@ -4891,7 +4865,14 @@
             model: chatEffectiveModel(),
             messages: context
           };
-          if (p.custom) body.persona = p.desc;
+          if (p.copy) {
+            var cov = null;
+            try { cov = personaOverrides[p.id]; } catch (e) {}
+            if (typeof cov === "string" && cov) body.persona = cov;
+            else if (typeof p.basePersona === "string" && p.basePersona) body.persona = p.basePersona;
+            else if (p.baseId) body.personaId = p.baseId;
+            else body.persona = p.desc || "";
+          } else if (p.custom) body.persona = p.desc;
           else {
             body.personaId = p.id;
             try {
@@ -5305,14 +5286,11 @@
           list.innerHTML = "";
           allPersonas().forEach(function (p) {
             var row = document.createElement("div");
-            /* mreasonchan 雙模式：任一模式 active，呢行都算揀中咗 */
-            var mrActive = false;
-            try { mrActive = p.id === "mreasonchan" && (activePersonaId === "mreasonchan" || activePersonaId === "mreasonchan2"); } catch (e) {}
-            row.className = "persona-item" + ((p.id === activePersonaId || mrActive) ? " on" : "");
+            row.className = "persona-item" + ((p.id === activePersonaId) ? " on" : "");
             var av = document.createElement("span");
             av.className = "p-avatar";
             var rowAvatar = p.avatar;
-            try { if (avatarOverrides[p.id]) rowAvatar = avatarOverrides[p.id]; } catch (e) {}
+            try { var rak = personaAvatarKey(p.id); if (avatarOverrides[rak]) rowAvatar = avatarOverrides[rak]; } catch (e) {}
             if (rowAvatar) {
               var img = document.createElement("img");
               img.src = rowAvatar;
@@ -5343,10 +5321,6 @@
             tx.appendChild(bl);
             try {
               var hasMod = !p.custom && typeof personaOverrides[p.id] === "string" && !!personaOverrides[p.id];
-              /* mreasonchan：任一模式有改版都出「已修改」 */
-              if (!hasMod && p.id === "mreasonchan") {
-                hasMod = typeof personaOverrides["mreasonchan2"] === "string" && !!personaOverrides["mreasonchan2"];
-              }
               if (hasMod) {
                 var bd = document.createElement("span");
                 bd.className = "p-badge";
@@ -5354,24 +5328,15 @@
                 tx.appendChild(bd);
               }
             } catch (e) {}
-            /* mreasonchan 模式徽章：active 先出，寫明而家係邊個模式 */
-            try {
-              if (mrActive) {
-                var mb = document.createElement("span");
-                mb.className = "p-badge";
-                mb.textContent = activePersonaId === "mreasonchan2" ? "2.0 偶像" : "1.0 亲密";
-                tx.appendChild(mb);
-              }
-            } catch (e) {}
             row.appendChild(av);
             row.appendChild(tx);
-            if (p.id === activePersonaId || mrActive) {
+            if (p.id === activePersonaId) {
               var ck = document.createElement("span");
               ck.className = "p-check";
               ck.textContent = "✓ 而家係佢";
               row.appendChild(ck);
             }
-            if (p.custom) {
+            if (p.custom || p.copy) {
               var del = document.createElement("button");
               del.type = "button";
               del.className = "p-del";
@@ -5386,8 +5351,6 @@
             }
             try { buildPersonaRowActions(row, p); } catch (e) {}
             row.addEventListener("click", function () {
-              /* mreasonchan 唔直接切換：每次撳都要先彈卡問揀邊種關係 */
-              if (p.id === "mreasonchan") { try { openPersonaModeChooser("switch"); } catch (e) {} return; }
               switchPersona(p.id);
             });
             list.appendChild(row);
@@ -5410,45 +5373,52 @@
           $("personaPanel").style.display = "none";
           $("personaAvatar").setAttribute("aria-expanded", "false");
         }
-        /* ---------- mreasonchan 雙模式揀關係卡 ----------
-           action："switch"＝撳列表行揀模式切換；"edit"＝撳「改人设」先揀改邊個模式。
-           撳選項先做嘢；撳取消或者撳卡外面淨係閂卡，唔切換、唔開編輯器。
-           成段包住 try/catch，出咩岔子都唔會拖冧頁面。 */
-        var personaModeAction = "switch";
-        function openPersonaModeChooser(action) {
+        /* ---------- 复制陪伴者 ----------
+           任何一位陪伴者都可以复制：复制出嚟嗰位自動叫「原名 1.0／2.0／3.0……」，
+           有自己獨立嘅聊天記錄同人設改版，預設原版原封不动。复制嗰陣會帶走
+           而家生效嗰版人設（改過就帶改過嗰版，冇改過就跟預設走）同而家個頭像。
+           副本可以再复制，編號永遠跟返最初嗰位（rootKey）排，唔會疊名。 */
+        function duplicatePersona(sourceId) {
           try {
-            personaModeAction = action === "edit" ? "edit" : "switch";
-            var title = $("personaModeTitle");
-            var sub = $("personaModeSub");
-            if (personaModeAction === "edit") {
-              if (title) title.textContent = "改边个模式嘅人设？";
-              if (sub) sub.style.display = "none";
-            } else {
-              if (title) title.textContent = "mreasonchan";
-              if (sub) { sub.textContent = "拣一种关系："; sub.style.display = ""; }
+            var src = personaById(sourceId);
+            if (!src) return;
+            var rootKey, rootName, baseId;
+            if (src.copy) { rootKey = src.rootKey; rootName = src.rootName; baseId = src.baseId; }
+            else if (src.custom) { rootKey = src.id; rootName = src.name; baseId = ""; }
+            else { rootKey = src.id; rootName = src.name; baseId = src.id; }
+            var maxV = 0;
+            copiedPersonas.forEach(function (c) {
+              if (c.rootKey === rootKey && typeof c.version === "number" && c.version > maxV) maxV = c.version;
+            });
+            var version = maxV + 1;
+            var basePersona = "";
+            try {
+              var ov = personaOverrides[src.id];
+              if (typeof ov === "string" && ov) basePersona = ov;
+            } catch (e) {}
+            if (!basePersona) {
+              if (src.copy) basePersona = src.basePersona || "";
+              else if (src.custom) basePersona = src.desc || "";
+              else basePersona = "";
             }
-            $("personaModeOverlay").classList.add("show");
+            var avatar = src.avatar || "";
+            try {
+              var ak = personaAvatarKey(src.id);
+              if (avatarOverrides[ak]) avatar = avatarOverrides[ak];
+            } catch (e2) {}
+            var nid = "copy-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+            var name = rootName + " " + version + ".0";
+            copiedPersonas.push({
+              id: nid, name: name, blurb: src.blurb || "", avatar: avatar,
+              baseId: baseId, rootKey: rootKey, rootName: rootName, version: version,
+              basePersona: basePersona.slice(0, 4000)
+            });
+            if (!chatHistories[nid]) chatHistories[nid] = [];
+            storageSave();
+            renderPersonaPanel();
+            toast("复制好喇：「" + name + "」。佢有自己嘅聊天记录同人设，预设嗰位原封不动。");
           } catch (e) {}
         }
-        function closePersonaModeChooser() {
-          try { $("personaModeOverlay").classList.remove("show"); } catch (e) {}
-        }
-        function choosePersonaMode(modeId) {
-          var action = personaModeAction;
-          closePersonaModeChooser();
-          try {
-            if (action === "edit") openPersonaEditor(modeId);
-            else switchPersona(modeId);
-          } catch (e) {}
-        }
-        try {
-          $("personaModeOpt1").addEventListener("click", function () { choosePersonaMode("mreasonchan"); });
-          $("personaModeOpt2").addEventListener("click", function () { choosePersonaMode("mreasonchan2"); });
-          $("personaModeCancel").addEventListener("click", function () { closePersonaModeChooser(); });
-          $("personaModeOverlay").addEventListener("click", function (e) {
-            if (e && e.target === this) closePersonaModeChooser();
-          });
-        } catch (e) {}
         /* ---------- 改人设（預設限定）＋ 换头像（全部陪伴者） ----------
            改人设：去接口 GET /personas 攞返預設人設原文（回傳形狀以
            {personas:[{id, persona}]} 為準，另外幾種形狀都防禦式兼容），
@@ -5468,11 +5438,6 @@
         }
         function personaById(id) {
           try {
-            /* mreasonchan2 顯示歸一去 mreasonchan 預設，id 保留返模式 id */
-            if (id === "mreasonchan2") {
-              var mr = mrModePersona("mreasonchan2");
-              if (mr) return mr;
-            }
             var list = allPersonas();
             for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
           } catch (e) {}
@@ -5488,12 +5453,19 @@
             editBtn.textContent = "改人设";
             editBtn.addEventListener("click", function (e) {
               if (e && e.stopPropagation) e.stopPropagation();
-              /* mreasonchan 改人设要分模式：先彈卡問改邊個模式，揀咗先開編輯器 */
-              if (p.id === "mreasonchan") { try { openPersonaModeChooser("edit"); } catch (err) {} return; }
               try { openPersonaEditor(p.id); } catch (err) {}
             });
             box.appendChild(editBtn);
           }
+          var cpBtn = document.createElement("button");
+          cpBtn.type = "button";
+          cpBtn.className = "ghost small";
+          cpBtn.textContent = "复制";
+          cpBtn.addEventListener("click", function (e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            try { duplicatePersona(p.id); } catch (err) {}
+          });
+          box.appendChild(cpBtn);
           if (avatarFeatureOk()) {
             var avBtn = document.createElement("button");
             avBtn.type = "button";
@@ -5502,14 +5474,14 @@
             avBtn.addEventListener("click", function (e) {
               if (e && e.stopPropagation) e.stopPropagation();
               try {
-                pendingAvatarForId = p.id;
+                pendingAvatarForId = personaAvatarKey(p.id);
                 var inp = $("avatarFileInput");
                 if (inp) { inp.value = ""; inp.click(); }
               } catch (err) {}
             });
             box.appendChild(avBtn);
             var hasOv = false;
-            try { hasOv = !!avatarOverrides[p.id]; } catch (e2) {}
+            try { hasOv = !!avatarOverrides[personaAvatarKey(p.id)]; } catch (e2) {}
             if (hasOv) {
               var rsBtn = document.createElement("button");
               rsBtn.type = "button";
@@ -5518,8 +5490,10 @@
               rsBtn.addEventListener("click", function (e) {
                 if (e && e.stopPropagation) e.stopPropagation();
                 try {
-                  pendingAvatarResetId = p.id;
-                  $("avatarResetText").textContent = "真係還原「" + p.name + "」個頭像？會用返預設嗰張，你上傳嗰張會清走。";
+                  pendingAvatarResetId = personaAvatarKey(p.id);
+                  $("avatarResetText").textContent = p.copy
+                    ? "真係還原「" + p.name + "」個頭像？會用返复制嗰阵嗰張，你上傳嗰張會清走。"
+                    : "真係還原「" + p.name + "」個頭像？會用返預設嗰張，你上傳嗰張會清走。";
                   $("avatarResetConfirm").style.display = "block";
                 } catch (err) {}
               });
@@ -5569,10 +5543,23 @@
           var ta = $("personaEditText");
           var existing = "";
           try { existing = (typeof personaOverrides[id] === "string") ? personaOverrides[id] : ""; } catch (e) {}
+          var cp = copyById(id);
+          var lookupId = (cp && cp.baseId) ? cp.baseId : id;
+          var isDavidVoice = (lookupId === "david");
           if (existing) {
             if (ta) ta.value = existing;
             personaEditCountUpdate();
-            personaEditStatus("呢位而家用緊你改過嗰版（只存喺你部機）。想用返預設，撳下面「还原预设」。");
+            personaEditStatus(cp
+              ? "呢位而家用緊你改過嗰版（只存喺你部機）。想用返复制嗰阵嗰版，撳下面「还原预设」。"
+              : "呢位而家用緊你改過嗰版（只存喺你部機）。想用返預設，撳下面「还原预设」。");
+            return;
+          }
+          /* 副本有人設快照（复制嗰陣帶過嚟嗰版）就直接用，唔使上網拉；
+             冇快照（由冇改過嘅預設复制出嚟）就按 baseId 去拉預設原文。 */
+          if (cp && cp.basePersona) {
+            if (ta) ta.value = cp.basePersona.slice(0, 4000);
+            personaEditCountUpdate();
+            personaEditStatus("呢版係复制嗰陣帶過嚟嘅人設。改完撳「保存」，之後傾計就會用你改呢版；唔改就撳「取消」。");
             return;
           }
           if (ta) ta.value = "";
@@ -5584,19 +5571,19 @@
             }).then(function (data) {
               if (editingPersonaId !== id) return;
               var map = parsePersonasMap(data);
-              var txt = (typeof map[id] === "string") ? map[id] : "";
+              var txt = (typeof map[lookupId] === "string") ? map[lookupId] : "";
               if (txt) {
                 if (ta) ta.value = txt.slice(0, 4000);
                 personaEditCountUpdate();
                 personaEditStatus("拉到喇。改完撳「保存」，之後傾計就會用你改呢版；唔改就撳「取消」。");
               } else {
-                personaEditStatus(id === "david"
+                personaEditStatus(isDavidVoice
                   ? "接口嗰邊冇返到呢位嘅人設原文返嚟。你可以照樣喺下面打字改，打完撳保存，一樣生效。"
                   : "沒有拉到這位的人設原文。你可以照樣在下面輸入，保存後一樣生效。");
               }
             }, function () {
               if (editingPersonaId !== id) return;
-              personaEditStatus(id === "david"
+              personaEditStatus(isDavidVoice
                 ? "拉唔到接口嗰邊嘅預設人設——多數係網絡問題。你可以照樣喺下面打字改，打完撳保存，一樣生效。"
                 : "拉不到預設人設，可能是網絡問題。你可以照樣在下面輸入，保存後一樣生效。");
             });
@@ -5657,7 +5644,10 @@
           $("personaEditReset").addEventListener("click", function () {
             try {
               var p = personaById(editingPersonaId);
-              $("personaResetText").textContent = "真係還原「" + (p ? p.name : "") + "」嘅預設人設？你改過嗰版會清走，冇得返轉頭。";
+              var nm = p ? p.name : "";
+              $("personaResetText").textContent = copyById(editingPersonaId)
+                ? "真係還原「" + nm + "」嘅人設？你改過嗰版會清走，用返复制嗰陣嗰版，冇得返轉頭。"
+                : "真係還原「" + nm + "」嘅預設人設？你改過嗰版會清走，冇得返轉頭。";
               $("personaResetConfirm").style.display = "block";
             } catch (e) {}
           });
@@ -5666,11 +5656,12 @@
           });
           $("personaResetYes").addEventListener("click", function () {
             try {
+              var wasCopy = !!copyById(editingPersonaId);
               if (editingPersonaId) delete personaOverrides[editingPersonaId];
               storageSave();
               closePersonaEditor();
               renderPersonaPanel();
-              toast("還原好喇，用返預設人設。");
+              toast(wasCopy ? "還原好喇，用返复制嗰陣嗰版人設。" : "還原好喇，用返預設人設。");
             } catch (e) {}
           });
           $("avatarResetNo").addEventListener("click", function () {
@@ -5747,7 +5738,10 @@
           var id = pendingDeletePersonaId;
           if (!id) return;
           customPersonas = customPersonas.filter(function (p) { return p.id !== id; });
+          copiedPersonas = copiedPersonas.filter(function (p) { return p.id !== id; });
           delete chatHistories[id];
+          delete personaOverrides[id];
+          try { delete avatarOverrides[id]; } catch (e) {}
           pendingDeletePersonaId = "";
           $("personaDeleteConfirm").style.display = "none";
           if (activePersonaId === id) {
