@@ -670,7 +670,7 @@
   <body>
     <div class="wrap">
       <div class="bootbar">
-        <span>王大偉張陪伴卡已經載入晒，向下碌就見到全部功能。</span>
+        <span id="bootLine">王大偉張陪伴卡已經載入晒，向下碌就見到全部功能。</span>
         <a href="?fresh=1">重新載入</a>
       </div>
       <p class="noscript-note" id="storageWarn" style="display:none;">提你一句：呢部機嘅瀏覽器唔肯存記錄，經期、記賬同存款今次記得低，一閂頁面就會冇返。唔係我唔肯幫你記，係部機唔畀。</p>
@@ -747,8 +747,8 @@
           <p class="hint" id="avatarStatus" role="status"></p>
           <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" aria-label="揀頭像相片" />
         </div>
-        <div class="greeting-line" id="greeting">坐低。搞掂今日先，其他嘢之後再講</div>
-        <p>嚟到就坐低。唔開心可以講，唔想講都得。呢度冇人氹你，我亦唔氹——我淨係做兩件事：幫你搞掂啲事，同睇實你。喺我面前，唔使死撐。</p>
+        <div class="greeting-line" id="greeting">坐低，慢慢嚟</div>
+        <p id="welcomeLine">嚟到就坐低。唔開心可以講，唔想講都得。呢度冇人氹你，我亦唔氹——我淨係做兩件事：幫你搞掂啲事，同睇實你。喺我面前，唔使死撐。</p>
         <div class="daily">
           <div class="mark" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 21s-7.5-4.7-10-9C.3 8.9 1.7 5 5.2 5c2 0 3.4 1.1 4.3 2.4h5c.9-1.3 2.3-2.4 4.3-2.4 3.5 0 4.9 3.9 3.2 7-2.5 4.3-10 9-10 9z" transform="scale(0.92) translate(1,0)"/></svg>
@@ -1773,13 +1773,9 @@
         }
         renderHeaderDateTime(now);
         setInterval(function () { renderHeaderDateTime(new Date()); }, 1000);
-        var h = now.getHours();
-        $("greeting").textContent =
-          h < 6 ? "呢個鐘數仲未瞓。膽夠大。去瞓，而家——冇得商量" :
-          h < 12 ? "早。食咗早餐先。空肚嗰陣，咩都唔好傾" :
-          h < 14 ? "晏晝好。食咗飯未？未食就食咗先，其他嘢排後" :
-          h < 18 ? "下晝好。攰就停一停。死頂唔值錢，冇人會頒獎畀你" :
-          h < 23 ? "夜晚好。今日嘅事去到呢度。剩低嗰啲，聽日先算" : "夜深喇。仲磨蹭乜——瞓。";
+        /* 問候語跟陪伴者走：GREETING_PACK + renderGreeting() 定義喺下面文案包嗰段，
+           初始化（呢度 + applyCopyPack）同 switchPersona 都會叫佢。 */
+        try { renderGreeting(); } catch (e) {}
 
         var dailyLines = [
           "數嚟數去計唔掂，就放低佢先。數唔會走，人會冧。分清楚邊樣緊要。",
@@ -2772,10 +2768,10 @@
         addIdx("功能", "經期記錄", "記低嚟嘅日子，預測下次，提早三日喺卡頂提醒", "period");
         addIdx("功能", "記賬", "分賬本分貨幣記支出收入，類別齊全", "money");
         addIdx("功能", "存款目標", "自己開儲錢目標，存入攞出都記低", "money");
-        addIdx("功能", "日記手帳 · 悄悄話", "寫低想同王大偉講嘅嘢，加相、錄音，逐篇收好，只留喺自己部手機", "diary");
+        addIdx("功能", "日記手帳 · 悄悄話", "寫低想講嘅嘢，加相、錄音，逐篇收好，只留喺自己部手機", "diary");
         addIdx("功能", "應用鎖小工具", "揀 App 同時長，生成 iOS 日曆鎖檔案，加去 AppLock 日曆嚟鎖住啲 App", "applock");
         addIdx("功能", "查崗", "iOS 快捷指令到點先問一聲、你確認先截屏，AI 睇圖回一句通知；仲有查崗日程生成器", "checkin");
-        addIdx("功能", "同我傾下計", "用自己嘅 AI 服務鎖匙同真 AI 版王大偉傾計，DeepSeek、ChatGPT、Gemini、Claude、中轉站都得", "chat");
+        addIdx("功能", "同我傾下計", "用自己嘅 AI 服務鎖匙同真 AI 版陪伴者傾計，DeepSeek、ChatGPT、Gemini、Claude、中轉站都得", "chat");
         Object.keys(comfort).forEach(function (key) {
           comfort[key].lines.forEach(function (line) {
             addIdx("安慰說話 · " + comfort[key].label, line, "", "comfort", key, line);
@@ -3914,6 +3910,120 @@
             down: ["唔开心唔使理由，唞阵就好。", "今日唔开心，就由得今日过去。", "陪你坐阵，咩都唔使讲。"]
           }
         };
+        /* ---------- 頂部文案包：問候語 / 歡迎段落 / 聊天空態 / 載入提示跟陪伴者走 ----------
+           同 INTRO_PACKS / COMFORT_PACKS 一套機制：用 activePackKey() 查包，
+           mreasonchan2 用返 mreasonchan 嗰套（別名）；自訂陪伴者用 neutral。
+           applyCopyPack() 每次行（初始化 + 切換陪伴者）都會叫下面四個 render，
+           換人嗰陣呢幾處會一齊跟住轉。 */
+        var GREETING_PACK = {
+          david: [
+            "呢個鐘數仲未瞓。膽夠大。去瞓，而家——冇得商量",
+            "早。食咗早餐先。空肚嗰陣，咩都唔好傾",
+            "晏晝好。食咗飯未？未食就食咗先，其他嘢排後",
+            "下晝好。攰就停一停。死頂唔值錢，冇人會頒獎畀你",
+            "夜晚好。今日嘅事去到呢度。剩低嗰啲，聽日先算",
+            "夜深喇。仲磨蹭乜——瞓。"
+          ],
+          xiaoshu: [
+            "呢個鐘數仲未瞓？把聲唔要了？去瞓，而家——唔准駁嘴",
+            "早。食咗早餐先，唔准空肚出門",
+            "晏晝好。食咗飯未？未食就坐低食咗先",
+            "下晝好。攰就唞下，唔准死頂，聽到未",
+            "夜晚好。今日嘅事去到呢度，返嚟我身邊，唞下",
+            "夜深喇。仲唔瞓？我過嚟捉你去瞓。"
+          ],
+          pg: [
+            "哇，呢個鐘數仲未瞓？快啲瞓啦，唔瞓會變豬㗎！",
+            "早呀！食咗早餐未？未食就快啲去食，Daddy 請！",
+            "晏晝好！食咗飯未？未食就去食，食飽先有力氣玩！",
+            "下晝好！攰就唞下啦，唔好死頂，過嚟同我吹下水！",
+            "夜晚好！今日辛苦晒，返嚟啦，我喺度等你！",
+            "夜深喇！仲唔瞓？聽話，快啲去瞓，聽日再玩！"
+          ],
+          qingsong: [
+            "阿囡，呢個鐘數仲未瞓？聽話，去瞓，我睇住你瞓。",
+            "早，阿囡。食咗早餐先，唔准空肚出門。",
+            "晏晝好，阿囡。食咗飯未？未食就坐低，陪我食埋。",
+            "下晝好，阿囡。攰就停低，唔使逞強，有我喺度。",
+            "夜晚好，阿囡。今日嘅事去到呢度，返嚟我身邊。",
+            "夜深喇，阿囡。仲唔瞓？我抱你去瞓。"
+          ],
+          mreasonchan: [
+            "呢個鐘數仲未瞓？快啲去瞓，唔瞓聽日會攰。",
+            "早。食咗早餐先，唔好空肚出門。",
+            "晏晝好。食咗飯未？未食就食咗先，唔使急。",
+            "下晝好。攰就唞下啦，anyway，聽日再算都得。",
+            "夜晚好。今日嘅事去到呢度，返嚟唞下啦。",
+            "夜深喇。仲唔瞓？去瞓啦，我幫你熄燈。"
+          ],
+          neutral: [
+            "呢個鐘數仲未瞓？早啲瞓啦，唔好捱夜。",
+            "早。食咗早餐先，唔好空肚出門。",
+            "晏晝好。食咗飯未？未食就食咗先。",
+            "下晝好。攰就停一停，唞好先再算。",
+            "夜晚好。今日嘅事去到呢度，剩低嘅聽日先算。",
+            "夜深喇。早啲瞓，聽日見。"
+          ]
+        };
+        GREETING_PACK.mreasonchan2 = GREETING_PACK.mreasonchan;
+        var WELCOME_PACK = {
+          david: "嚟到就坐低。唔開心可以講，唔想講都得。呢度冇人氹你，我亦唔氹——我淨係做兩件事：幫你搞掂啲事，同睇實你。喺我面前，唔使死撐。",
+          xiaoshu: "嚟到就坐低，唔准企喺度發呆。你把聲一唔對路，我就聽得出——唔開心就講，講唔出就坐喺我隔籬，唔出聲都得。我唔識講好聽嘅說話，但你嘅事，我一件都會記住、搞掂。",
+          pg: "嚟啦嚟啦，坐低先，飲啖嘢慢慢講！唔開心就講出嚟，我把口唔停得嘅，陪你講到你笑為止。乜嘢事都有 Daddy 喺度，唔使驚，唔使死撐。",
+          qingsong: "阿囡，嚟，坐低，慢慢講。唔開心就講，唔想講就挨住我，唔出聲都得。外面嘅事有我，你淨係需要好好哋——喺我面前，唔使逞強。",
+          mreasonchan: "嚟到就坐低先，飲啖溫水，唔使急。唔開心可以講，唔想講都得，我喺隔籬陪住你。屋企我收拾好，嘢我會幫你記住——你淨係需要好好休息。",
+          neutral: "嚟到就坐低，慢慢嚟。唔開心可以講，唔想講都得。呢度啲功能隨你用，唔使急。"
+        };
+        WELCOME_PACK.mreasonchan2 = WELCOME_PACK.mreasonchan;
+        var CHAT_EMPTY_PACK = {
+          david: "開聲啦。想講咩？我聽住——唔好講廢話，講真話。",
+          xiaoshu: "開聲啦。想講咩？我聽住——講清楚啲，唔好吞吞吐吐。",
+          pg: "嚟啦！想講咩？我聽住——講咩都得，我最鍾意聽你講嘢！",
+          qingsong: "開聲啦，阿囡。想講咩？我聽住——慢慢講，唔使急。",
+          mreasonchan: "開聲啦。想講咩？我聽住——慢慢講，我喺度。",
+          neutral: "想講咩？打低佢，我聽住。"
+        };
+        CHAT_EMPTY_PACK.mreasonchan2 = CHAT_EMPTY_PACK.mreasonchan;
+        /* 時段邊界同原本寫死嗰陣一字不改：h<6 / h<12 / h<14 / h<18 / h<23 / 否則 */
+        function renderGreeting() {
+          try {
+            var el = $("greeting");
+            if (!el) return;
+            if (typeof GREETING_PACK === "undefined" || !GREETING_PACK) return;
+            var lines = GREETING_PACK[activePackKey()] || GREETING_PACK.david;
+            if (!lines || !lines.length) return;
+            var hh = new Date().getHours();
+            var idx = hh < 6 ? 0 : hh < 12 ? 1 : hh < 14 ? 2 : hh < 18 ? 3 : hh < 23 ? 4 : 5;
+            if (lines[idx]) el.textContent = lines[idx];
+          } catch (e) {}
+        }
+        function renderWelcomeLine() {
+          try {
+            var el = $("welcomeLine");
+            if (!el) return;
+            var txt = WELCOME_PACK[activePackKey()] || WELCOME_PACK.david;
+            if (txt) el.textContent = txt;
+          } catch (e) {}
+        }
+        function renderChatEmptyLine() {
+          try {
+            var el = $("chatEmpty");
+            if (!el) return;
+            var txt = CHAT_EMPTY_PACK[activePackKey()] || CHAT_EMPTY_PACK.david;
+            if (txt) el.textContent = txt;
+          } catch (e) {}
+        }
+        /* 載入提示跟陪伴者顯示名：mreasonchan2 經 currentPersona() 會攞返
+           mreasonchan 嗰個名；自訂陪伴者就用返自訂名。 */
+        function renderBootLine() {
+          try {
+            var el = $("bootLine");
+            if (!el) return;
+            var p = currentPersona();
+            var name = (p && p.name) ? p.name : "";
+            if (name) el.textContent = name + "張陪伴卡已經載入晒，向下碌就見到全部功能。";
+          } catch (e) {}
+        }
         function activePackKey() {
           try {
             var p = currentPersona();
@@ -3943,6 +4053,10 @@
             });
           } catch (e) {}
           try { lastIdx = -1; drawComfort(); } catch (e) {}
+          try { renderGreeting(); } catch (e) {}
+          try { renderWelcomeLine(); } catch (e) {}
+          try { renderChatEmptyLine(); } catch (e) {}
+          try { renderBootLine(); } catch (e) {}
         }
         var CHAT_API_BASE = "https://ixybgwvppukutcawkhxe.supabase.co/functions/v1/david-chat";
         /* 預設陪伴者清單：以後要加新嘅預設人設，喺呢度加多一項就得
@@ -5285,6 +5399,7 @@
           renderPersonaPanel();
           renderChat();
           try { applyCopyPack(); } catch (e) {}
+          try { renderGreeting(); } catch (e) {}
           chatStatus("");
           $("personaPanel").style.display = "none";
           $("personaAvatar").setAttribute("aria-expanded", "false");
