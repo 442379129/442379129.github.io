@@ -24,6 +24,7 @@ nav.toc a:active { text-decoration: underline;}
 .warn { background: #fdf3e3; border-left: 4px solid #d9930d;}
 .tip { background: #eef5ee; border-left: 4px solid #6a9a6a;}
 .danger { background: #fdeeee; border-left: 4px solid #c0392b;}
+.red { color: #c0392b;}
 code,.url { font-family: ui-monospace, Menlo, Consolas, monospace; font-size:.92em; background: #efe9dc; padding: 1px 6px; border-radius: 6px; word-break: break-all;}
 pre.urlblock { background: #2b2620; color: #f7f2ea; padding: 12px 14px; border-radius: 10px; white-space: pre-wrap; word-break: break-all; font-size:.9rem; margin: 10px 0; user-select: all;}
 ol.steps > li, ul > li { margin: 8px 0;}
@@ -40,6 +41,25 @@ table { width: 100%; border-collapse: collapse; font-size:.95rem;}
 th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e5dccb; vertical-align: top;}
 th { white-space: nowrap;}
 footer { margin-top: 40px; padding-top: 14px; border-top: 2px solid #e5dccb; color: #7a7264; font-size:.9rem;}
+.fab { position: fixed; right: 16px; bottom: 20px; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 60;}
+.fab-ball { width: 52px; height: 52px; border-radius: 50%; padding: 0; font-size: 1.3rem; line-height: 1; box-shadow: 0 3px 12px rgba(0,0,0,.25);}
+.fab-menu { position: absolute; right: 0; bottom: 62px; width: 242px; max-height: min(64vh, 540px); overflow-y: auto; background: #fffdf8; border: 1px solid #e5dccb; border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.18); padding: 8px; display: none;}
+.fab-menu.open { display: block;}
+.fab-menu button { display: block; width: 100%; text-align: left; background: none; color: #2b2620; padding: 10px 12px; font-size: .95rem; font-weight: 500; border-radius: 8px;}
+.fab-menu button:active { background: #f3ecdd; opacity: 1;}
+.fm-head { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px 6px; font-weight: 700;}
+.fm-head button { width: auto; padding: 4px 10px; color: #8a8172; font-size: 1rem;}
+.fab-search { position: sticky; top: -8px; z-index: 2; background: #fffdf8; padding: 6px 4px 8px; border-bottom: 1px solid #e5dccb;}
+.fab-search-row { display: flex; gap: 6px;}
+.fab-search-row input { flex: 1; min-width: 0; border: 1px solid #d8cfba; border-radius: 8px; padding: 8px 10px; font-size: .95rem; background: #fff; color: #2b2620;}
+.fab-search-row input:focus { outline: 2px solid #b4552d; outline-offset: -1px;}
+.fab-search-row button { width: auto; padding: 8px 10px; color: #8a8172;}
+.fab-search-nav { display: flex; align-items: center; gap: 6px; margin-top: 6px;}
+.fab-search-nav span { flex: 1; font-size: .85rem; color: #7a7264; min-height: 1.2em;}
+.fab-search-nav button { width: auto; padding: 6px 10px; font-size: .88rem;}
+.fab-search-nav button:disabled { opacity: .4;}
+mark.fab-hit { background: #ffe08a; color: inherit; border-radius: 2px; padding: 0 1px;}
+mark.fab-hit-current { background: #f39c12; color: #fff;}
 </style>
 </head>
 <body>
@@ -65,6 +85,7 @@ footer { margin-top: 40px; padding-top: 14px; border-top: 2px solid #e5dccb; col
 <li><a href="#faq">常见问题</a></li>
 </ol>
 </nav>
+<p>划到下面想跳去别的区？点右下角的悬浮球，里面有去每一节的按键，还能输入关键词查找内容。</p>
 
 <h2 id="about">1. 这是什么</h2>
 <p>陪伴卡是一张<strong>网页版的陪伴卡片</strong>，不用下载 App，浏览器打开就能用。卡里住着几位陪伴者：<strong>王大伟、小叔、pg、霍青松、mreasonchan（角色线）、mreasonchan（陪伴线）</strong>，你也可以自己新增陪伴者（见下面第 4 节）。你可以和他们聊天、抽安慰话、掟骰子、转大转盘、定闹钟、记账、记经期、写日记，还能用应用锁管住刷手机的手、用查岗定时自律。</p>
@@ -93,7 +114,7 @@ footer { margin-top: 40px; padding-top: 14px; border-top: 2px solid #e5dccb; col
 
 【她在用的中转站】她自己在用的几家中转站（邀请链接）：肖恩 https://go.toter.me/register?code=36FPGR （注册送 7000 额度）；舒芙蕾 https://shufulei.net/register?aff=PIZZ ；橘子汽水 https://juziqishui.net/register?aff=WsXU ；7喜 https://7up.ing/sign-up?aff=mORU ；玖时 https://api.jiushi.xin/register?aff=AOzO ；启明星 https://cn.qimingx.net/sign-up?aff=GchL 。首次使用要先去网站注册账号、创建 API 密钥，再把密钥和接口地址填进卡里；提醒她先小额充值试试。
 
-MCP 是让聊天时能调用外部服务做事的接口（例如点外卖、查地图），只支持 OpenAI 兼容格式（DeepSeek、ChatGPT、中转站），Claude 官方不支持。在聊天设置「MCP 工具」区：点「麦当劳」「瑞幸」「高德」三个预设按钮会自动填好地址，再填 Token/Key：麦当劳的 Token 去 open.mcd.cn 用手机号登录申请；瑞幸的 Token 去 open.lkcoffee.com 用手机号登录拿，大约 30 天有效，过期重拿，且只能到店自取；高德去高德开放平台申请一个 Web 服务 Key，把 Key 接在地址 key= 后面，Token 格留空。点「新增 MCP」可加其他服务：填服务名、https 地址、Token（有的服务把 Key 放地址里，Token 就留空）。加好后服务默认启用，可开关、可删除。聊天时他会按需要调用工具；凡是会产生实际动作的操作（如下单），会先弹一张确认卡，必须她亲手点确认才会执行，不会擅自下单；下单成功会返回订单详情和支付链接，她自己点链接去付款，AI 不碰钱。如果启用了 MCP 但一个工具都加载不到，聊天会直接报错而不是悄悄不用，这时先检查 Token 是否过期（麦当劳 Token 过期会报 401，重新申请粘贴即可）。
+MCP 是让聊天时能调用外部服务做事的接口（例如点外卖、查地图），只支持 OpenAI 兼容格式（DeepSeek、ChatGPT、中转站），Claude 官方不支持。在聊天设置「MCP 工具」区：点「麦当劳」「瑞幸」「高德」三个预设按钮会自动填好地址，再填 Token/Key：麦当劳的 Token 去 open.mcd.cn 用手机号登录申请；瑞幸的 Token 去 open.lkcoffee.com 用手机号登录拿，大约 30 天有效，过期重拿，且只能到店自取、不能外卖；高德去高德开放平台申请一个 Web 服务 Key，把 Key 接在地址 key= 后面，Token 格留空。点「新增 MCP」可加其他服务：填服务名、https 地址、Token（有的服务把 Key 放地址里，Token 就留空）。加好后服务默认启用，可开关、可删除。聊天时他会按需要调用工具；凡是会产生实际动作的操作（如下单），会先弹一张确认卡，必须她亲手点确认才会执行，不会擅自下单；下单成功会返回订单详情和支付链接，她自己点链接去付款，AI 不碰钱。如果启用了 MCP 但一个工具都加载不到，聊天会直接报错而不是悄悄不用，这时先检查 Token 是否过期（麦当劳 Token 过期会报 401，重新申请粘贴即可）。
 
 软锁：到点打开被锁的 App 时，会弹出陪伴者现写的一句话提醒，再弹回陪伴卡；再点一次还是能进去，只是给你一个停下来想想的机会。需要四部分都搭好：1）日历里新建一个名字 exactly 叫 AppLock 的日历；2）在「快捷指令」App 里新建一条快捷指令（流程见下）；3）新建一个自动化：触发条件选「App 打开时」，选中要锁的 App，选「立即运行」且不询问，动作为运行上面那条快捷指令；4）在卡片「应用锁小工具」区选 App 和时长，点「生成锁文件」，下载.ics 文件并导入到 AppLock 日历（一定要选 AppLock 日历）。想提前解锁就去日历删掉那条事件。快捷指令流程：取得「目前 App」→ 设为变量「文本」→ 查找日历行程（开始日期为最近 1 日、结束日期在未来 1 日、日历是 AppLock）→ 重复每个行程 → 取标题（这个动作叫「获取日历日程的详细信息」，要搜「详细信息」才找得到，直接搜「标题」搜不到；加上后把「日历日程」改成「重复项目」、「详细信息」改成「标题」，才会变成「从重复项目取得标题」的样子）→ 设为变量「锁标题」→ 如果「锁标题」包含「文本」→ 取得 URL 内容 POST 到 https://ixybgwvppukutcawkhxe.supabase.co/functions/v1/david-chat/lockline ，请求正文选 JSON，加 6 个字段：provider、baseUrl、apiKey、model、personaId（填陪伴者 id：david、xiaoshu、pg、qingsong、mreasonchan 角色线、mreasonchan2 陪伴线）、app（值选「文本」变量），标题行留空 → 取 reply 的值 → 显示通知（内容用 reply；如果通知消失太快看不清，就在后面再加一个「显示提示」，内容同样用 reply，它会等你按好才继续）→ 打开陪伴卡网址 → 停止。注意：复制接口网址时前后不要多任何符号，尤其不要把反引号 ` 拷进去（会变成 %60 导致接口认不出）。常见故障：锁不生效先查三处——日历名是不是 AppLock、事件标题里有没有 App 名、自动化是不是「立即运行」且触发条件里选中了要锁的 App；手动运行有反应、自动打开 App 没反应，多半是自动化触发条件抽风，删掉自动化重建一个（不要复制旧的），必要时重启手机。应用锁没有现成的分享链接，因为原版作者注明禁二传，必须一步步搭。
 
@@ -237,7 +258,7 @@ MCP 是让聊天时能调用外部服务做事的接口（例如点外卖、查�
   <li>去 <span class="url">open.lkcoffee.com</span>，用手机号登录拿 Token。</li>
   <li>粘贴到「Token」格，保存。</li>
 </ol>
-<div class="box warn"><p>瑞幸的 Token 大约 30 天有效，过期要重新拿。还有，这个服务只做到店自取，不能外卖。</p></div>
+<div class="box warn"><p>瑞幸的 Token 大约 30 天有效，过期要重新拿。还有，这个服务<strong class="red">只做到店自取，不能外卖</strong>。</p></div>
 <h3>（3）高德地图</h3>
 <ol class="steps">
   <li>点「高德」按钮，地址自动填好（<span class="url">https://mcp.amap.com/mcp?key=</span>）。</li>
@@ -480,6 +501,243 @@ MCP 是让聊天时能调用外部服务做事的接口（例如点外卖、查�
       navigator.clipboard.writeText(text).then(done, fallback);
     } else { fallback(); }
   });
+})();
+</script>
+<div class="fab" id="fabNav">
+  <div class="fab-menu" id="fabMenu" role="menu" aria-label="快速跳转">
+    <div class="fm-head"><span>跳到哪一节？</span><button type="button" id="fabClose" aria-label="关闭">✕</button></div>
+    <div class="fab-search">
+      <div class="fab-search-row">
+        <input type="search" id="fabSearchInput" placeholder="输入关键词找内容…" aria-label="在指南内查找" autocomplete="off" />
+        <button type="button" id="fabSearchClear" aria-label="清除查找">✕</button>
+      </div>
+      <div class="fab-search-nav">
+        <span id="fabSearchCount" aria-live="polite"></span>
+        <button type="button" id="fabSearchPrev">上一个</button>
+        <button type="button" id="fabSearchNext">下一个</button>
+      </div>
+    </div>
+    <button type="button" data-fab-top="1">回到顶部</button>
+    <button type="button" data-fab-target="about">1 · 这是什么</button>
+    <button type="button" data-fab-target="ai-teacher">2 · 让 AI 教你</button>
+    <button type="button" data-fab-target="start">3 · 第一次打开</button>
+    <button type="button" data-fab-target="companions">4 · 切换陪伴者 · 改人设</button>
+    <button type="button" data-fab-target="api">5 · 接入 API</button>
+    <button type="button" data-fab-target="mcp">6 · 接入 MCP</button>
+    <button type="button" data-fab-target="applock">7 · 应用锁</button>
+    <button type="button" data-fab-target="checkin">8 · 查岗</button>
+    <button type="button" data-fab-target="sections">9 · 其他分区</button>
+    <button type="button" data-fab-target="backup">10 · 备份与搬家</button>
+    <button type="button" data-fab-target="faq">11 · 常见问题</button>
+  </div>
+  <button type="button" class="fab-ball" id="fabBall" aria-label="快速跳转" aria-expanded="false">☰</button>
+</div>
+<script>
+(function () {
+  function initFabNav() {
+    try {
+      var wrap = document.getElementById("fabNav");
+      var ball = document.getElementById("fabBall");
+      var menu = document.getElementById("fabMenu");
+      var closeBtn = document.getElementById("fabClose");
+      if (!wrap || !ball || !menu) return;
+      var behavior = "smooth";
+      try {
+        if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) behavior = "auto";
+      } catch (e1) { behavior = "smooth"; }
+      function isOpen() { return menu.classList.contains("open"); }
+      function setOpen(open) {
+        try {
+          if (open) menu.classList.add("open"); else menu.classList.remove("open");
+          ball.setAttribute("aria-expanded", open ? "true" : "false");
+        } catch (e2) {}
+      }
+      ball.addEventListener("click", function (ev) {
+        if (ev && ev.stopPropagation) ev.stopPropagation();
+        setOpen(!isOpen());
+      });
+      if (closeBtn) closeBtn.addEventListener("click", function () { setOpen(false); });
+      document.addEventListener("click", function (ev) {
+        if (!isOpen()) return;
+        var t = ev.target;
+        if (t && wrap.contains(t)) return;
+        setOpen(false);
+      });
+      document.addEventListener("keydown", function (ev) {
+        if (ev && ev.key === "Escape" && isOpen()) setOpen(false);
+      });
+      var items = menu.querySelectorAll("[data-fab-target], [data-fab-top]");
+      Array.prototype.forEach.call(items, function (btn) {
+        btn.addEventListener("click", function () {
+          try {
+            if (btn.hasAttribute("data-fab-top")) {
+              window.scrollTo({ top: 0, behavior: behavior });
+            } else {
+              var el = document.getElementById(btn.getAttribute("data-fab-target"));
+              if (el && el.scrollIntoView) el.scrollIntoView({ behavior: behavior, block: "start" });
+            }
+          } catch (e3) {}
+          setOpen(false);
+        });
+      });
+      /* ---------- 悬浮球内快速查找：输入关键词，黄色标出所有命中，
+         当前命中橙色显示，点「上一个／下一个」轮着跳（绕回头）。
+         正文用 <mark> 包住命中；AI 指令文本框内的命中会跳到文本框
+         并选中那段文字。清空输入或点 ✕ 就清掉全部标记。 ---------- */
+      var searchInput = document.getElementById("fabSearchInput");
+      var searchCount = document.getElementById("fabSearchCount");
+      var searchPrev = document.getElementById("fabSearchPrev");
+      var searchNext = document.getElementById("fabSearchNext");
+      var searchClear = document.getElementById("fabSearchClear");
+      var searchTa = document.getElementById("aiPrompt");
+      var searchWrap = document.querySelector(".wrap");
+      var searchHits = [];
+      var searchIdx = -1;
+      var searchTimer = null;
+      var lastQuery = "";
+      function updateSearchCount(msg) {
+        if (searchCount) searchCount.textContent = msg || "";
+        var has = searchHits.length > 0;
+        if (searchPrev) searchPrev.disabled = !has;
+        if (searchNext) searchNext.disabled = !has;
+      }
+      function searchClearHits() {
+        try {
+          var marks = searchWrap.querySelectorAll("mark.fab-hit");
+          Array.prototype.forEach.call(marks, function (m) {
+            m.parentNode.replaceChild(document.createTextNode(m.textContent), m);
+          });
+          searchWrap.normalize();
+        } catch (e) {}
+        searchHits = [];
+        searchIdx = -1;
+        updateSearchCount("");
+      }
+      function searchShowHit(i) {
+        if (!searchHits.length) return;
+        searchIdx = ((i % searchHits.length) + searchHits.length) % searchHits.length;
+        var h = searchHits[searchIdx];
+        try {
+          var cur = searchWrap.querySelector("mark.fab-hit-current");
+          if (cur) cur.classList.remove("fab-hit-current");
+        } catch (e) {}
+        if (h.ta) {
+          try {
+            searchTa.scrollIntoView({ behavior: behavior, block: "center" });
+            searchTa.focus({ preventScroll: true });
+            searchTa.setSelectionRange(h.start, h.end);
+          } catch (e2) {}
+        } else {
+          try {
+            h.mark.classList.add("fab-hit-current");
+            h.mark.scrollIntoView({ behavior: behavior, block: "center" });
+          } catch (e3) {}
+        }
+        updateSearchCount("第 " + (searchIdx + 1) + " 个，共 " + searchHits.length + " 个");
+      }
+      function runSearch(q) {
+        lastQuery = q;
+        searchClearHits();
+        if (!q) return;
+        var needle = q.toLowerCase();
+        var walker = document.createTreeWalker(searchWrap, NodeFilter.SHOW_TEXT, {
+          acceptNode: function (n) {
+            var p = n.parentNode;
+            while (p && p !== searchWrap) {
+              var tn = p.nodeName;
+              if (tn === "SCRIPT" || tn === "STYLE" || tn === "TEXTAREA") return NodeFilter.FILTER_REJECT;
+              p = p.parentNode;
+            }
+            if (!n.nodeValue || n.nodeValue.toLowerCase().indexOf(needle) < 0) return NodeFilter.FILTER_SKIP;
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        });
+        var nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        nodes.forEach(function (node) {
+          var lower = node.nodeValue.toLowerCase();
+          var ms = [];
+          var pos = 0;
+          while (true) {
+            var at = lower.indexOf(needle, pos);
+            if (at < 0) break;
+            ms.push({ start: at, end: at + needle.length });
+            pos = at + Math.max(needle.length, 1);
+          }
+          for (var i = ms.length - 1; i >= 0; i--) {
+            try {
+              var range = document.createRange();
+              range.setStart(node, ms[i].start);
+              range.setEnd(node, ms[i].end);
+              var mark = document.createElement("mark");
+              mark.className = "fab-hit";
+              range.surroundContents(mark);
+            } catch (e) {}
+          }
+        });
+        var hits = [];
+        Array.prototype.forEach.call(searchWrap.querySelectorAll("mark.fab-hit"), function (m) { hits.push({ mark: m }); });
+        var taHits = [];
+        try {
+          var lv = (searchTa ? searchTa.value : "").toLowerCase();
+          var p2 = 0;
+          while (true) {
+            var at2 = lv.indexOf(needle, p2);
+            if (at2 < 0) break;
+            taHits.push({ ta: true, start: at2, end: at2 + needle.length });
+            p2 = at2 + Math.max(needle.length, 1);
+          }
+        } catch (e4) {}
+        if (taHits.length && searchTa) {
+          var ins = hits.length;
+          for (var k = 0; k < hits.length; k++) {
+            try {
+              if (searchTa.compareDocumentPosition(hits[k].mark) & Node.DOCUMENT_POSITION_FOLLOWING) { ins = k; break; }
+            } catch (e5) {}
+          }
+          hits.splice.apply(hits, [ins, 0].concat(taHits));
+        }
+        searchHits = hits;
+        if (!hits.length) {
+          updateSearchCount("没有找到“" + (q.length > 12 ? q.slice(0, 12) + "…" : q) + "”");
+          return;
+        }
+        searchShowHit(0);
+      }
+      if (searchInput) {
+        searchInput.addEventListener("input", function () {
+          var q = searchInput.value.trim();
+          if (searchTimer) clearTimeout(searchTimer);
+          searchTimer = setTimeout(function () { runSearch(q); }, 150);
+        });
+        searchInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            var q = searchInput.value.trim();
+            if (q !== lastQuery) {
+              if (searchTimer) clearTimeout(searchTimer);
+              runSearch(q);
+            } else if (searchHits.length) {
+              searchShowHit(searchIdx + 1);
+            }
+          }
+        });
+      }
+      if (searchPrev) searchPrev.addEventListener("click", function () { if (searchHits.length) searchShowHit(searchIdx - 1); });
+      if (searchNext) searchNext.addEventListener("click", function () { if (searchHits.length) searchShowHit(searchIdx + 1); });
+      if (searchClear) searchClear.addEventListener("click", function () {
+        if (searchTimer) clearTimeout(searchTimer);
+        if (searchInput) searchInput.value = "";
+        searchClearHits();
+        if (searchInput) searchInput.focus();
+      });
+      updateSearchCount("");
+    } catch (e) {}
+  }
+  try {
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initFabNav);
+    else initFabNav();
+  } catch (e) {}
 })();
 </script>
 </body>
