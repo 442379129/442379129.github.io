@@ -151,6 +151,27 @@
         color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 1px 8px;
       }
 
+      /* ---------- mreasonchan 雙模式揀關係卡（遮罩＋頁內卡片） ---------- */
+      .mode-overlay {
+        position: fixed; inset: 0; z-index: 66;
+        background: rgba(30, 18, 10, 0.55);
+        display: none; place-items: center; padding: 20px;
+      }
+      .mode-overlay.show { display: grid; }
+      .mode-overlay .mode-card {
+        background: var(--gold-soft); border-radius: 12px; padding: 18px;
+        max-width: 340px; width: 100%; box-shadow: var(--shadow); color: var(--ink);
+      }
+      .mode-overlay .mode-title { margin: 0 0 4px; font-weight: 700; font-size: 1.05rem; }
+      .mode-overlay .mode-sub { margin: 0 0 10px; font-size: 0.92rem; color: var(--ink-soft); }
+      .mode-overlay .mode-opt {
+        display: block; width: 100%; text-align: left; margin-top: 10px;
+        padding: 12px 14px;
+      }
+      .mode-overlay .mode-opt-name { display: block; font-weight: 700; }
+      .mode-overlay .mode-opt-sub { display: block; font-size: 0.85rem; font-weight: 500; opacity: 0.85; margin-top: 2px; }
+      .mode-overlay .mode-cancel { display: block; width: 100%; margin-top: 12px; }
+
       .daily {
         margin-top: 18px;
         background: var(--surface);
@@ -1254,6 +1275,22 @@
     <div class="img-overlay" id="imgOverlay">
       <button class="ghost closex" id="imgOverlayClose" type="button">閂</button>
       <img id="imgOverlayImg" alt="日記相片大圖" />
+    </div>
+    <!-- mreasonchan 雙模式：揀關係卡（撳卡外面只閂卡，唔切換） -->
+    <div class="mode-overlay" id="personaModeOverlay" role="dialog" aria-modal="true" aria-labelledby="personaModeTitle">
+      <div class="mode-card">
+        <p class="mode-title" id="personaModeTitle">mreasonchan</p>
+        <p class="mode-sub" id="personaModeSub">拣一种关系：</p>
+        <button type="button" class="mode-opt" id="personaModeOpt1">
+          <span class="mode-opt-name">1.0 · 亲密关系</span>
+          <span class="mode-opt-sub">Daddy 同小朋友</span>
+        </button>
+        <button type="button" class="mode-opt" id="personaModeOpt2">
+          <span class="mode-opt-name">2.0 · 偶像粉丝</span>
+          <span class="mode-opt-sub">歌手 Eason 同歌迷</span>
+        </button>
+        <button type="button" class="ghost mode-cancel" id="personaModeCancel">取消</button>
+      </div>
     </div>
     <div class="toast" id="toast"></div>
 
@@ -3544,6 +3581,40 @@
             checkin: "到点就查岗，截屏畀我睇下你做紧乜——唔系监视你，系我想知你好好哋。",
             backup: "换手机之前记得备份，唔好整唔见啲嘢——你嘅嘢，我一件都唔想唔见。"
           },
+          mreasonchan: {
+            search: "想搵咩？打低佢，我帮你翻出嚟——搵嘢呢家嘢，最紧要有条理。",
+            websearch: "上网搵嘢交畀我，你负责坐定定等答案，唔使心急。",
+            comfort: "唔开心？过嚟坐低先，饮啖温水，咩都唔使讲住。",
+            chat: "想倾计？嚟，坐低慢慢讲，anyway，我喺度听住。",
+            dice: "拣唔落手？掟啦，掟到咩就咩，唔使谂咁多，顺其自然。",
+            decision: "自己写选项，我帮你掟——掟完就去做，行一步算一步。",
+            wheel: "转啦，转到边个就边个，anyway，点都系一个开始。",
+            timer: "到点就瞓，唔准熬夜——瞓好先有精神，听日嘅嘢听日再讲。",
+            breath: "停低，吸气，呼气——跟住我，慢慢嚟，唔使急。",
+            period: "呢排唔准掂冰嘅，记低日子，我帮你记住，唔使你操心。",
+            money: "钱要记清楚，分门别类放好——整齐咗，心就定啲。",
+            diary: "有嘢想讲？写喺度，净係你自己睇到。我唔会乱翻人嘅嘢。",
+            applock: "玩手机玩到唔肯瞓？锁咗佢，早啲瞓，身体要紧。",
+            checkin: "到点就查岗，截屏畀我睇下——唔使紧张，我净係睇下你今日过得点。",
+            backup: "换手机之前记得备份，收拾整齐先出发，唔好漏嘢。"
+          },
+          mreasonchan2: {
+            search: "想搵咩？打低佢，我帮你翻出嚟——搵嘢呢家嘢，最紧要有条理。",
+            websearch: "上网搵嘢交畀我，你负责坐定定等答案，唔使心急。",
+            comfort: "唔开心？过嚟坐低先，饮啖温水，咩都唔使讲住。",
+            chat: "想倾计？嚟，坐低慢慢讲，anyway，我喺度听住。",
+            dice: "拣唔落手？掟啦，掟到咩就咩，唔使谂咁多，顺其自然。",
+            decision: "自己写选项，我帮你掟——掟完就去做，行一步算一步。",
+            wheel: "转啦，转到边个就边个，anyway，点都系一个开始。",
+            timer: "到点就瞓，唔准熬夜——瞓好先有精神，听日嘅嘢听日再讲。",
+            breath: "停低，吸气，呼气——跟住我，慢慢嚟，唔使急。",
+            period: "呢排唔准掂冰嘅，记低日子，我帮你记住，唔使你操心。",
+            money: "钱要记清楚，分门别类放好——整齐咗，心就定啲。",
+            diary: "有嘢想讲？写喺度，净係你自己睇到。我唔会乱翻人嘅嘢。",
+            applock: "玩手机玩到唔肯瞓？锁咗佢，早啲瞓，身体要紧。",
+            checkin: "到点就查岗，截屏畀我睇下——唔使紧张，我净係睇下你今日过得点。",
+            backup: "换手机之前记得备份，收拾整齐先出发，唔好漏嘢。"
+          },
           neutral: {
             search: "输入关键字，喺卡里搵内容。",
             websearch: "用必应上网搜寻，查完返回呢度。",
@@ -3580,6 +3651,18 @@
             sad: ["受咗委屈？同我讲，边个虾你，我去处理，唔使你出面。", "唔喊唔喊，阿囡，我喺度。委屈讲出嚟，剩低嘅交畀我。", "过来抱抱先，委屈唔使自己吞——有我在，冇人可以再令你受委屈。"],
             stuck: ["冇动力？唔紧要，今日唔做都得，我陪你坐住，听日再讲。", "起身啦，陪我饮杯茶，饮完有力气再做，唔急。", "唔想郁就唔好郁住，唞够先，几时想做再做，我喺度等你。"],
             down: ["唔开心唔使理由，过来挨住我，我陪你，唔出声都得。", "今日唔开心？咁就唔开心啦，我陪你唔开心，你唔使一个人扛。", "笑一个啦，唔笑？唔紧要，我喺度陪住你，等你想笑嗰阵。"]
+          },
+          mreasonchan: {
+            tired: ["攰就唞下啦，乜都唔使理，瞓一觉先，醒咗再讲。", "今日辛苦晒啦，坐低饮啖温水，剩低嘅嘢听日再算。", "攰到唔想郁？唔使郁，合埋眼唞阵，我喺隔篱陪住你。"],
+            sad: ["受咗委屈？同我讲，我听住，唔会打断你。", "唔喊唔喊，我喺度。委屈讲出嚟，心就冇咁重。", "过来坐低先，唔使讲嘢住，我陪你坐阵。"],
+            stuck: ["冇动力？唔紧要，今日唔做都得，anyway，听日又系新一日。", "起身啦，陪我行出去饮杯嘢，透下气先，返嚟再谂。", "唔想郁就唔好郁住，唞够先，几时想做再做，唔急。"],
+            down: ["唔开心唔使理由，听首歌啦，音乐识得陪你。", "今日唔开心？咁就唔开心啦，唔使逼自己，慢慢嚟就得。", "笑一个啦，唔笑都唔紧要，我喺度，等你慢慢好返。"]
+          },
+          mreasonchan2: {
+            tired: ["攰就唞下啦，乜都唔使理，瞓一觉先，醒咗再讲。", "今日辛苦晒啦，坐低饮啖温水，剩低嘅嘢听日再算。", "攰到唔想郁？唔使郁，合埋眼唞阵，我喺隔篱陪住你。"],
+            sad: ["受咗委屈？同我讲，我听住，唔会打断你。", "唔喊唔喊，我喺度。委屈讲出嚟，心就冇咁重。", "过来坐低先，唔使讲嘢住，我陪你坐阵。"],
+            stuck: ["冇动力？唔紧要，今日唔做都得，anyway，听日又系新一日。", "起身啦，陪我行出去饮杯嘢，透下气先，返嚟再谂。", "唔想郁就唔好郁住，唞够先，几时想做再做，唔急。"],
+            down: ["唔开心唔使理由，听首歌啦，音乐识得陪你。", "今日唔开心？咁就唔开心啦，唔使逼自己，慢慢嚟就得。", "笑一个啦，唔笑都唔紧要，我喺度，等你慢慢好返。"]
           },
           neutral: {
             tired: ["攰就休息，剩低嘅听日再讲。", "你已经做得够多，先唞阵。", "放低手机，合埋眼唞一会。"],
@@ -3625,7 +3708,8 @@
           { id: "david", name: "王大偉", blurb: "众信集团副总裁", avatar: "https://drive.google.com/thumbnail?id=13q9LnzpLvhTpX9R92GiUGRAwFo7kCmvS&sz=w180" },
           { id: "xiaoshu", name: "小叔", blurb: "易思音乐总裁，绝对音准的陈阎王", avatar: "https://drive.google.com/thumbnail?id=1PmgHYrDnc7Ka4YN1nHosDEXUvnd6bJN8&sz=w180" },
           { id: "pg", name: "pg", blurb: "乐坛吹神，烟火气爹系陈生", avatar: "https://drive.google.com/thumbnail?id=1n2rdGZqGw8M1tEPr0jHQoze3qMhFDgfF&sz=w180" },
-          { id: "qingsong", name: "霍青松", blurb: "红油起家的金融巨鳄，笑面虎霍生", avatar: "https://drive.google.com/thumbnail?id=1DjLOCZ9W3vdBUpQ9OHee3VW3V6ukTpJs&sz=w180" }
+          { id: "qingsong", name: "霍青松", blurb: "红油起家的金融巨鳄，笑面虎霍生", avatar: "https://drive.google.com/thumbnail?id=1DjLOCZ9W3vdBUpQ9OHee3VW3V6ukTpJs&sz=w180" },
+          { id: "mreasonchan", name: "mreasonchan", blurb: "半百歌神，叠衫煲汤的管家 Daddy", avatar: "https://drive.google.com/thumbnail?id=1t6uH_FPcDgjvzlui39p6dQwMEZj9LaAA&sz=w180" }
         ];
         function allPersonas() {
           var list = COMPANION_PRESETS.map(function (p) {
@@ -3636,7 +3720,27 @@
           });
           return list;
         }
+        /* mreasonchan 雙模式：mreasonchan2（2.0 偶像）唔喺預設清單入面，
+           顯示一律歸返 mreasonchan 預設（名／簡介／頭像），但 id 保留
+           mreasonchan2，聊天同查崗發出去嘅 personaId 先至分得開兩個模式。 */
+        function mrModePersona(id) {
+          try {
+            var list = allPersonas();
+            for (var i = 0; i < list.length; i++) {
+              if (list[i].id === "mreasonchan") {
+                return { id: id, name: list[i].name, blurb: list[i].blurb, avatar: list[i].avatar, desc: list[i].desc || "", custom: false };
+              }
+            }
+          } catch (e) {}
+          return null;
+        }
+        /* 兩個模式共用一個頭像：自訂頭像一律存喺 "mreasonchan" 呢個 key */
+        function personaAvatarKey(id) { return id === "mreasonchan2" ? "mreasonchan" : id; }
         function currentPersona() {
+          if (activePersonaId === "mreasonchan2") {
+            var mr = mrModePersona("mreasonchan2");
+            if (mr) return mr;
+          }
           var list = allPersonas();
           for (var i = 0; i < list.length; i++) { if (list[i].id === activePersonaId) return list[i]; }
           return list[0];
@@ -4332,7 +4436,7 @@
           btn.title = "而家陪你傾計嘅係：" + p.name + "（撳嚟切換陪伴者）";
           btn.setAttribute("aria-label", "而家陪你傾計嘅係 " + p.name + "，撳嚟切換陪伴者");
           var headAvatar = p.avatar;
-          try { if (avatarOverrides[p.id]) headAvatar = avatarOverrides[p.id]; } catch (e) {}
+          try { var hk = personaAvatarKey(p.id); if (avatarOverrides[hk]) headAvatar = avatarOverrides[hk]; } catch (e) {}
           if (headAvatar) {
             var img = document.createElement("img");
             img.src = headAvatar;
@@ -4357,7 +4461,10 @@
           list.innerHTML = "";
           allPersonas().forEach(function (p) {
             var row = document.createElement("div");
-            row.className = "persona-item" + (p.id === activePersonaId ? " on" : "");
+            /* mreasonchan 雙模式：任一模式 active，呢行都算揀中咗 */
+            var mrActive = false;
+            try { mrActive = p.id === "mreasonchan" && (activePersonaId === "mreasonchan" || activePersonaId === "mreasonchan2"); } catch (e) {}
+            row.className = "persona-item" + ((p.id === activePersonaId || mrActive) ? " on" : "");
             var av = document.createElement("span");
             av.className = "p-avatar";
             var rowAvatar = p.avatar;
@@ -4391,16 +4498,30 @@
             tx.appendChild(nm);
             tx.appendChild(bl);
             try {
-              if (!p.custom && typeof personaOverrides[p.id] === "string" && personaOverrides[p.id]) {
+              var hasMod = !p.custom && typeof personaOverrides[p.id] === "string" && !!personaOverrides[p.id];
+              /* mreasonchan：任一模式有改版都出「已修改」 */
+              if (!hasMod && p.id === "mreasonchan") {
+                hasMod = typeof personaOverrides["mreasonchan2"] === "string" && !!personaOverrides["mreasonchan2"];
+              }
+              if (hasMod) {
                 var bd = document.createElement("span");
                 bd.className = "p-badge";
                 bd.textContent = "已修改";
                 tx.appendChild(bd);
               }
             } catch (e) {}
+            /* mreasonchan 模式徽章：active 先出，寫明而家係邊個模式 */
+            try {
+              if (mrActive) {
+                var mb = document.createElement("span");
+                mb.className = "p-badge";
+                mb.textContent = activePersonaId === "mreasonchan2" ? "2.0 偶像" : "1.0 亲密";
+                tx.appendChild(mb);
+              }
+            } catch (e) {}
             row.appendChild(av);
             row.appendChild(tx);
-            if (p.id === activePersonaId) {
+            if (p.id === activePersonaId || mrActive) {
               var ck = document.createElement("span");
               ck.className = "p-check";
               ck.textContent = "✓ 而家係佢";
@@ -4420,7 +4541,11 @@
               row.appendChild(del);
             }
             try { buildPersonaRowActions(row, p); } catch (e) {}
-            row.addEventListener("click", function () { switchPersona(p.id); });
+            row.addEventListener("click", function () {
+              /* mreasonchan 唔直接切換：每次撳都要先彈卡問揀邊種關係 */
+              if (p.id === "mreasonchan") { try { openPersonaModeChooser("switch"); } catch (e) {} return; }
+              switchPersona(p.id);
+            });
             list.appendChild(row);
           });
         }
@@ -4440,6 +4565,45 @@
           $("personaPanel").style.display = "none";
           $("personaAvatar").setAttribute("aria-expanded", "false");
         }
+        /* ---------- mreasonchan 雙模式揀關係卡 ----------
+           action："switch"＝撳列表行揀模式切換；"edit"＝撳「改人设」先揀改邊個模式。
+           撳選項先做嘢；撳取消或者撳卡外面淨係閂卡，唔切換、唔開編輯器。
+           成段包住 try/catch，出咩岔子都唔會拖冧頁面。 */
+        var personaModeAction = "switch";
+        function openPersonaModeChooser(action) {
+          try {
+            personaModeAction = action === "edit" ? "edit" : "switch";
+            var title = $("personaModeTitle");
+            var sub = $("personaModeSub");
+            if (personaModeAction === "edit") {
+              if (title) title.textContent = "改边个模式嘅人设？";
+              if (sub) sub.style.display = "none";
+            } else {
+              if (title) title.textContent = "mreasonchan";
+              if (sub) { sub.textContent = "拣一种关系："; sub.style.display = ""; }
+            }
+            $("personaModeOverlay").classList.add("show");
+          } catch (e) {}
+        }
+        function closePersonaModeChooser() {
+          try { $("personaModeOverlay").classList.remove("show"); } catch (e) {}
+        }
+        function choosePersonaMode(modeId) {
+          var action = personaModeAction;
+          closePersonaModeChooser();
+          try {
+            if (action === "edit") openPersonaEditor(modeId);
+            else switchPersona(modeId);
+          } catch (e) {}
+        }
+        try {
+          $("personaModeOpt1").addEventListener("click", function () { choosePersonaMode("mreasonchan"); });
+          $("personaModeOpt2").addEventListener("click", function () { choosePersonaMode("mreasonchan2"); });
+          $("personaModeCancel").addEventListener("click", function () { closePersonaModeChooser(); });
+          $("personaModeOverlay").addEventListener("click", function (e) {
+            if (e && e.target === this) closePersonaModeChooser();
+          });
+        } catch (e) {}
         /* ---------- 改人设（預設限定）＋ 换头像（全部陪伴者） ----------
            改人设：去接口 GET /personas 攞返預設人設原文（回傳形狀以
            {personas:[{id, persona}]} 為準，另外幾種形狀都防禦式兼容），
@@ -4459,6 +4623,11 @@
         }
         function personaById(id) {
           try {
+            /* mreasonchan2 顯示歸一去 mreasonchan 預設，id 保留返模式 id */
+            if (id === "mreasonchan2") {
+              var mr = mrModePersona("mreasonchan2");
+              if (mr) return mr;
+            }
             var list = allPersonas();
             for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
           } catch (e) {}
@@ -4474,6 +4643,8 @@
             editBtn.textContent = "改人设";
             editBtn.addEventListener("click", function (e) {
               if (e && e.stopPropagation) e.stopPropagation();
+              /* mreasonchan 改人设要分模式：先彈卡問改邊個模式，揀咗先開編輯器 */
+              if (p.id === "mreasonchan") { try { openPersonaModeChooser("edit"); } catch (err) {} return; }
               try { openPersonaEditor(p.id); } catch (err) {}
             });
             box.appendChild(editBtn);
