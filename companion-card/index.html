@@ -111,6 +111,42 @@
         font-size: clamp(1.18rem, 4.2vw, 1.5rem);
         margin: 0 0 6px; line-height: 1.4; font-weight: 700;
       }
+      /* ---------- 陪伴者頭像切換（標題行右上角） ---------- */
+      .title-row { display: flex; align-items: flex-start; gap: 12px; }
+      .title-row .title-main { flex: 1 1 auto; min-width: 0; }
+      .persona-avatar {
+        flex: none; width: 46px; height: 46px; padding: 0; margin-top: 8px;
+        border-radius: 50%; overflow: hidden; background: var(--surface-2);
+        border: 2px solid var(--line); display: grid; place-items: center;
+      }
+      .persona-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .persona-avatar .p-letter { font-size: 1.3rem; font-weight: 700; color: var(--accent); line-height: 1; }
+      .persona-panel {
+        margin-top: 14px; background: var(--surface); border: 1px solid var(--line);
+        border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 18px;
+      }
+      .persona-panel-title { margin: 0; font-weight: 700; }
+      .persona-item {
+        display: flex; align-items: center; gap: 12px; cursor: pointer;
+        background: var(--bg); border: 1px solid var(--line); border-radius: 12px;
+        padding: 10px 12px; margin-top: 8px;
+      }
+      .persona-item.on { border-color: var(--accent); }
+      .persona-item .p-avatar {
+        flex: none; width: 40px; height: 40px; border-radius: 50%; overflow: hidden;
+        background: var(--surface-2); border: 1px solid var(--line); display: grid; place-items: center;
+      }
+      .persona-item .p-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .persona-item .p-avatar .p-letter { font-weight: 700; color: var(--accent); font-size: 1.1rem; line-height: 1; }
+      .persona-item .p-text { flex: 1 1 auto; min-width: 0; }
+      .persona-item .p-name { font-weight: 700; display: block; }
+      .persona-item .p-blurb {
+        color: var(--ink-soft); font-size: 0.88rem; display: block;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .persona-item .p-check { color: var(--accent); font-weight: 700; flex: none; }
+      .persona-item .p-del { flex: none; background: transparent; color: var(--rose); padding: 6px 8px; font-weight: 500; }
+
       .daily {
         margin-top: 18px;
         background: var(--surface);
@@ -420,6 +456,16 @@
       .img-overlay img { max-width: 100%; max-height: 86vh; border-radius: 12px; }
       .img-overlay .closex { position: absolute; top: 14px; right: 14px; }
 
+      /* ---------- AI 聊天 ---------- */
+      .chat-msgs { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; max-height: 480px; overflow-y: auto; }
+      .chat-msg {
+        max-width: 86%; padding: 10px 14px; border-radius: 14px;
+        white-space: pre-wrap; word-break: break-word; line-height: 1.55;
+      }
+      .chat-msg.him { align-self: flex-start; background: var(--surface-2); border: 1px solid var(--line); border-bottom-left-radius: 5px; }
+      .chat-msg.me { align-self: flex-end; background: var(--accent); color: var(--accent-ink); border-bottom-right-radius: 5px; }
+      .chat-pending { color: var(--ink-soft); font-size: 0.92rem; margin: 10px 0 0; }
+
       /* ---------- 鬧鐘彈窗 ---------- */
       .overlay {
         position: fixed; inset: 0; z-index: 60;
@@ -471,8 +517,36 @@
       </div>
 
       <header class="hello">
-        <div class="date" id="todayDate">今日</div>
-        <h1>王副总陪伴卡</h1>
+        <div class="title-row">
+          <div class="title-main">
+            <div class="date" id="todayDate">今日</div>
+            <h1>王副总陪伴卡</h1>
+          </div>
+          <button type="button" class="persona-avatar" id="personaAvatar" aria-label="切換陪伴者" aria-haspopup="true" aria-expanded="false"></button>
+        </div>
+        <div class="persona-panel" id="personaPanel" style="display:none;">
+          <p class="persona-panel-title">陪你傾計嘅人——撳邊個，就同邊個傾</p>
+          <div id="personaList"></div>
+          <button type="button" class="ghost small" id="personaAddBtn" style="margin-top:12px;">＋ 新增人設</button>
+          <div id="personaForm" style="display:none; margin-top:6px;">
+            <label class="flabel" for="personaName">人設名</label>
+            <input type="text" id="personaName" placeholder="例如：阿哥、老師、鄰居……" aria-label="人設名" />
+            <label class="flabel" for="personaDesc">人設描述（佢係咩人、點講嘢、點對你，寫清楚啲）</label>
+            <textarea id="personaDesc" rows="4" placeholder="例如：一個講嘢好溫柔嘅鄰居姐姐，鍾意用粵語陪人傾心事，唔會鬧人……" aria-label="人設描述"></textarea>
+            <div class="row" style="margin-top:12px;">
+              <button type="button" id="personaSave">保存呢個人設</button>
+              <button type="button" class="ghost" id="personaCancel">取消</button>
+            </div>
+            <p class="hint" id="personaFormStatus" role="status"></p>
+          </div>
+          <div class="note" id="personaDeleteConfirm" style="display:none;">
+            <p style="margin:0 0 6px;" id="personaDeleteText"></p>
+            <div class="row">
+              <button type="button" id="personaDeleteYes">確認刪除</button>
+              <button type="button" class="ghost" id="personaDeleteNo">算數，留返</button>
+            </div>
+          </div>
+        </div>
         <div class="greeting-line" id="greeting">坐低。搞掂今日先，其他嘢之後再講</div>
         <p>嚟到就坐低。唔開心可以講，唔想講都得。呢度冇人氹你，我亦唔氹——我淨係做兩件事：幫你搞掂啲事，同睇實你。喺我面前，唔使死撐。</p>
         <div class="daily">
@@ -490,6 +564,7 @@
         <a href="#search">搜尋</a>
         <a href="#websearch">聯網搜尋</a>
         <a href="#comfort">撳開就攬下</a>
+        <a href="#chat">同我傾下計</a>
         <a href="#dice">掟骰仔</a>
         <a href="#wheel">大轉盤</a>
         <a href="#timer">鬧鐘 · 倒計時</a>
@@ -532,6 +607,62 @@
           <div class="comfort-actions">
             <button id="drawComfort">畀句說話我</button>
             <button class="ghost" id="copyComfort">複製呢句</button>
+          </div>
+        </section>
+
+        <!-- AI 聊天 -->
+        <section class="card span2" id="chat">
+          <h2><span class="ic terra"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.5 0-3-.4-4.2-1.1L3 20l1.1-5.3A8.5 8.5 0 1 1 21 11.5z"/></svg></span>同我傾下計</h2>
+          <p class="sub">呢度唔係抽句說話咁簡單——係真 AI 版嘅我，你打咩，我即刻答咩，唔使等，唔使就我。但有幾樣嘢，講明先，唔含糊：要用你自己嘅 AI 服務鎖匙先傾得，DeepSeek、ChatGPT、Gemini、Claude，又或者中轉站，都得，冇鎖匙就真係傾唔到，唔係我揸頸。對話會經你揀嗰間 AI 服務傳過去，先有回覆——唔似日記手帳咁，純粹留喺你部機，呢點你要分清楚。鎖匙就只存喺你自己部手機嘅瀏覽器，唔會上傳去其他地方；傾計花嘅，係你自己賬戶嘅錢，使幾多，自己睇實個賬戶，唔好傾到唔記得睇。</p>
+          <div class="row">
+            <button type="button" class="ghost small" id="chatSettingsToggle">收起設定</button>
+          </div>
+          <div id="chatSettings">
+            <label class="flabel" for="chatPreset">AI 服務</label>
+            <select id="chatPreset">
+              <option value="deepseek">DeepSeek</option>
+              <option value="openai">ChatGPT（OpenAI）</option>
+              <option value="gemini">Gemini（Google）</option>
+              <option value="claude">Claude（Anthropic 官方）</option>
+              <option value="custom">自訂 / 中轉站</option>
+            </select>
+            <label class="flabel" for="chatBaseUrl">接口地址</label>
+            <input type="text" id="chatBaseUrl" placeholder="例如：https://api.deepseek.com" aria-label="接口地址" />
+            <p class="hint" id="chatBaseUrlHint" style="display:none;">提你一句：好多中轉站畀你嗰個地址，本身係冇 /v1 嘅，要自己加返先接得上——例如 https://xxx.com/v1。冇咗 /v1，就傾唔到，唔好到時又話連唔上。</p>
+            <label class="flabel" for="chatApiKey">API 鎖匙</label>
+            <input type="password" id="chatApiKey" placeholder="貼上你自己嗰條 API 鎖匙" autocomplete="off" aria-label="API 鎖匙" />
+            <p class="hint">只存喺你部手機，唔會去其他地方。唔好用別人嘅鎖匙，亦唔好將自己嗰條發畀人——邊個攞到，邊個就花到你賬戶入面嘅錢，呢樣嘢唔講得笑。</p>
+            <div class="row" style="margin-top:12px;">
+              <button type="button" class="ghost" id="chatFetchModels">拉取模型</button>
+              <button type="button" id="chatSaveSettings">保存設定</button>
+            </div>
+            <p class="hint" id="chatModelStatus" role="status"></p>
+            <label class="flabel" for="chatModelSelect">用邊個模型（拉取完，喺度揀）</label>
+            <select id="chatModelSelect">
+              <option value="">未拉取過——拉唔到都唔緊要，手填下面嗰格一樣用得</option>
+            </select>
+            <label class="flabel" for="chatModelManual">手動輸入模型名（呢格有字，就用呢格嗰個）</label>
+            <input type="text" id="chatModelManual" placeholder="例如：deepseek-chat" aria-label="手動輸入模型名" />
+          </div>
+
+          <hr class="divider" />
+          <div class="chat-msgs" id="chatMsgs"></div>
+          <p class="alarm-empty" id="chatEmpty">開聲啦。想講咩？我聽住——唔好講廢話，講真話。</p>
+          <p class="chat-pending" id="chatPending" style="display:none;">諗緊，唔好催。</p>
+          <p class="hint" id="chatStatus" role="status"></p>
+          <div class="row" style="margin-top:10px; align-items:flex-end;">
+            <textarea id="chatInput" rows="2" class="grow" placeholder="想同我講嘅嘢，打低佢……" aria-label="輸入訊息"></textarea>
+            <button type="button" id="chatSend">發送</button>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <button type="button" class="ghost small" id="chatClear">清空對話</button>
+          </div>
+          <div class="note" id="chatClearConfirm" style="display:none;">
+            <p style="margin:0 0 6px;">成段對話刪晒，一句都唔留，冇得返轉頭。諗清楚，先好撳確認。</p>
+            <div class="row">
+              <button type="button" id="chatClearYes">確認清空</button>
+              <button type="button" class="ghost" id="chatClearNo">算數，留返</button>
+            </div>
           </div>
         </section>
 
@@ -989,13 +1120,56 @@
         }
         var savedData = storageLoad();
         if (!storageOk) showStorageWarn();
+
+        /* ---------- AI 聊天狀態（設定 + 對話記錄） ----------
+           同其他記錄一樣存入呢份 localStorage 存檔；但備份導出嗰陣會剔走
+           API 鎖匙同成段對話，導入亦唔會覆蓋返部機現有嘅聊天設定。 */
+        var chatSettings = { preset: "deepseek", provider: "openai", baseUrl: "https://api.deepseek.com", apiKey: "", model: "", modelManual: "" };
+        /* 陪伴者：預設清單喺下面 COMPANION_PRESETS；粉絲自訂嘅存 customPersonas。
+           對話記錄按陪伴者分開存入 chatHistories（id -> 訊息陣列，各自上限 200 條）；
+           chatHistory 變量永遠指向而家揀中嗰位陪伴者嗰份記錄。 */
+        var customPersonas = []; // {id, name, desc}
+        var activePersonaId = "david";
+        var chatHistories = {}; // { personaId: [{role:"user"|"assistant", content:"..."}] }
+        if (savedData) {
+          if (savedData.chatSettings && typeof savedData.chatSettings === "object") {
+            ["preset", "provider", "baseUrl", "apiKey", "model", "modelManual"].forEach(function (k) {
+              if (typeof savedData.chatSettings[k] === "string") chatSettings[k] = savedData.chatSettings[k];
+            });
+          }
+          if (Object.prototype.toString.call(savedData.customPersonas) === "[object Array]") {
+            customPersonas = savedData.customPersonas.filter(function (p) {
+              return p && typeof p.id === "string" && typeof p.name === "string" && typeof p.desc === "string";
+            });
+          }
+          if (savedData.chatHistories && typeof savedData.chatHistories === "object") {
+            Object.keys(savedData.chatHistories).forEach(function (pid) {
+              var arr = savedData.chatHistories[pid];
+              if (Object.prototype.toString.call(arr) === "[object Array]") {
+                chatHistories[pid] = arr.filter(function (m) {
+                  return m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string";
+                }).slice(-200);
+              }
+            });
+          }
+          /* 舊版得一份冇分陪伴者嘅記錄嗰陣，歸入王大偉名下，唔好抌咗佢 */
+          if (!chatHistories.david && Object.prototype.toString.call(savedData.chatHistory) === "[object Array]") {
+            chatHistories.david = savedData.chatHistory.filter(function (m) {
+              return m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string";
+            }).slice(-200);
+          }
+          if (typeof savedData.activePersonaId === "string") activePersonaId = savedData.activePersonaId;
+        }
+        if (!chatHistories[activePersonaId]) chatHistories[activePersonaId] = [];
+        var chatHistory = chatHistories[activePersonaId];
         function storageSave() {
           try {
             window.localStorage.setItem(STORE_KEY, JSON.stringify({
               periodEntries: periodEntries, periodSeq: periodSeq,
               periodRemindOn: periodRemindOn, periodCycle: $("periodCycle").value,
               ledgers: ledgers, ledgerSeq: ledgerSeq, txSeq: txSeq, activeLedgerId: activeLedgerId,
-              goals: goals, goalSeq: goalSeq, wakeLockOn: wakeLockOn
+              goals: goals, goalSeq: goalSeq, wakeLockOn: wakeLockOn,
+              chatSettings: chatSettings, chatHistories: chatHistories, customPersonas: customPersonas, activePersonaId: activePersonaId
             }));
           } catch (e) { storageOk = false; showStorageWarn(); }
         }
@@ -2006,6 +2180,7 @@
         addIdx("功能", "記賬", "分賬本分貨幣記支出收入，類別齊全", "money");
         addIdx("功能", "存款目標", "自己開儲錢目標，存入攞出都記低", "money");
         addIdx("功能", "日記手帳 · 悄悄話", "寫低想同王大偉講嘅嘢，加相、錄音，逐篇收好，只留喺自己部手機", "diary");
+        addIdx("功能", "同我傾下計", "用自己嘅 AI 服務鎖匙同真 AI 版王大偉傾計，DeepSeek、ChatGPT、Gemini、Claude、中轉站都得", "chat");
         Object.keys(comfort).forEach(function (key) {
           comfort[key].lines.forEach(function (line) {
             addIdx("安慰說話 · " + comfort[key].label, line, "", "comfort", key, line);
@@ -2436,6 +2611,17 @@
                 return;
               }
             }
+            /* AI 聊天：鎖匙同成段對話唔入備份——鎖匙係秘密，對話係私隱，
+               兩樣都唔跟住個檔案周圍走。剩低服務商、接口地址同模型名先入。 */
+            delete data.chatHistory;
+            delete data.chatHistories;
+            if (data.chatSettings && typeof data.chatSettings === "object") {
+              var csCopy = {};
+              ["preset", "provider", "baseUrl", "model", "modelManual"].forEach(function (k) {
+                if (typeof data.chatSettings[k] === "string") csCopy[k] = data.chatSettings[k];
+              });
+              data.chatSettings = csCopy;
+            }
             /* 日記（條目＋相＋錄音，全部已經係可序列化嘅字串）並入同一份備份 */
             if (diaryEntries.length || diaryUsable) data.diaryEntries = diaryEntries;
             var pack = {
@@ -2575,6 +2761,464 @@
             backupStatus("導入嗰陣出咗岔子，冇寫入去，你啲嘢冇唔見。再試下；唔得就留返個備份檔，唔好刪。");
           }
         });
+
+        /* ---------- AI 聊天（同我傾下計） ----------
+           粉絲自己帶鎖匙（BYOK）：設定存返入面嗰份 localStorage 存檔，對話記錄
+           按陪伴者分開存（見上面 chatHistories）。請求唔會直接掟去 AI 服務商，
+           而係經已部署好嘅聊天接口轉發；人設提示詞住喺接口嗰頭，卡入面唔再寫。
+           發邊位陪伴者，就自動帶返佢嘅 personaId（預設人設）或者 persona
+           （粉絲自訂人設全文），唔使人手再設。日記內容永遠唔會掟入嚟。 */
+        var CHAT_API_BASE = "https://ixybgwvppukutcawkhxe.supabase.co/functions/v1/david-chat";
+        /* 預設陪伴者清單：以後要加新嘅預設人設，喺呢度加多一項就得
+           （id 會做 personaId 傳去接口，name 顯示名，blurb 一句簡介，avatar 頭像網址）。 */
+        var COMPANION_PRESETS = [
+          { id: "david", name: "王大偉", blurb: "伦敦志诚资本掌舵人", avatar: "https://drive.google.com/thumbnail?id=13q9LnzpLvhTpX9R92GiUGRAwFo7kCmvS&sz=w180" }
+        ];
+        function allPersonas() {
+          var list = COMPANION_PRESETS.map(function (p) {
+            return { id: p.id, name: p.name, blurb: p.blurb, avatar: p.avatar || "", desc: "", custom: false };
+          });
+          customPersonas.forEach(function (p) {
+            list.push({ id: p.id, name: p.name, blurb: p.desc, avatar: "", desc: p.desc, custom: true });
+          });
+          return list;
+        }
+        function currentPersona() {
+          var list = allPersonas();
+          for (var i = 0; i < list.length; i++) { if (list[i].id === activePersonaId) return list[i]; }
+          return list[0];
+        }
+        /* 存檔揀嗰位陪伴者已經唔存在（例如人設刪咗），就自動校返去第一位 */
+        if (currentPersona().id !== activePersonaId) {
+          activePersonaId = currentPersona().id;
+          if (!chatHistories[activePersonaId]) chatHistories[activePersonaId] = [];
+          chatHistory = chatHistories[activePersonaId];
+        }
+        /* 提示文字：王大偉嗰陣用返佢口吻；揀咗自訂人設嗰陣，用中性直白講法 */
+        function chatT(davidText, neutralText) {
+          return currentPersona().custom ? neutralText : davidText;
+        }
+        var CHAT_PRESETS = {
+          deepseek: { provider: "openai", baseUrl: "https://api.deepseek.com" },
+          openai: { provider: "openai", baseUrl: "https://api.openai.com/v1" },
+          gemini: { provider: "openai", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai" },
+          claude: { provider: "anthropic", baseUrl: "https://api.anthropic.com/v1" },
+          custom: { provider: "openai", baseUrl: "" }
+        };
+        var chatSending = false;
+        function chatStatus(msg) { var el = $("chatStatus"); if (el) el.textContent = msg; }
+        function chatModelStatus(msg) { var el = $("chatModelStatus"); if (el) el.textContent = msg; }
+        /* 中轉站 /v1 提醒：只喺揀咗「自訂 / 中轉站」嗰陣先顯示 */
+        function updateBaseUrlHint() {
+          var el = $("chatBaseUrlHint");
+          if (el) el.style.display = ($("chatPreset").value === "custom") ? "block" : "none";
+        }
+        function chatEffectiveModel() {
+          var manual = $("chatModelManual").value.trim();
+          if (manual) return manual;
+          return $("chatModelSelect").value.trim();
+        }
+        function chatReadSettingsFromUI() {
+          var presetKey = $("chatPreset").value;
+          var preset = CHAT_PRESETS[presetKey] || CHAT_PRESETS.custom;
+          chatSettings.preset = presetKey;
+          chatSettings.provider = preset.provider;
+          chatSettings.baseUrl = $("chatBaseUrl").value.trim();
+          chatSettings.apiKey = $("chatApiKey").value.trim();
+          chatSettings.modelManual = $("chatModelManual").value.trim();
+          chatSettings.model = chatEffectiveModel();
+          return chatSettings;
+        }
+        function chatFillUIFromSettings() {
+          var presetKey = CHAT_PRESETS[chatSettings.preset] ? chatSettings.preset : "custom";
+          $("chatPreset").value = presetKey;
+          $("chatBaseUrl").value = chatSettings.baseUrl || CHAT_PRESETS[presetKey].baseUrl || "";
+          $("chatApiKey").value = chatSettings.apiKey || "";
+          $("chatModelManual").value = chatSettings.modelManual || "";
+          var sel = $("chatModelSelect");
+          if (chatSettings.model) {
+            var found = false;
+            for (var i = 0; i < sel.options.length; i++) { if (sel.options[i].value === chatSettings.model) found = true; }
+            if (!found) {
+              var opt = document.createElement("option");
+              opt.value = chatSettings.model; opt.textContent = chatSettings.model;
+              sel.appendChild(opt);
+            }
+            sel.value = chatSettings.model;
+          }
+        }
+        function renderChat() {
+          var box = $("chatMsgs");
+          if (!box) return;
+          box.innerHTML = "";
+          $("chatEmpty").style.display = chatHistory.length ? "none" : "block";
+          chatHistory.forEach(function (m) {
+            var d = document.createElement("div");
+            d.className = "chat-msg " + (m.role === "user" ? "me" : "him");
+            d.textContent = m.content;
+            box.appendChild(d);
+          });
+          box.scrollTop = box.scrollHeight;
+        }
+        function chatErrorLine(status) {
+          if (currentPersona().custom) {
+            if (status === 401 || status === 403) return "API 鎖匙不正確，或這條鎖匙沒有使用這個服務的權限。請到設定裡檢查鎖匙有沒有貼錯、有沒有貼漏。";
+            if (status === 402 || status === 429) return "賬戶出了問題：多數是餘額不足，或額度已用完。請到所選 AI 服務的賬戶查看後再試。";
+            if (status === 502) return "聊天接口暫時出了問題，請稍等一陣再試。";
+            if (status === 503 || status === 504) return "服務暫時繁忙或不可用，請稍等一陣再試。";
+            if (typeof status === "number" && status >= 400) return "服務返回了錯誤（狀態 " + status + "）。請檢查設定和模型名，再試一次。";
+            return "連接失敗，可能是網絡問題。請檢查網絡後再試。";
+          }
+          if (status === 401 || status === 403) return "條鎖匙唔啱，又或者呢條鎖匙冇權限用呢個服務。返去設定度，睇清楚有冇貼錯、有冇貼漏，唔好亂估。";
+          if (status === 402 || status === 429) return "你賬戶嗰邊出咗問題：多數係餘額唔夠，或者額度用爆咗。去返你揀嗰間 AI 服務個賬戶睇下，先再返嚟傾。";
+          if (status === 502) return "個接口嗰邊出咗問題，唔關你事。等一陣再試，唔好連撳。";
+          if (status === 503 || status === 504) return "對方個服務而家唔得閒，又或者暫時唔通。唔關你事，等一陣再試，唔好連撳。";
+          if (typeof status === "number" && status >= 400) return "對方回咗個錯返嚟（狀態 " + status + "）。設定同模型名再對一次，先再試。";
+          return "連唔到去嗰間服務嗰度。有可能係網絡問題，又或者接口嗰邊未通。等一陣再試。";
+        }
+        function chatNetworkFailLine() {
+          return chatT("連唔到個接口——可能係網絡斷咗，又或者接口嗰邊出咗岔子。", "連接聊天接口失敗，可能是網絡問題，請稍後再試。");
+        }
+        function chatApiBase() {
+          return (chatSettings.baseUrl || "").replace(/\/+$/, "");
+        }
+        /* 經接口發訊息：POST {接口}/chat，帶服務商設定、最近 20 條對話，
+           同當前陪伴者嘅 personaId（預設）或 persona（自訂人設全文）。
+           回覆喺返回嘅 reply 欄位；出錯嗰陣 error 欄位會帶返狀態碼。
+           一律回傳 { httpStatus, errStatus, reply }，網絡失敗就 reject，交返去畀 .catch 處理。 */
+        function chatPostChat(context) {
+          var p = currentPersona();
+          var body = {
+            provider: chatSettings.provider,
+            baseUrl: chatApiBase(),
+            apiKey: chatSettings.apiKey,
+            model: chatEffectiveModel(),
+            messages: context
+          };
+          if (p.custom) body.persona = p.desc; else body.personaId = p.id;
+          return fetch(CHAT_API_BASE + "/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+          }).then(function (res) {
+            return res.json().then(function (data) {
+              data = data || {};
+              var errStatus = null;
+              if (data.error && typeof data.error === "object" && typeof data.error.status === "number") errStatus = data.error.status;
+              else if (typeof data.status === "number" && data.status >= 400) errStatus = data.status;
+              return { httpStatus: res.status, errStatus: errStatus, reply: typeof data.reply === "string" ? data.reply : "" };
+            }, function () { return { httpStatus: res.status, errStatus: null, reply: "" }; });
+          });
+        }
+        /* 經接口拉模型清單：POST {接口}/models，模型名喺返回嘅 models 陣列。
+           回傳 { httpStatus, errStatus, data }。 */
+        function chatGetModels() {
+          return fetch(CHAT_API_BASE + "/models", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ provider: chatSettings.provider, baseUrl: chatApiBase(), apiKey: chatSettings.apiKey })
+          }).then(function (res) {
+            return res.json().then(function (data) {
+              data = data || {};
+              var errStatus = null;
+              if (data.error && typeof data.error === "object" && typeof data.error.status === "number") errStatus = data.error.status;
+              return { httpStatus: res.status, errStatus: errStatus, data: data };
+            }, function () { return { httpStatus: res.status, errStatus: null, data: {} }; });
+          });
+        }
+        /* 設定區摺疊 */
+        var chatSettingsOpen = true;
+        $("chatSettingsToggle").addEventListener("click", function () {
+          chatSettingsOpen = !chatSettingsOpen;
+          $("chatSettings").style.display = chatSettingsOpen ? "block" : "none";
+          this.textContent = chatSettingsOpen ? "收起設定" : "打開設定";
+        });
+        /* 揀預設：即刻填返對應接口地址 */
+        $("chatPreset").addEventListener("change", function () {
+          var preset = CHAT_PRESETS[this.value] || CHAT_PRESETS.custom;
+          if (this.value !== "custom" || preset.baseUrl) $("chatBaseUrl").value = preset.baseUrl;
+          chatReadSettingsFromUI();
+          storageSave();
+          updateBaseUrlHint();
+        });
+        ["chatBaseUrl", "chatApiKey", "chatModelManual"].forEach(function (id) {
+          $(id).addEventListener("change", function () { chatReadSettingsFromUI(); storageSave(); });
+        });
+        $("chatModelSelect").addEventListener("change", function () { chatReadSettingsFromUI(); storageSave(); });
+        $("chatSaveSettings").addEventListener("click", function () {
+          chatReadSettingsFromUI();
+          storageSave();
+          if (!chatSettings.apiKey) { chatModelStatus("設定記低咗，不過鎖匙嗰格仲係空嘅——冇鎖匙，邊度都去唔到。填埋佢。"); return; }
+          if (!chatSettings.baseUrl) { chatModelStatus("設定記低咗，不過接口地址仲未填。中轉站嗰啲，要自己打返個地址入去。"); return; }
+          chatModelStatus("");
+          toast("設定收好喇。鎖匙喺你部機度，我睇實，唔會走樣。");
+        });
+        /* 拉取模型 */
+        $("chatFetchModels").addEventListener("click", function () {
+          chatReadSettingsFromUI(); storageSave();
+          if (!chatSettings.apiKey) { chatModelStatus(chatT("鎖匙都未填，拉咩模型。填咗條鎖匙先，再撳過。", "還沒有填 API 鎖匙，填好後再拉取。")); return; }
+          if (!chatSettings.baseUrl) { chatModelStatus(chatT("接口地址未填，我唔知去邊度拉。填返個地址先。", "接口地址還沒有填，填好後再拉取。")); return; }
+          var btn = this;
+          btn.disabled = true;
+          chatModelStatus(chatT("拉緊，等下……唔好走開。", "正在拉取，請稍等。"));
+          chatGetModels()
+            .then(function (r) {
+              btn.disabled = false;
+              var list = null;
+              if (r.data && Object.prototype.toString.call(r.data.models) === "[object Array]") list = r.data.models;
+              else if (r.data && Object.prototype.toString.call(r.data.data) === "[object Array]") list = r.data.data;
+              else if (Object.prototype.toString.call(r.data) === "[object Array]") list = r.data;
+              if (r.errStatus) { chatModelStatus(chatErrorLine(r.errStatus)); return; }
+              if (r.data && r.data.error && !list) { chatModelStatus(chatErrorLine(r.httpStatus)); return; }
+              if (!list || !list.length) {
+                if (r.httpStatus >= 400) { chatModelStatus(chatErrorLine(r.httpStatus)); return; }
+                chatModelStatus(chatT("嗰邊冇畀到模型清單返嚟——有啲服務係唔畀拉列表嘅，唔代表用唔到。手填返個模型名，一樣傾得。", "那邊沒有返回模型清單——有些服務不提供清單，不代表不能用。手動填寫模型名，一樣可以傾。"));
+                return;
+              }
+              var names = list.map(function (m) {
+                if (typeof m === "string") return m;
+                return (m && (m.id || m.name)) || "";
+              }).filter(Boolean);
+              if (!names.length) { chatModelStatus(chatT("拉返嚟嗰份清單，我讀唔明。手填模型名啦，穩陣啲。", "返回的清單格式讀不懂。手動填寫模型名會穩妥些。")); return; }
+              var sel = $("chatModelSelect");
+              var keep = chatEffectiveModel();
+              sel.innerHTML = "";
+              names.forEach(function (n) {
+                var o = document.createElement("option");
+                o.value = n; o.textContent = n;
+                sel.appendChild(o);
+              });
+              if (keep && names.indexOf(keep) >= 0) sel.value = keep;
+              chatReadSettingsFromUI(); storageSave();
+              chatModelStatus(chatT("拉到喇，共 " + names.length + " 個模型，喺上面個清單揀返個嚟用。揀完，碌落去開聲傾。", "已拉到 " + names.length + " 個模型，在上面的清單裡選一個使用。"));
+            })
+            .catch(function () {
+              btn.disabled = false;
+              chatModelStatus(chatNetworkFailLine() + chatT("拉唔到都唔緊要，手填返個模型名，一樣傾得。", "拉不到也不要緊，手動填寫模型名一樣可以。"));
+            });
+        });
+        /* 發送 */
+        function chatSetSending(on) {
+          chatSending = on;
+          $("chatSend").disabled = on;
+          $("chatPending").style.display = on ? "block" : "none";
+        }
+        function chatSendNow() {
+          if (chatSending) return;
+          var text = $("chatInput").value.trim();
+          if (!text) { chatStatus(chatT("一個字都冇，你叫我點答。打啲嘢先。", "還沒有輸入內容。先打幾個字，再發送。")); return; }
+          chatReadSettingsFromUI(); storageSave();
+          if (!chatSettings.apiKey) { chatStatus(chatT("鎖匙都未填，傾唔到。上去設定嗰度，填返你自己嗰條鎖匙先。", "還沒有填 API 鎖匙。請到上面的設定裡，填上你自己的鎖匙。")); return; }
+          if (!chatSettings.baseUrl) { chatStatus(chatT("接口地址未填。上去設定嗰度補返，先傾到。", "接口地址還沒有填。請到設定裡補上。")); return; }
+          if (!chatEffectiveModel()) { chatStatus(chatT("用邊個模型都未揀。拉一次模型嚟揀，或者手填返個模型名。", "還沒有選模型。請拉取模型清單選一個，或手動輸入模型名。")); return; }
+          chatHistory.push({ role: "user", content: text });
+          if (chatHistory.length > 200) chatHistory = chatHistory.slice(chatHistory.length - 200);
+          chatHistories[activePersonaId] = chatHistory;
+          $("chatInput").value = "";
+          chatStatus("");
+          renderChat();
+          storageSave();
+          chatSetSending(true);
+          var context = chatHistory.slice(-20).map(function (m) { return { role: m.role, content: m.content }; });
+          chatPostChat(context).then(function (r) {
+            chatSetSending(false);
+            if (r.reply) {
+              chatHistory.push({ role: "assistant", content: r.reply });
+              if (chatHistory.length > 200) chatHistory = chatHistory.slice(chatHistory.length - 200);
+              chatHistories[activePersonaId] = chatHistory;
+              renderChat();
+              storageSave();
+              return;
+            }
+            chatStatus(chatErrorLine(r.errStatus || r.httpStatus));
+          }).catch(function () {
+            chatSetSending(false);
+            chatStatus(chatNetworkFailLine() + chatT("唔關你事——你嗰句我收好咗喺上面，轉頭再發過。", "你剛才那句已留在上面，稍後可再發一次。"));
+          });
+        }
+        $("chatSend").addEventListener("click", chatSendNow);
+        $("chatInput").addEventListener("keydown", function (e) {
+          if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); chatSendNow(); }
+        });
+        /* 清空對話（頁內確認，唔用系統彈窗） */
+        $("chatClear").addEventListener("click", function () { $("chatClearConfirm").style.display = "block"; });
+        $("chatClearNo").addEventListener("click", function () { $("chatClearConfirm").style.display = "none"; });
+        $("chatClearYes").addEventListener("click", function () {
+          chatHistory = [];
+          chatHistories[activePersonaId] = chatHistory;
+          storageSave();
+          renderChat();
+          $("chatClearConfirm").style.display = "none";
+          chatStatus("");
+          toast("清晒喇，乾乾淨淨。重新開聲啦，我聽住。");
+        });
+        /* ---------- 陪伴者切換（標題行頭像 + 清單面板） ---------- */
+        var pendingDeletePersonaId = "";
+        function renderPersonaAvatar() {
+          var btn = $("personaAvatar");
+          var p = currentPersona();
+          btn.innerHTML = "";
+          btn.title = "而家陪你傾計嘅係：" + p.name + "（撳嚟切換陪伴者）";
+          btn.setAttribute("aria-label", "而家陪你傾計嘅係 " + p.name + "，撳嚟切換陪伴者");
+          if (p.avatar) {
+            var img = document.createElement("img");
+            img.src = p.avatar;
+            img.alt = p.name;
+            img.onerror = function () {
+              btn.innerHTML = "";
+              var lt = document.createElement("span");
+              lt.className = "p-letter";
+              lt.textContent = p.name.charAt(0) || "?";
+              btn.appendChild(lt);
+            };
+            btn.appendChild(img);
+          } else {
+            var lt2 = document.createElement("span");
+            lt2.className = "p-letter";
+            lt2.textContent = p.name.charAt(0) || "?";
+            btn.appendChild(lt2);
+          }
+        }
+        function renderPersonaPanel() {
+          var list = $("personaList");
+          list.innerHTML = "";
+          allPersonas().forEach(function (p) {
+            var row = document.createElement("div");
+            row.className = "persona-item" + (p.id === activePersonaId ? " on" : "");
+            var av = document.createElement("span");
+            av.className = "p-avatar";
+            if (p.avatar) {
+              var img = document.createElement("img");
+              img.src = p.avatar;
+              img.alt = "";
+              img.onerror = function () {
+                av.innerHTML = "";
+                var lt = document.createElement("span");
+                lt.className = "p-letter";
+                lt.textContent = p.name.charAt(0) || "?";
+                av.appendChild(lt);
+              };
+              av.appendChild(img);
+            } else {
+              var lt2 = document.createElement("span");
+              lt2.className = "p-letter";
+              lt2.textContent = p.name.charAt(0) || "?";
+              av.appendChild(lt2);
+            }
+            var tx = document.createElement("span");
+            tx.className = "p-text";
+            var nm = document.createElement("span");
+            nm.className = "p-name";
+            nm.textContent = p.name;
+            var bl = document.createElement("span");
+            bl.className = "p-blurb";
+            bl.textContent = p.blurb || "";
+            tx.appendChild(nm);
+            tx.appendChild(bl);
+            row.appendChild(av);
+            row.appendChild(tx);
+            if (p.id === activePersonaId) {
+              var ck = document.createElement("span");
+              ck.className = "p-check";
+              ck.textContent = "✓ 而家係佢";
+              row.appendChild(ck);
+            }
+            if (p.custom) {
+              var del = document.createElement("button");
+              del.type = "button";
+              del.className = "p-del";
+              del.textContent = "刪除";
+              del.addEventListener("click", function (e) {
+                e.stopPropagation();
+                pendingDeletePersonaId = p.id;
+                $("personaDeleteText").textContent = "真係刪咗「" + p.name + "」？呢個人設同佢嘅對話記錄會一併刪晒，冇得返轉頭。";
+                $("personaDeleteConfirm").style.display = "block";
+              });
+              row.appendChild(del);
+            }
+            row.addEventListener("click", function () { switchPersona(p.id); });
+            list.appendChild(row);
+          });
+        }
+        function switchPersona(id) {
+          activePersonaId = id;
+          if (!chatHistories[id]) chatHistories[id] = [];
+          chatHistory = chatHistories[id];
+          pendingDeletePersonaId = "";
+          $("personaDeleteConfirm").style.display = "none";
+          storageSave();
+          renderPersonaAvatar();
+          renderPersonaPanel();
+          renderChat();
+          chatStatus("");
+          $("personaPanel").style.display = "none";
+          $("personaAvatar").setAttribute("aria-expanded", "false");
+        }
+        $("personaAvatar").addEventListener("click", function () {
+          var panel = $("personaPanel");
+          var open = panel.style.display !== "none";
+          panel.style.display = open ? "none" : "block";
+          this.setAttribute("aria-expanded", open ? "false" : "true");
+        });
+        $("personaAddBtn").addEventListener("click", function () {
+          $("personaForm").style.display = "block";
+          $("personaFormStatus").textContent = "";
+          $("personaName").focus();
+        });
+        $("personaCancel").addEventListener("click", function () {
+          $("personaForm").style.display = "none";
+        });
+        $("personaSave").addEventListener("click", function () {
+          var name = $("personaName").value.trim();
+          var desc = $("personaDesc").value.trim();
+          if (!name || !desc) { $("personaFormStatus").textContent = "名同人設描述都要寫齊，先保存到。"; return; }
+          var id = "custom-" + Date.now();
+          customPersonas.push({ id: id, name: name, desc: desc });
+          if (!chatHistories[id]) chatHistories[id] = [];
+          $("personaName").value = "";
+          $("personaDesc").value = "";
+          $("personaForm").style.display = "none";
+          storageSave();
+          renderPersonaPanel();
+          switchPersona(id);
+          toast("新人設「" + name + "」加好喇，而家陪你傾計嘅就係佢。");
+        });
+        $("personaDeleteNo").addEventListener("click", function () {
+          pendingDeletePersonaId = "";
+          $("personaDeleteConfirm").style.display = "none";
+        });
+        $("personaDeleteYes").addEventListener("click", function () {
+          var id = pendingDeletePersonaId;
+          if (!id) return;
+          customPersonas = customPersonas.filter(function (p) { return p.id !== id; });
+          delete chatHistories[id];
+          pendingDeletePersonaId = "";
+          $("personaDeleteConfirm").style.display = "none";
+          if (activePersonaId === id) {
+            activePersonaId = "david";
+            if (!chatHistories.david) chatHistories.david = [];
+            chatHistory = chatHistories.david;
+            renderChat();
+            chatStatus("");
+          }
+          storageSave();
+          renderPersonaAvatar();
+          renderPersonaPanel();
+        });
+
+        /* 初始化聊天區 */
+        if (!chatSettings.apiKey) {
+          chatSettingsOpen = true;
+        } else {
+          chatSettingsOpen = false;
+          $("chatSettings").style.display = "none";
+          $("chatSettingsToggle").textContent = "打開設定";
+        }
+        chatFillUIFromSettings();
+        updateBaseUrlHint();
+        renderPersonaAvatar();
+        renderPersonaPanel();
+        renderChat();
       })();
     </script>
   </body>
