@@ -554,6 +554,7 @@
       .mcp-item .m-del { background: transparent; color: var(--rose); padding: 6px 8px; font-weight: 500; flex: none; }
       .mcp-preset { margin-top: 10px; }
       .mcp-preset .hint { margin-top: 4px; }
+      .hint .red { color: #c0392b; }
       .mcp-confirm {
         align-self: stretch; background: var(--gold-soft); border: 1px solid var(--gold);
         border-radius: 14px; padding: 14px 16px;
@@ -851,7 +852,7 @@
             </div>
             <div class="mcp-preset">
               <button type="button" class="ghost small" data-mcp-preset="1">瑞幸</button>
-              <p class="hint">Token 去邊度攞：去 open.lkcoffee.com 用手機號登入攞 Token，大約 30 日有效，過期要再攞過；呢個服務只做到店自取。</p>
+              <p class="hint">Token 去邊度攞：去 open.lkcoffee.com 用手機號登入攞 Token，大約 30 日有效，過期要再攞過；呢個服務<strong class="red">只做到店自取</strong>。</p>
             </div>
             <div class="mcp-preset">
               <button type="button" class="ghost small" data-mcp-preset="2">高德</button>
@@ -4576,7 +4577,7 @@
            一齊入 localStorage；Token 唔入備份導出（export 嗰邊只抄指定欄位）。 */
         var MCP_PRESETS = [
           { name: "麥當勞", url: "https://mcp.mcd.cn", hint: "Token：去 open.mcd.cn 用手機號登入申請，攞到貼入 Token 格就得。" },
-          { name: "瑞幸", url: "https://gwmcp.lkcoffee.com/order/user/mcp", hint: "Token：去 open.lkcoffee.com 用手機號登入攞，大約 30 日有效；呢個服務只做到店自取。" },
+          { name: "瑞幸", url: "https://gwmcp.lkcoffee.com/order/user/mcp", hint: "Token：去 open.lkcoffee.com 用手機號登入攞，大約 30 日有效；呢個服務<strong class=\"red\">只做到店自取</strong>。" },
           { name: "高德", url: "https://mcp.amap.com/mcp?key=", hint: "Key：去高德開放平台申請 Web 服務 Key，接喺地址 key= 後面；Token 格留空就得。" }
         ];
         var pendingMcpDeleteIndex = -1;
@@ -4637,7 +4638,8 @@
           $("mcpUrl").value = url || "";
           $("mcpToken").value = "";
           var hintEl = $("mcpFormHint");
-          if (hint) { hintEl.textContent = hint; hintEl.style.display = "block"; }
+          /* hint 全部係 MCP_PRESETS 嘅固定文字，冇用戶輸入，改用 innerHTML 等瑞幸嗰句紅字顯示到。 */
+          if (hint) { hintEl.innerHTML = hint; hintEl.style.display = "block"; }
           else hintEl.style.display = "none";
           mcpFormStatus("");
           $("mcpForm").style.display = "block";
