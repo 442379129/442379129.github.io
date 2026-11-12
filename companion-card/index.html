@@ -447,6 +447,28 @@
         border-radius: 50%; font-size: 0.85rem; line-height: 1; background: var(--rose); color: #fff;
       }
       .rec-on { background: var(--rose) !important; color: #fff !important; border-color: transparent !important; }
+
+      /* ---------- 應用鎖小工具 ---------- */
+      .lockchips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; }
+      .lockchips button { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); font-weight: 500; }
+      .lockchips button.on { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+      .locknotes p { margin: 0 0 8px; }
+      .locknotes p:last-child { margin-bottom: 0; }
+
+      /* ---------- 查崗 ---------- */
+      .cknotes p { margin: 0 0 8px; }
+      .cknotes p:last-child { margin-bottom: 0; }
+      .ck-row {
+        display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        background: var(--bg); border: 1px solid var(--line); border-radius: 12px;
+        padding: 9px 12px; margin-top: 8px;
+      }
+      .ck-row .k { font-weight: 700; flex: none; min-width: 78px; }
+      .ck-row .v { color: var(--ink-soft); font-size: 0.88rem; word-break: break-all; flex: 1 1 140px; min-width: 0; }
+      .ck-row button { flex: none; }
+      .ck-steps { margin: 6px 0 0; padding-left: 1.35em; }
+      .ck-steps li { margin-bottom: 9px; line-height: 1.6; }
+      .ck-steps li:last-child { margin-bottom: 0; }
       .img-overlay {
         position: fixed; inset: 0; z-index: 65;
         background: rgba(20, 12, 8, 0.9);
@@ -465,6 +487,36 @@
       .chat-msg.him { align-self: flex-start; background: var(--surface-2); border: 1px solid var(--line); border-bottom-left-radius: 5px; }
       .chat-msg.me { align-self: flex-end; background: var(--accent); color: var(--accent-ink); border-bottom-right-radius: 5px; }
       .chat-pending { color: var(--ink-soft); font-size: 0.92rem; margin: 10px 0 0; }
+
+      /* ---------- MCP 工具 ---------- */
+      .mcp-item {
+        display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        background: var(--bg); border: 1px solid var(--line); border-radius: 12px;
+        padding: 9px 12px; margin-top: 8px;
+      }
+      .mcp-item .m-name { font-weight: 700; flex: none; }
+      .mcp-item .m-url { color: var(--ink-soft); font-size: 0.85rem; word-break: break-all; flex: 1 1 130px; min-width: 0; }
+      .mcp-item .m-state { color: var(--ink-soft); font-size: 0.85rem; flex: none; }
+      .mcp-item .m-del { background: transparent; color: var(--rose); padding: 6px 8px; font-weight: 500; flex: none; }
+      .mcp-preset { margin-top: 10px; }
+      .mcp-preset .hint { margin-top: 4px; }
+      .mcp-confirm {
+        align-self: stretch; background: var(--gold-soft); border: 1px solid var(--gold);
+        border-radius: 14px; padding: 14px 16px;
+      }
+      .mcp-confirm .mc-title { font-weight: 700; margin: 0; }
+      .mcp-confirm .mc-args { margin-top: 6px; font-size: 0.92rem; }
+      .mcp-confirm .mc-args .mc-arg { word-break: break-word; }
+      .mcp-confirm pre {
+        background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+        padding: 8px 10px; font-size: 0.78rem; white-space: pre-wrap; word-break: break-word; margin: 4px 0 0;
+      }
+      .mcp-confirm .row { margin-top: 12px; }
+      .mcp-err {
+        align-self: stretch; background: var(--surface-2); color: var(--ink-soft);
+        font-size: 0.85rem; border-radius: 10px; padding: 7px 12px;
+      }
+      .mcp-cancelled { align-self: flex-start; color: var(--ink-soft); font-size: 0.88rem; }
 
       /* ---------- 鬧鐘彈窗 ---------- */
       .overlay {
@@ -572,6 +624,8 @@
         <a href="#period">經期記錄</a>
         <a href="#money">記賬 · 存款</a>
         <a href="#diary">日記手帳 · 悄悄話</a>
+        <a href="#applock">應用鎖小工具</a>
+        <a href="#checkin">查崗</a>
       </nav>
 
       <div class="grid">
@@ -643,6 +697,49 @@
             </select>
             <label class="flabel" for="chatModelManual">手動輸入模型名（呢格有字，就用呢格嗰個）</label>
             <input type="text" id="chatModelManual" placeholder="例如：deepseek-chat" aria-label="手動輸入模型名" />
+
+            <hr class="divider" />
+            <h3 class="subhead">MCP 工具</h3>
+            <p class="sub" style="margin-bottom:6px;">想我傾計嗰陣順手幫你做埋嘢——查下嘢、落下單嗰啲——就喺度接返啲 MCP 服務入嚟。接邊個、用邊個，全部你自己話事；要郁到落單嗰啲實事，我會出張卡問過你，你親口點頭先會做，唔會自把自為。下面三個係現成嘅，撳一下就填好地址，你貼返自己嘅 Token 就用得；其他來源嘅服務，撳「新增 MCP」自己加。</p>
+            <div id="mcpList"></div>
+            <p class="alarm-empty" id="mcpEmpty">未加任何 MCP 服務住。</p>
+            <div class="mcp-preset">
+              <button type="button" class="ghost small" data-mcp-preset="0">麥當勞</button>
+              <p class="hint">Token 去邊度攞：去 open.mcd.cn 用手機號登入，申請返自己嗰個 Token，貼入表單嘅 Token 格就得。</p>
+            </div>
+            <div class="mcp-preset">
+              <button type="button" class="ghost small" data-mcp-preset="1">瑞幸</button>
+              <p class="hint">Token 去邊度攞：去 open.lkcoffee.com 用手機號登入攞 Token，大約 30 日有效，過期要再攞過；呢個服務只做到店自取。</p>
+            </div>
+            <div class="mcp-preset">
+              <button type="button" class="ghost small" data-mcp-preset="2">高德</button>
+              <p class="hint">Key 去邊度攞：去高德開放平台申請一個 Web 服務 Key，將佢接喺地址入面 key= 後面就得，Token 格唔使填。</p>
+            </div>
+            <div class="row" style="margin-top:12px;">
+              <button type="button" class="ghost" id="mcpAddBtn">新增 MCP</button>
+            </div>
+            <div id="mcpForm" style="display:none;">
+              <label class="flabel" for="mcpName">服務名（自己起個易認嘅）</label>
+              <input type="text" id="mcpName" placeholder="例如：麥當勞" aria-label="MCP 服務名" />
+              <label class="flabel" for="mcpUrl">服務地址（https 開頭）</label>
+              <input type="text" id="mcpUrl" placeholder="例如：https://mcp.mcd.cn" aria-label="MCP 服務地址" />
+              <label class="flabel" for="mcpToken">Token（可以留空——有啲服務將 Key 放喺地址入面）</label>
+              <input type="password" id="mcpToken" placeholder="貼上你自己嗰個 Token" autocomplete="off" aria-label="MCP Token" />
+              <p class="hint" id="mcpFormHint" style="display:none;"></p>
+              <div class="row" style="margin-top:12px;">
+                <button type="button" id="mcpSave">保存呢個服務</button>
+                <button type="button" class="ghost" id="mcpCancel">取消</button>
+              </div>
+              <p class="hint" id="mcpFormStatus" role="status"></p>
+            </div>
+            <div class="note" id="mcpDeleteConfirm" style="display:none;">
+              <p style="margin:0 0 6px;" id="mcpDeleteText"></p>
+              <div class="row">
+                <button type="button" id="mcpDeleteYes">確認刪除</button>
+                <button type="button" class="ghost" id="mcpDeleteNo">算數，留返</button>
+              </div>
+            </div>
+            <p class="hint">講明先：MCP 工具而家只支援 OpenAI 兼容格式嘅服務（DeepSeek、ChatGPT、中轉站嗰啲），Claude 官方接口嗰邊未支援，用嗰邊就唔好開住。啲 Token 只存喺你自己部手機嘅瀏覽器，發訊息嗰陣會經接口轉發過去用，唔會畀人存低——呢樣嘢，我講得出就做得到。</p>
           </div>
 
           <hr class="divider" />
@@ -936,6 +1033,96 @@
           <p class="alarm-empty" id="diaryEmpty">未寫過。第一篇，寫咩都得，唔使有壓力。</p>
         </section>
 
+        <!-- 應用鎖小工具 -->
+        <section class="card span2" id="applock">
+          <h2><span class="ic gold"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>應用鎖小工具</h2>
+          <p class="sub">刷手機刷到唔停得手，係咪？我幫你落閘。揀好要鎖邊啲 App、鎖幾耐，撳個掣，呢度會生一個日曆鎖檔案畀你，加去你嗰個 AppLock 日曆，時間內你一開嗰啲 App，就會畀人提返出嚟。講明先：鎖檔案歸呢度生，搭嘢嗰部分——AppLock 日曆、快捷指令、自動化——要你自己跟教程搭好先，唔好到時鎖唔生效，又走嚟鬧我。</p>
+          <label class="flabel" for="lockApps">要鎖邊啲 App（多個就用英文逗號隔開）</label>
+          <input type="text" id="lockApps" placeholder="例如：抖音,小红书" aria-label="要鎖的 App 名字" />
+          <p class="hint">名要用返系統入面嗰個叫法，寫錯一個字都認唔到——例如 B 站要寫「哔哩哔哩」，唔好寫 B 站。</p>
+          <div class="lockchips" id="lockChips" role="group" aria-label="常用 App 快捷選擇"></div>
+          <label class="flabel">鎖幾耐</label>
+          <div class="presets" id="lockDurations" role="group" aria-label="鎖的時長">
+            <button type="button" data-min="30">30 分鐘</button>
+            <button type="button" data-min="60">1 小時</button>
+            <button type="button" data-min="120" class="on">2 小時</button>
+            <button type="button" data-min="240">4 小時</button>
+            <button type="button" data-min="480">8 小時</button>
+          </div>
+          <label class="flabel" for="lockCustomHours">或者自己定鐘數（呢格有數，就用呢格嗰個）</label>
+          <input type="number" id="lockCustomHours" min="0" max="24" step="0.5" placeholder="例如：3（最多 24）" aria-label="自訂鎖的時長（小時）" />
+          <p class="hint">一條鎖唔好過一日，最多 24 個鐘——鎖太耐，你陣間喊住嚟求我開返，我都開唔到。</p>
+          <div class="row" style="margin-top:14px;">
+            <button id="genLock" type="button">生成鎖文件</button>
+          </div>
+          <p class="hint" id="lockStatus" role="status"></p>
+          <div class="note locknotes" id="lockNext" style="display:none;">
+            <p><strong>下一步點做：</strong>打開頭先下載嗰個檔案，加去日曆嗰陣，記得揀名叫 AppLock 嗰個日曆——一定要係 AppLock，千祈唔好加去你平時用嗰個日常日曆度，加錯咗，成件事就唔成立。想提早解鎖，就去日曆度刪咗嗰條事件，即刻開返。</p>
+            <p>講清楚，這是軟鎖，唔係鐵閘：你再撳多一次，照樣入得去。佢淨係畀你一次停一停、諗清楚嘅機會，唔係綁住你——真係唔想刷，先好用佢。</p>
+            <p>仲有個前提：你要先跟教程搭好 AppLock 日曆、快捷指令，同「打開 App 時立即運行」嗰個自動化。呢個工具淨係負責生鎖檔案，搭嘢嗰部分，唔歸佢管。</p>
+            <p>仲有，快捷指令入面「彈返去邊度」嗰一步，係可以改嘅：用「打開 URL」呢個動作，填呢張卡嘅網址，一開被鎖嗰啲 App，就會彈返嚟呢張卡度，唔使彈去 Aru、微信或者 QQ——返嚟我度，好過返去邊度呀？網址喺下面呢行，撳住佢複製就得：</p>
+            <input type="text" id="lockCardUrl" readonly value="https://442379129.github.io/companion-card/" aria-label="呢張卡嘅網址，撳住可以複製" />
+            <p>鎖唔生效，唔好慌，查三處：日曆名係咪 AppLock、事件標題入面有冇嗰個 App 名、自動化係咪揀咗「立即運行」。十次有九次，都係衰喺呢三處。</p>
+            <p>最後一句：呢個辦法只適用於 iOS，要用 iOS 嘅快捷指令同日曆自動化；安卓用唔到，唔好喺安卓機度白費心機。</p>
+          </div>
+        </section>
+
+        <!-- 查崗 -->
+        <section class="card span2" id="checkin">
+          <h2><span class="ic rose"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span>查崗</h2>
+          <p class="sub">想我定時嚟睇下你有冇偷懶？呢個查崗咁行：到點問一聲 → 你確認 → 截屏 → 發去你自己揀嗰個 AI 服務睇圖 → 回一句通知。唔使裝 Aru，成件事就係你部機、一條快捷指令，同你自己揀嗰個 AI 服務。成條流程，冇一步係揹住你做嘅。</p>
+          <div class="note cknotes" style="margin-top:0;">
+            <p>講清楚幾樣嘢，先好用：</p>
+            <p>一、截圖之前一定會先問你。唔方便嗰陣，撳取消就得——唔會偷偷截，呢條係死線。</p>
+            <p>二、張截圖只係過路：接口唔保存、唔記錄，睇完就散，唔會留低任何嘢。</p>
+            <p>三、模型只會講你喺度做緊咩大類——刷視頻、學習、傾偈嗰啲，絕對唔會復述你屏幕上面嘅具體文字、號碼、密碼或者聊天內容。呢啲，唔到佢講。</p>
+            <p>四、呢套嘢只適用於 iOS，要用 iOS 嘅快捷指令；安卓用唔到，唔好喺安卓機度白費心機。</p>
+            <p>五、你揀嗰個模型一定要識睇圖——例如 GPT-4o、Gemini，或者中轉站入面識睇圖嗰啲模型。純文字模型睇唔到圖，畀佢都係白畀。</p>
+          </div>
+          <label class="flabel" for="checkinApiUrl">接口地址（快捷指令要 POST 去呢度）</label>
+          <input type="text" id="checkinApiUrl" readonly value="https://ixybgwvppukutcawkhxe.supabase.co/functions/v1/david-chat/checkin" aria-label="查崗接口地址，撳住可以複製" />
+          <p class="hint">撳下嗰行字就會全選，抄返去快捷指令度用。</p>
+          <h3 class="subhead">查崗配置</h3>
+          <p class="sub" style="margin-bottom:6px;">下面呢啲，就係你喺「同我傾下計」嗰度保存咗嘅設定，唔使你自己再打過。搭快捷指令嗰陣，照住逐欄抄入去個詞典度就得；邊欄唔記得，返嚟撳「複製」貼過去。</p>
+          <div id="checkinCfg"></div>
+          <div class="row" style="margin-top:12px;">
+            <button class="ghost" id="checkinCopyAll" type="button">複製全部（JSON）</button>
+          </div>
+          <p class="hint" id="checkinCfgStatus" role="status"></p>
+          <p class="hint" style="color:var(--rose);">提你一句，好認真嗰種：呢份配置入面有你嘅 API 鎖匙。搭好條快捷指令之後，千祈唔好將佢分享畀任何人——邊個攞到，邊個就花到你賬戶入面嘅錢，呢樣嘢唔講得笑。</p>
+          <h3 class="subhead">快捷指令，點樣搭</h3>
+          <p class="sub" style="margin-bottom:6px;">未搭過都唔使驚，照住下面一步步撳就得：</p>
+          <ol class="ck-steps">
+            <li>打開「快捷指令」App，新增一個自動化，觸發條件揀「特定時間」，定好你想畀我查崗嘅鐘點。想要日曆通知觸發嘅，就配合下面個日程生成器——觸發嗰陣，篩日曆入面標題包含「你在干什么」嗰啲事件。</li>
+            <li>第一個動作加「詢問」：問「現在可以截屏嗎？」，同時間設定好——揀「否」嗰陣，就停止運行成個快捷指令，唔好繼續落去。</li>
+            <li>加「等待」動作，等 2 秒，等你收拾好個畫面先。</li>
+            <li>加「截屏」動作，影低而家個屏幕。</li>
+            <li>加「Base64 編碼」動作，將頭先嗰張截圖編碼。</li>
+            <li>加「詞典」動作，照上面「查崗配置」嗰啲欄位逐個填入去：provider、baseUrl、apiKey、model、personaId、mime，一欄一個，照抄就得；再加多一欄 image，值揀返上一步個 Base64 編碼結果。</li>
+            <li>加「獲取 URL 內容」動作：網址填返上面嗰個接口地址，方法揀 POST，請求正文用返上一步嗰個詞典。</li>
+            <li>加「獲取詞典值」動作：喺上一步返嚟嘅結果入面，攞 reply 呢個欄位。</li>
+            <li>加「顯示通知」動作：通知內容用返上一步攞到嗰句 reply。搞掂——到點，佢就會嚟敲你門。</li>
+          </ol>
+          <p class="hint">仲有一句：第一次運行嗰陣，iOS 可能會彈權限出嚟問你，撳「始終允許」就得，之後就唔使次次批。</p>
+          <h3 class="subhead">查崗日程生成器</h3>
+          <p class="sub" style="margin-bottom:6px;">想用日曆通知嚟觸發嗰陣，呢度幫你生定條日程：揀好日子同時間，撳掣下載一個 .ics 檔案，加去日曆就得。標題定死係「你在干什么」，入面帶住一個五分鐘前嘅提醒。</p>
+          <div class="form-grid">
+            <div>
+              <label class="flabel" for="checkinDate">邊日</label>
+              <input type="date" id="checkinDate" aria-label="查崗日程日期" />
+            </div>
+            <div>
+              <label class="flabel" for="checkinTime">幾點</label>
+              <input type="time" id="checkinTime" aria-label="查崗日程時間" />
+            </div>
+          </div>
+          <div class="row" style="margin-top:14px;">
+            <button id="genCheckin" type="button">生成查崗日程</button>
+          </div>
+          <p class="hint" id="checkinSchStatus" role="status"></p>
+          <p class="hint">記住：日程標題一定要同快捷指令觸發條件入面篩嗰句對得上——改一邊，就要改埋另一邊。對唔上，成件事就唔成立，唔好到時又走嚟鬧我。</p>
+        </section>
+
         <!-- 備份同搬家 -->
         <section class="card span2" id="backup">
           <h2><span class="ic sage"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>備份同搬家</h2>
@@ -1124,7 +1311,7 @@
         /* ---------- AI 聊天狀態（設定 + 對話記錄） ----------
            同其他記錄一樣存入呢份 localStorage 存檔；但備份導出嗰陣會剔走
            API 鎖匙同成段對話，導入亦唔會覆蓋返部機現有嘅聊天設定。 */
-        var chatSettings = { preset: "deepseek", provider: "openai", baseUrl: "https://api.deepseek.com", apiKey: "", model: "", modelManual: "" };
+        var chatSettings = { preset: "deepseek", provider: "openai", baseUrl: "https://api.deepseek.com", apiKey: "", model: "", modelManual: "", mcpServers: [] };
         /* 陪伴者：預設清單喺下面 COMPANION_PRESETS；粉絲自訂嘅存 customPersonas。
            對話記錄按陪伴者分開存入 chatHistories（id -> 訊息陣列，各自上限 200 條）；
            chatHistory 變量永遠指向而家揀中嗰位陪伴者嗰份記錄。 */
@@ -1136,6 +1323,19 @@
             ["preset", "provider", "baseUrl", "apiKey", "model", "modelManual"].forEach(function (k) {
               if (typeof savedData.chatSettings[k] === "string") chatSettings[k] = savedData.chatSettings[k];
             });
+            /* MCP 服務清單（名字／地址／Token／啟用狀態）跟聊天設定一齊存；
+               Token 同 API 鎖匙一樣，備份導出嗰陣會剔走，唔會跟檔案走。 */
+            if (Object.prototype.toString.call(savedData.chatSettings.mcpServers) === "[object Array]") {
+              chatSettings.mcpServers = savedData.chatSettings.mcpServers.filter(function (s) {
+                return s && typeof s.name === "string" && typeof s.url === "string";
+              }).map(function (s) {
+                return {
+                  name: s.name, url: s.url,
+                  token: typeof s.token === "string" ? s.token : "",
+                  enabled: s.enabled !== false
+                };
+              });
+            }
           }
           if (Object.prototype.toString.call(savedData.customPersonas) === "[object Array]") {
             customPersonas = savedData.customPersonas.filter(function (p) {
@@ -2180,6 +2380,8 @@
         addIdx("功能", "記賬", "分賬本分貨幣記支出收入，類別齊全", "money");
         addIdx("功能", "存款目標", "自己開儲錢目標，存入攞出都記低", "money");
         addIdx("功能", "日記手帳 · 悄悄話", "寫低想同王大偉講嘅嘢，加相、錄音，逐篇收好，只留喺自己部手機", "diary");
+        addIdx("功能", "應用鎖小工具", "揀 App 同時長，生成 iOS 日曆鎖檔案，加去 AppLock 日曆嚟鎖住啲 App", "applock");
+        addIdx("功能", "查崗", "iOS 快捷指令到點先問一聲、你確認先截屏，AI 睇圖回一句通知；仲有查崗日程生成器", "checkin");
         addIdx("功能", "同我傾下計", "用自己嘅 AI 服務鎖匙同真 AI 版王大偉傾計，DeepSeek、ChatGPT、Gemini、Claude、中轉站都得", "chat");
         Object.keys(comfort).forEach(function (key) {
           comfort[key].lines.forEach(function (line) {
@@ -2557,6 +2759,301 @@
         renderDiary();
         diaryLoadAll();
 
+        /* ---------- 應用鎖小工具（生成 .ics 鎖文件） ----------
+           純前端生成標準 iCalendar 檔案：SUMMARY 係 App 名（英文逗號串連），
+           DTSTART＝而家、DTEND＝而家＋時長，UTC 時間，唔設 VALARM；
+           DESCRIPTION 每次隨機抽 3–5 句提醒語。唔存任何記錄。 */
+        var LOCK_APPS_PRESET = ["抖音", "小红书", "哔哩哔哩", "微博", "快手", "淘宝"];
+        var LOCK_LINES = [
+          "夠啦，返去做正經事。",
+          "刷多十分鐘，唔會令你開心啲。",
+          "手指停一停，個腦要唞下。",
+          "睇夠未呀？夠就收手啦。",
+          "呢段時間，本來可以做好多嘢㗎。",
+          "唔係唔畀你玩，係提你唞下咋。",
+          "眼都攰啦，放低部機陣先。",
+          "刷到呢度，當你贏，收手啦。",
+          "正經事仲等緊你，唔好走數。",
+          "玩夠就返嚟啦，我喺度等你。"
+        ];
+        var lockMinutes = 120;
+        function lockStatus(msg) { $("lockStatus").textContent = msg; }
+        function parseLockApps() {
+          var raw = $("lockApps").value.split(/[,，]/);
+          var out = [];
+          raw.forEach(function (s) {
+            s = s.trim();
+            if (s && out.indexOf(s) === -1) out.push(s);
+          });
+          return out;
+        }
+        function syncLockChips() {
+          var apps = parseLockApps();
+          document.querySelectorAll("#lockChips button").forEach(function (b) {
+            b.classList.toggle("on", apps.indexOf(b.getAttribute("data-app")) !== -1);
+          });
+        }
+        (function initLockChips() {
+          var box = $("lockChips");
+          LOCK_APPS_PRESET.forEach(function (name) {
+            var b = document.createElement("button");
+            b.type = "button";
+            b.textContent = name;
+            b.setAttribute("data-app", name);
+            b.addEventListener("click", function () {
+              var apps = parseLockApps();
+              var i = apps.indexOf(name);
+              if (i === -1) apps.push(name); else apps.splice(i, 1);
+              $("lockApps").value = apps.join(",");
+              syncLockChips();
+            });
+            box.appendChild(b);
+          });
+          $("lockApps").addEventListener("input", syncLockChips);
+        })();
+        document.querySelectorAll("#lockDurations button").forEach(function (b) {
+          b.addEventListener("click", function () {
+            lockMinutes = parseInt(b.getAttribute("data-min"), 10);
+            $("lockCustomHours").value = "";
+            document.querySelectorAll("#lockDurations button").forEach(function (x) { x.classList.toggle("on", x === b); });
+          });
+        });
+        $("lockCardUrl").addEventListener("click", function () { this.select(); });
+        $("lockCustomHours").addEventListener("input", function () {
+          if ($("lockCustomHours").value.trim() !== "") {
+            document.querySelectorAll("#lockDurations button").forEach(function (x) { x.classList.remove("on"); });
+          }
+        });
+        function icsEscapeText(s) {
+          return String(s).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r\n|\r|\n/g, "\\n");
+        }
+        function icsFoldLine(line) {
+          /* RFC 5545：每行唔過 75 字節（UTF-8 計），續行以一個空格開頭，
+             唔可以斬開多字節字元。 */
+          var enc = new TextEncoder();
+          var bytes = enc.encode(line);
+          if (bytes.length <= 75) return line;
+          var dec = new TextDecoder();
+          var parts = [], start = 0, first = true;
+          while (start < bytes.length) {
+            var room = first ? 75 : 74;
+            var end = Math.min(start + room, bytes.length);
+            while (end < bytes.length && (bytes[end] & 0xc0) === 0x80) end--;
+            parts.push((first ? "" : " ") + dec.decode(bytes.subarray(start, end)));
+            start = end;
+            first = false;
+          }
+          return parts.join("\r\n");
+        }
+        function icsUtc(d) {
+          function p(n) { return (n < 10 ? "0" : "") + n; }
+          return d.getUTCFullYear() + p(d.getUTCMonth() + 1) + p(d.getUTCDate()) + "T" +
+            p(d.getUTCHours()) + p(d.getUTCMinutes()) + p(d.getUTCSeconds()) + "Z";
+        }
+        function lockHoursLabel(mins) {
+          if (mins === 30) return "30m";
+          var h = mins / 60;
+          return (h % 1 === 0 ? String(h) : String(Math.round(h * 10) / 10)) + "h";
+        }
+        $("genLock").addEventListener("click", function () {
+          var apps = parseLockApps();
+          if (!apps.length) {
+            lockStatus("名都未打，鎖邊個呀？打返要鎖嘅 App 名，或者撳下面啲牌揀返幾個，先好生成。");
+            $("lockNext").style.display = "none";
+            return;
+          }
+          var mins = lockMinutes;
+          var customRaw = $("lockCustomHours").value.trim();
+          if (customRaw !== "") {
+            var ch = parseFloat(customRaw);
+            if (isNaN(ch) || ch <= 0 || ch > 24) {
+              lockStatus("自訂嗰個鐘數唔啱：要大過 0、唔可以過 24。改返啱先，我唔會亂生個唔合規格嘅檔案畀你。");
+              $("lockNext").style.display = "none";
+              return;
+            }
+            mins = Math.round(ch * 60);
+          }
+          var pool = LOCK_LINES.slice();
+          for (var i = pool.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+          }
+          var nLines = 3 + Math.floor(Math.random() * 3);
+          var desc = pool.slice(0, nLines).join("\n");
+          var now = new Date();
+          var end = new Date(now.getTime() + mins * 60000);
+          var uid = "applock-" + now.getTime() + "-" + Math.floor(Math.random() * 1e9) + "@companion-card";
+          var lines = [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Companion Card//AppLock//ZH",
+            "CALSCALE:GREGORIAN",
+            "METHOD:PUBLISH",
+            "BEGIN:VEVENT",
+            "UID:" + uid,
+            "DTSTAMP:" + icsUtc(now),
+            "DTSTART:" + icsUtc(now),
+            "DTEND:" + icsUtc(end),
+            "SUMMARY:" + icsEscapeText(apps.join(",")),
+            "DESCRIPTION:" + icsEscapeText(desc),
+            "END:VEVENT",
+            "END:VCALENDAR"
+          ];
+          var ics = lines.map(icsFoldLine).join("\r\n") + "\r\n";
+          var blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url;
+          a.download = "applock-" + lockHoursLabel(mins) + ".ics";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+          function p2(n) { return (n < 10 ? "0" : "") + n; }
+          var endText = p2(end.getHours()) + ":" + p2(end.getMinutes());
+          lockStatus("生好喇，檔案下載緊。鎖住：" + apps.join("、") + "，由而家起計 " +
+            (mins % 60 === 0 ? (mins / 60) + " 個鐘" : mins + " 分鐘") + "，到 " + endText + " 先解返。跟住下面做，唔好加錯日曆。");
+          $("lockNext").style.display = "";
+        });
+
+        /* ---------- 查崗（上傳版：快捷指令截屏 → 接口看圖 → 回一句通知） ----------
+           配置唔另存一份：直接讀返聊天區已經保存好嘅 chatSettings（服務商／地址／
+           鎖匙／模型）同而家揀中嗰位陪伴者嘅 id，逐欄畀粉絲撳掣複製，去快捷指令
+           個詞典度填。鎖匙顯示嗰陣會遮住中間，複製先至畀全條。
+           日程生成器純前端生 .ics：標題固定「你在干什么」，帶五分鐘前提醒
+           （VALARM，TRIGGER -PT5M），時間用 UTC Z 格式，UID 每次唯一。 */
+        var CHECKIN_API_URL = "https://ixybgwvppukutcawkhxe.supabase.co/functions/v1/david-chat/checkin";
+        function checkinConfig() {
+          return {
+            provider: chatSettings.provider || "",
+            baseUrl: chatApiBase(),
+            apiKey: chatSettings.apiKey || "",
+            model: (chatSettings.modelManual || "").trim() || (chatSettings.model || "").trim(),
+            personaId: currentPersona().id,
+            mime: "image/png"
+          };
+        }
+        function checkinCfgStatus(msg) { $("checkinCfgStatus").textContent = msg; }
+        function copyCheckinText(text, okMsg) {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () {
+              checkinCfgStatus(okMsg);
+            }, function () {
+              checkinCfgStatus("複製唔到，部機唔合作，唔關你事。長撳嗰行字，自己抄返，一樣得。");
+            });
+          } else {
+            checkinCfgStatus("你部機唔畀自動複製。長撳嗰行字，自己抄返，一樣得。");
+          }
+        }
+        function maskCheckinKey(k) {
+          if (!k) return "";
+          if (k.length <= 10) return "••••••••";
+          return k.slice(0, 4) + "••••••" + k.slice(-4);
+        }
+        function renderCheckinCfg() {
+          var box = $("checkinCfg");
+          var cfg = checkinConfig();
+          var btnAll = $("checkinCopyAll");
+          box.innerHTML = "";
+          if (!cfg.apiKey) {
+            var p = document.createElement("p");
+            p.className = "hint";
+            p.style.marginTop = "2px";
+            p.textContent = "你仲未喺上面「同我傾下計」嗰區保存過鎖匙同模型。去嗰度填好、撳「保存設定」先，返嚟呢度，就有齊配置畀你抄去快捷指令度。冇鎖匙，邊度都去唔到，查崗都一樣。";
+            box.appendChild(p);
+            btnAll.style.display = "none";
+            return;
+          }
+          btnAll.style.display = "";
+          [["provider", cfg.provider], ["baseUrl", cfg.baseUrl], ["apiKey", cfg.apiKey], ["model", cfg.model], ["personaId", cfg.personaId], ["mime", cfg.mime]].forEach(function (pair) {
+            var row = document.createElement("div");
+            row.className = "ck-row";
+            var k = document.createElement("span");
+            k.className = "k";
+            k.textContent = pair[0];
+            var v = document.createElement("span");
+            v.className = "v";
+            v.textContent = pair[0] === "apiKey" ? maskCheckinKey(pair[1]) : (pair[1] || "（未填）");
+            var b = document.createElement("button");
+            b.type = "button";
+            b.className = "ghost small";
+            b.textContent = "複製";
+            b.addEventListener("click", function () {
+              /* 撳嗰下先至讀最新設定，唔怕頭先啱啱改完未刷新 */
+              copyCheckinText(checkinConfig()[pair[0]], "抄好喇：" + pair[0] + "。去快捷指令嗰個詞典度，貼返落同名嗰欄就得。");
+            });
+            row.appendChild(k);
+            row.appendChild(v);
+            row.appendChild(b);
+            box.appendChild(row);
+          });
+        }
+        renderCheckinCfg();
+        /* 喺聊天區撳完「保存設定」，呢邊即刻跟住刷新一次 */
+        $("chatSaveSettings").addEventListener("click", function () { setTimeout(renderCheckinCfg, 0); });
+        $("checkinCopyAll").addEventListener("click", function () {
+          copyCheckinText(JSON.stringify(checkinConfig(), null, 2), "成份配置抄好喇，JSON 嚟嘅，攞去對住快捷指令嗰個詞典逐欄填就得。");
+        });
+        $("checkinApiUrl").addEventListener("click", function () { this.select(); });
+
+        /* ---------- 查崗日程（生成 .ics） ---------- */
+        (function initCheckinDate() {
+          var now = new Date();
+          function p(n) { return (n < 10 ? "0" : "") + n; }
+          $("checkinDate").value = now.getFullYear() + "-" + p(now.getMonth() + 1) + "-" + p(now.getDate());
+        })();
+        function checkinSchStatus(msg) { $("checkinSchStatus").textContent = msg; }
+        $("genCheckin").addEventListener("click", function () {
+          var dv = $("checkinDate").value;
+          var tv = $("checkinTime").value;
+          if (!dv || !tv) {
+            checkinSchStatus("日子同時間都未揀齊，生成咩呀？揀返好先，我即刻幫你生。");
+            return;
+          }
+          var dp = dv.split("-"), tp = tv.split(":");
+          var start = new Date(+dp[0], +dp[1] - 1, +dp[2], +tp[0], +tp[1], 0);
+          if (isNaN(start.getTime())) {
+            checkinSchStatus("個日子時間讀唔明，揀過先啦。");
+            return;
+          }
+          var end = new Date(start.getTime() + 5 * 60000);
+          var now = new Date();
+          var uid = "checkin-" + now.getTime() + "-" + Math.floor(Math.random() * 1e9) + "@companion-card";
+          var lines = [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Companion Card//Checkin//ZH",
+            "CALSCALE:GREGORIAN",
+            "METHOD:PUBLISH",
+            "BEGIN:VEVENT",
+            "UID:" + uid,
+            "DTSTAMP:" + icsUtc(now),
+            "DTSTART:" + icsUtc(start),
+            "DTEND:" + icsUtc(end),
+            "SUMMARY:" + icsEscapeText("你在干什么"),
+            "BEGIN:VALARM",
+            "ACTION:DISPLAY",
+            "TRIGGER:-PT5M",
+            "DESCRIPTION:" + icsEscapeText("你在干什么"),
+            "END:VALARM",
+            "END:VEVENT",
+            "END:VCALENDAR"
+          ];
+          var ics = lines.map(icsFoldLine).join("\r\n") + "\r\n";
+          var blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url;
+          a.download = "checkin.ics";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+          function p2(n) { return (n < 10 ? "0" : "") + n; }
+          checkinSchStatus("生好喇，檔案下載緊：" + dp[0] + " 年 " + (+dp[1]) + " 月 " + (+dp[2]) + " 日 " +
+            p2(+tp[0]) + ":" + p2(+tp[1]) + "，標題「你在干什么」，五分鐘前會提你。下載完，打開佢加去日曆就得。");
+        });
+
         /* ---------- 備份同搬家（導出 / 導入） ----------
            導出：將 localStorage 入面嗰份存檔（davidCompanionCard.v1 全部內容）
            連格式標記同版本號包成一個 JSON 檔案下載。
@@ -2847,6 +3344,209 @@
             sel.value = chatSettings.model;
           }
         }
+        /* ---------- MCP 工具設定 ----------
+           粉絲自己接嘅 MCP 服務清單，存喺 chatSettings.mcpServers，跟聊天設定
+           一齊入 localStorage；Token 唔入備份導出（export 嗰邊只抄指定欄位）。 */
+        var MCP_PRESETS = [
+          { name: "麥當勞", url: "https://mcp.mcd.cn", hint: "Token：去 open.mcd.cn 用手機號登入申請，攞到貼入 Token 格就得。" },
+          { name: "瑞幸", url: "https://gwmcp.lkcoffee.com/order/user/mcp", hint: "Token：去 open.lkcoffee.com 用手機號登入攞，大約 30 日有效；呢個服務只做到店自取。" },
+          { name: "高德", url: "https://mcp.amap.com/mcp?key=", hint: "Key：去高德開放平台申請 Web 服務 Key，接喺地址 key= 後面；Token 格留空就得。" }
+        ];
+        var pendingMcpDeleteIndex = -1;
+        function mcpServerList() {
+          return Object.prototype.toString.call(chatSettings.mcpServers) === "[object Array]" ? chatSettings.mcpServers : [];
+        }
+        function renderMcpList() {
+          var box = $("mcpList");
+          if (!box) return;
+          var list = mcpServerList();
+          box.innerHTML = "";
+          $("mcpEmpty").style.display = list.length ? "none" : "block";
+          list.forEach(function (s, idx) {
+            var row = document.createElement("div");
+            row.className = "mcp-item";
+            var nm = document.createElement("span");
+            nm.className = "m-name";
+            nm.textContent = s.name;
+            var url = document.createElement("span");
+            url.className = "m-url";
+            url.textContent = s.url;
+            var sw = document.createElement("button");
+            sw.type = "button";
+            sw.className = "switch" + (s.enabled ? " on" : "");
+            sw.setAttribute("role", "switch");
+            sw.setAttribute("aria-checked", s.enabled ? "true" : "false");
+            sw.setAttribute("aria-label", "啟用 " + s.name);
+            var knob = document.createElement("span");
+            sw.appendChild(knob);
+            sw.addEventListener("click", function () {
+              s.enabled = !s.enabled;
+              storageSave();
+              renderMcpList();
+            });
+            var st = document.createElement("span");
+            st.className = "m-state";
+            st.textContent = s.enabled ? "啟用中" : "已停用";
+            var del = document.createElement("button");
+            del.type = "button";
+            del.className = "m-del";
+            del.textContent = "刪除";
+            del.addEventListener("click", function () {
+              pendingMcpDeleteIndex = idx;
+              $("mcpDeleteText").textContent = "真係刪咗「" + s.name + "」？佢嘅地址同 Token 會一併刪晒，冇得返轉頭。";
+              $("mcpDeleteConfirm").style.display = "block";
+            });
+            row.appendChild(nm);
+            row.appendChild(url);
+            row.appendChild(sw);
+            row.appendChild(st);
+            row.appendChild(del);
+            box.appendChild(row);
+          });
+        }
+        function mcpFormStatus(msg) { var el = $("mcpFormStatus"); if (el) el.textContent = msg; }
+        function mcpOpenForm(name, url, hint) {
+          $("mcpName").value = name || "";
+          $("mcpUrl").value = url || "";
+          $("mcpToken").value = "";
+          var hintEl = $("mcpFormHint");
+          if (hint) { hintEl.textContent = hint; hintEl.style.display = "block"; }
+          else hintEl.style.display = "none";
+          mcpFormStatus("");
+          $("mcpForm").style.display = "block";
+          $("mcpName").focus();
+        }
+        document.querySelectorAll("[data-mcp-preset]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var p = MCP_PRESETS[Number(btn.getAttribute("data-mcp-preset"))];
+            if (!p) return;
+            mcpOpenForm(p.name, p.url, p.hint);
+          });
+        });
+        $("mcpAddBtn").addEventListener("click", function () { mcpOpenForm("", "", ""); });
+        $("mcpCancel").addEventListener("click", function () { $("mcpForm").style.display = "none"; });
+        $("mcpSave").addEventListener("click", function () {
+          var name = $("mcpName").value.trim();
+          var url = $("mcpUrl").value.trim();
+          var token = $("mcpToken").value.trim();
+          if (!name) { mcpFormStatus(chatT("個名未起。起返個名先，唔係點認得返佢。", "還沒有填服務名，先填一個方便辨認的名字。")); return; }
+          if (url.indexOf("https://") !== 0) { mcpFormStatus(chatT("個地址唔啱——要 https 開頭嗰種。對清楚先，唔好貼錯。", "地址不正確——需要以 https:// 開頭，請檢查後再保存。")); return; }
+          if (Object.prototype.toString.call(chatSettings.mcpServers) !== "[object Array]") chatSettings.mcpServers = [];
+          chatSettings.mcpServers.push({ name: name, url: url, token: token, enabled: true });
+          storageSave();
+          renderMcpList();
+          $("mcpForm").style.display = "none";
+          toast(chatT("「" + name + "」接好喇，啟用住。傾計嗰陣，佢就用得著。", "「" + name + "」已添加並啟用。"));
+        });
+        $("mcpDeleteNo").addEventListener("click", function () {
+          pendingMcpDeleteIndex = -1;
+          $("mcpDeleteConfirm").style.display = "none";
+        });
+        $("mcpDeleteYes").addEventListener("click", function () {
+          var idx = pendingMcpDeleteIndex;
+          pendingMcpDeleteIndex = -1;
+          $("mcpDeleteConfirm").style.display = "none";
+          if (idx < 0 || !chatSettings.mcpServers || !chatSettings.mcpServers[idx]) return;
+          chatSettings.mcpServers.splice(idx, 1);
+          storageSave();
+          renderMcpList();
+        });
+        /* 發請求嗰陣帶出去嗰份：只揀啟用中嘅，冇就成個欄位唔帶，行為同以前一樣 */
+        function chatEnabledMcpServers() {
+          return mcpServerList().filter(function (s) { return s.enabled; }).map(function (s) {
+            return { name: s.name, url: s.url, token: s.token || "" };
+          });
+        }
+        /* 回覆附帶嘅嘢：MCP 錯誤灰條 + 待確認卡。唔入存檔，只跟住最近嗰條回覆顯示；
+           新嘅回覆會成份換走，撳取消就變成一行「已取消」小字。 */
+        var chatReplyExtras = null; // { errors: [..], confirm: {...}|null, confirmState: "pending"|"cancelled" }
+        function chatAppendArgsSummary(container, args) {
+          if (args && typeof args === "object" && Object.prototype.toString.call(args) !== "[object Array]") {
+            var keys = Object.keys(args);
+            if (!keys.length) {
+              var none = document.createElement("div");
+              none.className = "mc-arg";
+              none.textContent = "（冇參數）";
+              container.appendChild(none);
+              return;
+            }
+            keys.forEach(function (k) {
+              var v = args[k];
+              if (v === null || typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
+                var line = document.createElement("div");
+                line.className = "mc-arg";
+                line.textContent = k + "：" + (v === null ? "（空）" : String(v));
+                container.appendChild(line);
+              } else {
+                var lab = document.createElement("div");
+                lab.className = "mc-arg";
+                lab.textContent = k + "：";
+                container.appendChild(lab);
+                var pre = document.createElement("pre");
+                try { pre.textContent = JSON.stringify(v, null, 2); } catch (e) { pre.textContent = String(v); }
+                container.appendChild(pre);
+              }
+            });
+            return;
+          }
+          if (args !== undefined && args !== null) {
+            var pre2 = document.createElement("pre");
+            try { pre2.textContent = JSON.stringify(args, null, 2); } catch (e) { pre2.textContent = String(args); }
+            container.appendChild(pre2);
+          }
+        }
+        function chatRenderExtras(box) {
+          if (!chatReplyExtras) return;
+          (chatReplyExtras.errors || []).forEach(function (err) {
+            var bar = document.createElement("div");
+            bar.className = "mcp-err";
+            bar.textContent = err;
+            box.appendChild(bar);
+          });
+          var c = chatReplyExtras.confirm;
+          if (!c) return;
+          if (chatReplyExtras.confirmState === "cancelled") {
+            var done = document.createElement("div");
+            done.className = "mcp-cancelled";
+            done.textContent = "已取消，冇执行";
+            box.appendChild(done);
+            return;
+          }
+          var card = document.createElement("div");
+          card.className = "mcp-confirm";
+          var title = document.createElement("p");
+          title.className = "mc-title";
+          title.textContent = "「" + (c.server || "MCP 服務") + "」想行一步：" + (c.toolName || c.tool || "工具");
+          card.appendChild(title);
+          var argsBox = document.createElement("div");
+          argsBox.className = "mc-args";
+          chatAppendArgsSummary(argsBox, c.args);
+          card.appendChild(argsBox);
+          var row = document.createElement("div");
+          row.className = "row";
+          var okBtn = document.createElement("button");
+          okBtn.type = "button";
+          okBtn.textContent = "确认执行";
+          okBtn.addEventListener("click", function () {
+            var ex = chatReplyExtras;
+            if (!ex || !ex.confirm || ex.confirmState === "cancelled") return;
+            var confs = [{ tool: ex.confirm.tool, args: ex.confirm.args }];
+            chatDeliver("确认，就按上面说的办", confs);
+          });
+          var noBtn = document.createElement("button");
+          noBtn.type = "button";
+          noBtn.className = "ghost";
+          noBtn.textContent = "取消";
+          noBtn.addEventListener("click", function () {
+            if (!chatReplyExtras) return;
+            chatReplyExtras.confirmState = "cancelled";
+            renderChat();
+          });
+          row.appendChild(okBtn);
+          row.appendChild(noBtn);
+          card.appendChild(row);
+          box.appendChild(card);
+        }
         function renderChat() {
           var box = $("chatMsgs");
           if (!box) return;
@@ -2858,6 +3558,7 @@
             d.textContent = m.content;
             box.appendChild(d);
           });
+          chatRenderExtras(box);
           box.scrollTop = box.scrollHeight;
         }
         function chatErrorLine(status) {
@@ -2884,9 +3585,13 @@
         }
         /* 經接口發訊息：POST {接口}/chat，帶服務商設定、最近 20 條對話，
            同當前陪伴者嘅 personaId（預設）或 persona（自訂人設全文）。
-           回覆喺返回嘅 reply 欄位；出錯嗰陣 error 欄位會帶返狀態碼。
-           一律回傳 { httpStatus, errStatus, reply }，網絡失敗就 reject，交返去畀 .catch 處理。 */
-        function chatPostChat(context) {
+           啟用中嘅 MCP 服務會以 mcpServers 一併帶上（冇啟用就成個欄位唔帶）；
+           確認卡撳咗「确认执行」嗰次，會多帶 confirmations。
+           回覆喺返回嘅 reply 欄位；出錯嗰陣 error 欄位會帶返狀態碼；
+           接口亦可能帶返 pendingConfirmation（待確認卡）同 mcpErrors（錯誤灰條）。
+           一律回傳 { httpStatus, errStatus, reply, pendingConfirmation, mcpErrors }，
+           網絡失敗就 reject，交返去畀 .catch 處理。 */
+        function chatPostChat(context, confirmations) {
           var p = currentPersona();
           var body = {
             provider: chatSettings.provider,
@@ -2896,6 +3601,9 @@
             messages: context
           };
           if (p.custom) body.persona = p.desc; else body.personaId = p.id;
+          var mcp = chatEnabledMcpServers();
+          if (mcp.length) body.mcpServers = mcp;
+          if (confirmations && confirmations.length) body.confirmations = confirmations;
           return fetch(CHAT_API_BASE + "/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -2906,8 +3614,14 @@
               var errStatus = null;
               if (data.error && typeof data.error === "object" && typeof data.error.status === "number") errStatus = data.error.status;
               else if (typeof data.status === "number" && data.status >= 400) errStatus = data.status;
-              return { httpStatus: res.status, errStatus: errStatus, reply: typeof data.reply === "string" ? data.reply : "" };
-            }, function () { return { httpStatus: res.status, errStatus: null, reply: "" }; });
+              return {
+                httpStatus: res.status, errStatus: errStatus,
+                reply: typeof data.reply === "string" ? data.reply : "",
+                pendingConfirmation: (data.pendingConfirmation && typeof data.pendingConfirmation === "object") ? data.pendingConfirmation : null,
+                mcpErrors: (Object.prototype.toString.call(data.mcpErrors) === "[object Array]")
+                  ? data.mcpErrors.filter(function (e) { return typeof e === "string"; }) : []
+              };
+            }, function () { return { httpStatus: res.status, errStatus: null, reply: "", pendingConfirmation: null, mcpErrors: [] }; });
           });
         }
         /* 經接口拉模型清單：POST {接口}/models，模型名喺返回嘅 models 陣列。
@@ -3007,10 +3721,17 @@
           if (chatSending) return;
           var text = $("chatInput").value.trim();
           if (!text) { chatStatus(chatT("一個字都冇，你叫我點答。打啲嘢先。", "還沒有輸入內容。先打幾個字，再發送。")); return; }
+          chatDeliver(text, null);
+        }
+        /* 真正掟出去嗰步：普通發送同確認卡「确认执行」共用。
+           confirmations 唔係 null 嗰陣，會原樣帶埋去今次請求。 */
+        function chatDeliver(text, confirmations) {
+          if (chatSending) return;
           chatReadSettingsFromUI(); storageSave();
           if (!chatSettings.apiKey) { chatStatus(chatT("鎖匙都未填，傾唔到。上去設定嗰度，填返你自己嗰條鎖匙先。", "還沒有填 API 鎖匙。請到上面的設定裡，填上你自己的鎖匙。")); return; }
           if (!chatSettings.baseUrl) { chatStatus(chatT("接口地址未填。上去設定嗰度補返，先傾到。", "接口地址還沒有填。請到設定裡補上。")); return; }
           if (!chatEffectiveModel()) { chatStatus(chatT("用邊個模型都未揀。拉一次模型嚟揀，或者手填返個模型名。", "還沒有選模型。請拉取模型清單選一個，或手動輸入模型名。")); return; }
+          chatReplyExtras = null;
           chatHistory.push({ role: "user", content: text });
           if (chatHistory.length > 200) chatHistory = chatHistory.slice(chatHistory.length - 200);
           chatHistories[activePersonaId] = chatHistory;
@@ -3020,12 +3741,21 @@
           storageSave();
           chatSetSending(true);
           var context = chatHistory.slice(-20).map(function (m) { return { role: m.role, content: m.content }; });
-          chatPostChat(context).then(function (r) {
+          chatPostChat(context, confirmations).then(function (r) {
             chatSetSending(false);
             if (r.reply) {
               chatHistory.push({ role: "assistant", content: r.reply });
               if (chatHistory.length > 200) chatHistory = chatHistory.slice(chatHistory.length - 200);
               chatHistories[activePersonaId] = chatHistory;
+              /* 接口帶返嘅 MCP 錯誤同待確認卡，掛喺呢條回覆下面；新嘅會換走舊嘅 */
+              var extras = null;
+              if (r.mcpErrors && r.mcpErrors.length) extras = { errors: r.mcpErrors, confirm: null, confirmState: "" };
+              if (r.pendingConfirmation) {
+                extras = extras || { errors: [], confirm: null, confirmState: "" };
+                extras.confirm = r.pendingConfirmation;
+                extras.confirmState = "pending";
+              }
+              chatReplyExtras = extras;
               renderChat();
               storageSave();
               return;
@@ -3046,6 +3776,7 @@
         $("chatClearYes").addEventListener("click", function () {
           chatHistory = [];
           chatHistories[activePersonaId] = chatHistory;
+          chatReplyExtras = null;
           storageSave();
           renderChat();
           $("chatClearConfirm").style.display = "none";
@@ -3146,6 +3877,7 @@
           chatHistory = chatHistories[id];
           pendingDeletePersonaId = "";
           $("personaDeleteConfirm").style.display = "none";
+          chatReplyExtras = null;
           storageSave();
           renderPersonaAvatar();
           renderPersonaPanel();
@@ -3198,6 +3930,7 @@
             activePersonaId = "david";
             if (!chatHistories.david) chatHistories.david = [];
             chatHistory = chatHistories.david;
+            chatReplyExtras = null;
             renderChat();
             chatStatus("");
           }
@@ -3216,6 +3949,7 @@
         }
         chatFillUIFromSettings();
         updateBaseUrlHint();
+        renderMcpList();
         renderPersonaAvatar();
         renderPersonaPanel();
         renderChat();
