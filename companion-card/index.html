@@ -504,14 +504,64 @@
       .img-overlay .closex { position: absolute; top: 14px; right: 14px; }
 
       /* ---------- AI 聊天 ---------- */
-      .chat-msgs { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; max-height: 480px; overflow-y: auto; }
-      .chat-msg {
-        max-width: 86%; padding: 10px 14px; border-radius: 14px;
-        white-space: pre-wrap; word-break: break-word; line-height: 1.55;
+      /* 對話窗格：WhatsApp 式高大窗格，內部滾動；背景（顏色／圖片）鋪滿成個窗格，
+         由 chatBgId 控制，default 就唔加 inline 覆蓋，用返呢度嘅底色。 */
+      .chat-msgs {
+        display: flex; flex-direction: column; gap: 8px; margin-top: 6px;
+        height: min(68vh, 640px); min-height: 420px; overflow-y: auto;
+        padding: 12px; border-radius: 12px; background-color: var(--surface-2);
       }
-      .chat-msg.him { align-self: flex-start; background: var(--surface-2); border: 1px solid var(--line); border-bottom-left-radius: 5px; }
-      .chat-msg.me { align-self: flex-end; background: var(--accent); color: var(--accent-ink); border-bottom-right-radius: 5px; }
+      .chat-msg {
+        max-width: 78%; padding: 8px 10px 6px; border-radius: 10px;
+        white-space: pre-wrap; word-break: break-word; line-height: 1.5;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+      }
+      .chat-msg.him { align-self: flex-start; background: #ffffff; color: #1c1c1c; border-bottom-left-radius: 5px; }
+      .chat-msg.me { align-self: flex-end; background: #dcf8c6; color: #1c1c1c; border-bottom-right-radius: 5px; }
+      .chat-msg .chat-text { display: block; }
+      .chat-time { display: block; text-align: right; font-size: 0.68rem; color: #8a8a8a; margin-top: 2px; line-height: 1.2; }
+      .chat-img { display: block; max-width: 100%; border-radius: 8px; margin: 2px 0 4px; cursor: pointer; }
+      .chat-file {
+        display: inline-block; background: rgba(0, 0, 0, 0.07); border-radius: 8px;
+        padding: 4px 9px; font-size: 0.85rem; margin: 2px 4px 4px 0; word-break: break-all;
+      }
+      .chat-stripped { display: block; color: #8a8a8a; font-size: 0.85rem; margin: 2px 0 4px; }
       .chat-pending { color: var(--ink-soft); font-size: 0.92rem; margin: 10px 0 0; }
+
+      /* ---------- 聊天設定組（多組 AI 設定） ---------- */
+      .chat-profile-item {
+        display: flex; align-items: center; gap: 10px;
+        background: var(--bg); border: 1px solid var(--line); border-radius: 12px;
+        padding: 9px 12px; margin-top: 8px; cursor: pointer;
+      }
+      .chat-profile-item.on { border-color: var(--accent); }
+      .chat-profile-item .cp-text { flex: 1 1 auto; min-width: 0; }
+      .chat-profile-item .cp-name { font-weight: 700; display: block; word-break: break-word; }
+      .chat-profile-item .cp-sub { color: var(--ink-soft); font-size: 0.85rem; word-break: break-all; display: block; }
+      .chat-profile-item .cp-check { color: var(--accent); font-weight: 700; flex: none; }
+      .chat-profile-item .cp-del { background: transparent; color: var(--rose); padding: 6px 8px; font-weight: 500; flex: none; }
+
+      /* ---------- 聊天背景色板 ---------- */
+      .chat-bg-swatches { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+      .chat-bg-swatch { width: 38px; height: 38px; border-radius: 10px; border: 2px solid var(--line); padding: 0; cursor: pointer; flex: none; }
+      .chat-bg-swatch.on { border-color: var(--accent); }
+
+      /* ---------- 聊天附件 ---------- */
+      .chat-attach-picker {
+        background: var(--surface-2); border: 1px solid var(--line);
+        border-radius: 12px; padding: 12px 14px; margin-top: 10px;
+      }
+      .chat-attach-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+      .chat-attach-preview:empty { display: none; }
+      .attach-chip {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px;
+        padding: 4px 6px 4px 10px; font-size: 0.85rem; max-width: 100%;
+      }
+      .attach-chip img { width: 28px; height: 28px; object-fit: cover; border-radius: 50%; flex: none; }
+      .attach-chip .ac-name { word-break: break-all; }
+      .attach-chip .ac-x { background: transparent; color: var(--rose); padding: 2px 6px; font-weight: 700; flex: none; }
+      #chatAttachBtn { flex: none; }
 
       /* ---------- MCP 工具 ---------- */
       .mcp-item {
@@ -770,6 +820,21 @@
             <button type="button" class="ghost small" id="chatSettingsToggle">收起設定</button>
           </div>
           <div id="chatSettings">
+            <h3 class="subhead" style="margin-top:2px;">已存設定</h3>
+            <p class="sub" style="margin-bottom:6px;">存低幾組唔同嘅服務同模型，撳一行就即刻轉過去，唔使次次重新填。城市同 MCP 係全部組共用嘅，唔使逐組設。</p>
+            <div id="chatProfileList"></div>
+            <div class="row" style="margin-top:10px;">
+              <button type="button" class="ghost" id="chatProfileAdd">新增一组设定</button>
+            </div>
+            <div class="note" id="chatProfileDeleteConfirm" style="display:none;">
+              <p style="margin:0 0 6px;" id="chatProfileDeleteText"></p>
+              <div class="row">
+                <button type="button" id="chatProfileDeleteYes">確認刪除</button>
+                <button type="button" class="ghost" id="chatProfileDeleteNo">算數，留返</button>
+              </div>
+            </div>
+            <label class="flabel" for="chatProfileName">呢组设定叫咩名</label>
+            <input type="text" id="chatProfileName" placeholder="例如：DeepSeek 官方" aria-label="呢组设定叫咩名" />
             <label class="flabel" for="chatPreset">AI 服務</label>
             <select id="chatPreset">
               <option value="deepseek">DeepSeek</option>
@@ -845,6 +910,24 @@
             <input type="text" id="chatCity" placeholder="例如：北京、上海、廣州……" aria-label="城市" />
             <p class="hint">填咗，我每次傾計前會自己去查一次嗰度嘅實時天氣，先答到你嗰邊凍唔凍、使唔使帶遮。唔使鎖匙，查唔到就照常傾，唔會卡住你。留空就唔啟用，唔好亂填個唔存在嘅地方嚟試我。</p>
             <p class="weather-line" id="chatWeatherLine" role="status" style="display:none;"></p>
+
+            <hr class="divider" />
+            <h3 class="subhead">聊天背景</h3>
+            <p class="sub" style="margin-bottom:6px;">淨係換下面傾計嗰個窗嘅底，氣泡唔受影響，幾深色都睇得清。</p>
+            <div class="chat-bg-swatches" id="chatBgSwatches">
+              <button type="button" class="chat-bg-swatch" data-chat-bg="default" style="background:#f7f2ea;" aria-label="预设米色" title="预设米色"></button>
+              <button type="button" class="chat-bg-swatch" data-chat-bg="wa" style="background:#ece5dd;" aria-label="WhatsApp 米黄" title="WhatsApp 米黄"></button>
+              <button type="button" class="chat-bg-swatch" data-chat-bg="green" style="background:#e6f4ea;" aria-label="浅绿" title="浅绿"></button>
+              <button type="button" class="chat-bg-swatch" data-chat-bg="pink" style="background:#fdeef1;" aria-label="粉" title="粉"></button>
+              <button type="button" class="chat-bg-swatch" data-chat-bg="bluegrey" style="background:#e8edf0;" aria-label="蓝灰" title="蓝灰"></button>
+              <button type="button" class="chat-bg-swatch" data-chat-bg="dark" style="background:#202c33;" aria-label="深色" title="深色"></button>
+            </div>
+            <div class="row" style="margin-top:10px;">
+              <button type="button" class="ghost" id="chatBgUploadBtn">自定图片</button>
+              <button type="button" class="ghost" id="chatBgReset">还原预设</button>
+            </div>
+            <input type="file" id="chatBgFile" accept="image/*" style="display:none;" aria-label="自定聊天背景图片" />
+            <p class="hint" id="chatBgHint" style="display:none;"></p>
           </div>
 
           <hr class="divider" />
@@ -853,7 +936,18 @@
           <p class="chat-pending" id="chatPending" style="display:none;">諗緊，唔好催。</p>
           <p class="hint" id="chatStatus" role="status"></p>
           <div class="mcp-err" id="chatErrDetail" style="display:none;" role="status"></div>
+          <div class="chat-attach-preview" id="chatAttachPreview"></div>
+          <div class="chat-attach-picker" id="chatAttachPicker" style="display:none;">
+            <div class="row">
+              <button type="button" class="ghost" id="chatAttachPickImages">选图片</button>
+              <button type="button" class="ghost" id="chatAttachPickFiles">选档案</button>
+            </div>
+            <p class="hint" style="margin-top:8px;">图片要模型识睇图先得；档案只读文字档（txt、md、csv 嗰类）。每条讯息最多 4 个附件。</p>
+          </div>
+          <input type="file" id="chatAttachImages" accept="image/*" multiple style="display:none;" aria-label="选图片" />
+          <input type="file" id="chatAttachFiles" accept=".txt,.md,.csv,.json,.log,.xml,.yaml,.yml" multiple style="display:none;" aria-label="选档案" />
           <div class="row" style="margin-top:10px; align-items:flex-end;">
+            <button type="button" class="ghost" id="chatAttachBtn" aria-label="加附件">＋</button>
             <textarea id="chatInput" rows="2" class="grow" placeholder="想同我講嘅嘢，打低佢……" aria-label="輸入訊息"></textarea>
             <button type="button" id="chatSend">發送</button>
           </div>
@@ -1478,6 +1572,43 @@
         var avatarOverrides = {}; // 本機自訂頭像 {personaId: data URL}，唔入備份
         var activePersonaId = "david";
         var chatHistories = {}; // { personaId: [{role:"user"|"assistant", content:"..."}] }
+        /* 多組 AI 設定：chatProfiles 存幾組可切換嘅設定，activeChatProfileId 指向而家嗰組；
+           chatSettings 繼續係「而家生效嗰組」嘅工作副本，city 同 mcpServers 全局共用，唔入組。 */
+        var chatProfiles = []; // [{id, name, preset, provider, baseUrl, apiKey, model, modelManual}]
+        var activeChatProfileId = "";
+        var chatBgId = "default";
+        var CHAT_BG_IDS = ["default", "wa", "green", "pink", "bluegrey", "dark", "custom"];
+        var CHAT_PRESET_NAMES = { deepseek: "DeepSeek", openai: "ChatGPT", gemini: "Gemini", claude: "Claude", custom: "中轉站" };
+        function chatNewProfileId() {
+          return "cp" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        }
+        function chatBlankProfile(name) {
+          return { id: chatNewProfileId(), name: name, preset: "deepseek", provider: "openai", baseUrl: "https://api.deepseek.com", apiKey: "", model: "", modelManual: "" };
+        }
+        function chatSanitizeProfile(p) {
+          if (!p || typeof p.id !== "string" || typeof p.name !== "string") return null;
+          var out = { id: p.id, name: p.name };
+          ["preset", "provider", "baseUrl", "apiKey", "model", "modelManual"].forEach(function (k) {
+            out[k] = typeof p[k] === "string" ? p[k] : "";
+          });
+          return out;
+        }
+        /* 對話記錄校驗：保留 ts（數字）、images（data: 開頭字串，最多 4 張）、
+           files（{name, text}）、imagesStripped（布林）；舊格式 {role, content} 原樣過。 */
+        function chatSanitizeHistoryMsg(m) {
+          var out = { role: m.role, content: m.content };
+          if (typeof m.ts === "number" && isFinite(m.ts)) out.ts = m.ts;
+          if (Object.prototype.toString.call(m.images) === "[object Array]") {
+            var imgs = m.images.filter(function (s) { return typeof s === "string" && s.indexOf("data:") === 0; }).slice(0, 4);
+            if (imgs.length) out.images = imgs;
+          }
+          if (Object.prototype.toString.call(m.files) === "[object Array]") {
+            var fls = m.files.filter(function (f) { return f && typeof f.name === "string" && typeof f.text === "string"; }).map(function (f) { return { name: f.name, text: f.text }; }).slice(0, 4);
+            if (fls.length) out.files = fls;
+          }
+          if (m.imagesStripped === true) out.imagesStripped = true;
+          return out;
+        }
         if (savedData) {
           if (savedData.chatSettings && typeof savedData.chatSettings === "object") {
             ["preset", "provider", "baseUrl", "apiKey", "model", "modelManual", "city"].forEach(function (k) {
@@ -1522,7 +1653,7 @@
               if (Object.prototype.toString.call(arr) === "[object Array]") {
                 chatHistories[pid] = arr.filter(function (m) {
                   return m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string";
-                }).slice(-200);
+                }).map(chatSanitizeHistoryMsg).slice(-200);
               }
             });
           }
@@ -1530,23 +1661,106 @@
           if (!chatHistories.david && Object.prototype.toString.call(savedData.chatHistory) === "[object Array]") {
             chatHistories.david = savedData.chatHistory.filter(function (m) {
               return m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string";
-            }).slice(-200);
+            }).map(chatSanitizeHistoryMsg).slice(-200);
           }
           if (typeof savedData.activePersonaId === "string") activePersonaId = savedData.activePersonaId;
+          /* 多組 AI 設定：讀入 + 校驗。存檔冇合法 chatProfiles 嗰陣（舊版得一組），
+             就由上面讀入咗嘅舊 chatSettings 遷移出第一組，舊資料一件都唔抌；
+             乜都冇就起一組空嘅「预设 1」。 */
+          var profilesLoaded = false;
+          if (Object.prototype.toString.call(savedData.chatProfiles) === "[object Array]") {
+            var cleanedProfiles = savedData.chatProfiles.map(chatSanitizeProfile).filter(function (p) { return !!p; });
+            if (cleanedProfiles.length) { chatProfiles = cleanedProfiles; profilesLoaded = true; }
+          }
+          if (!profilesLoaded) {
+            var scs = (savedData.chatSettings && typeof savedData.chatSettings === "object") ? savedData.chatSettings : {};
+            var hasOldSettings = (typeof scs.baseUrl === "string" && !!scs.baseUrl.trim())
+              || (typeof scs.apiKey === "string" && !!scs.apiKey.trim())
+              || (typeof scs.model === "string" && !!scs.model.trim());
+            if (hasOldSettings) {
+              chatProfiles = [{
+                id: chatNewProfileId(),
+                name: CHAT_PRESET_NAMES[chatSettings.preset] || "预设 1",
+                preset: chatSettings.preset || "deepseek",
+                provider: chatSettings.provider || "openai",
+                baseUrl: chatSettings.baseUrl || "",
+                apiKey: chatSettings.apiKey || "",
+                model: chatSettings.model || "",
+                modelManual: chatSettings.modelManual || ""
+              }];
+            } else {
+              chatProfiles = [chatBlankProfile("预设 1")];
+            }
+          }
+          if (typeof savedData.activeChatProfileId === "string" && chatProfiles.some(function (p) { return p.id === savedData.activeChatProfileId; })) {
+            activeChatProfileId = savedData.activeChatProfileId;
+          } else {
+            activeChatProfileId = chatProfiles[0].id;
+          }
+          /* 聊天背景選擇：只收合法 id，非法就退返 default */
+          if (typeof savedData.chatBgId === "string" && CHAT_BG_IDS.indexOf(savedData.chatBgId) >= 0) chatBgId = savedData.chatBgId;
+        }
+        if (!chatProfiles.length) {
+          /* 完全冇存檔嗰陣，都要保證至少有一組 */
+          chatProfiles = [chatBlankProfile("预设 1")];
+          activeChatProfileId = chatProfiles[0].id;
         }
         if (!chatHistories[activePersonaId]) chatHistories[activePersonaId] = [];
         var chatHistory = chatHistories[activePersonaId];
+        function storagePayload() {
+          return {
+            periodEntries: periodEntries, periodSeq: periodSeq,
+            periodRemindOn: periodRemindOn, periodCycle: $("periodCycle").value,
+            ledgers: ledgers, ledgerSeq: ledgerSeq, txSeq: txSeq, activeLedgerId: activeLedgerId,
+            goals: goals, goalSeq: goalSeq, wakeLockOn: wakeLockOn,
+            chatSettings: chatSettings, chatHistories: chatHistories, customPersonas: customPersonas, activePersonaId: activePersonaId,
+            personaOverrides: personaOverrides, avatarOverrides: avatarOverrides,
+            chatProfiles: chatProfiles, activeChatProfileId: activeChatProfileId, chatBgId: chatBgId
+          };
+        }
+        function storageIsQuotaErr(e) {
+          return !!e && (e.name === "QuotaExceededError" || e.code === 22);
+        }
         function storageSave() {
           try {
-            window.localStorage.setItem(STORE_KEY, JSON.stringify({
-              periodEntries: periodEntries, periodSeq: periodSeq,
-              periodRemindOn: periodRemindOn, periodCycle: $("periodCycle").value,
-              ledgers: ledgers, ledgerSeq: ledgerSeq, txSeq: txSeq, activeLedgerId: activeLedgerId,
-              goals: goals, goalSeq: goalSeq, wakeLockOn: wakeLockOn,
-              chatSettings: chatSettings, chatHistories: chatHistories, customPersonas: customPersonas, activePersonaId: activePersonaId,
-              personaOverrides: personaOverrides, avatarOverrides: avatarOverrides
-            }));
-          } catch (e) { storageOk = false; showStorageWarn(); }
+            window.localStorage.setItem(STORE_KEY, JSON.stringify(storagePayload()));
+            return;
+          } catch (e) {
+            if (!storageIsQuotaErr(e)) { storageOk = false; showStorageWarn(); return; }
+          }
+          /* 超額保護：對話入面嘅圖片最食位。由最舊嗰條開始，逐條剝走 images
+             數據（加 imagesStripped 標記，氣泡會顯示「[圖片已清理]」），每剝一條
+             重試一次，直到存得入為止，最多剝 500 條；文字一句都唔抌。
+             剝晒都存唔入，先至行返原本嘅失敗提示。 */
+          var strippedCount = 0;
+          var currentChanged = false;
+          try {
+            var pids = Object.keys(chatHistories);
+            stripLoop:
+            for (var pi = 0; pi < pids.length; pi++) {
+              var arr = chatHistories[pids[pi]];
+              if (Object.prototype.toString.call(arr) !== "[object Array]") continue;
+              for (var mi = 0; mi < arr.length; mi++) {
+                var msg = arr[mi];
+                if (msg && Object.prototype.toString.call(msg.images) === "[object Array]" && msg.images.length) {
+                  delete msg.images;
+                  msg.imagesStripped = true;
+                  strippedCount++;
+                  if (pids[pi] === activePersonaId) currentChanged = true;
+                  try {
+                    window.localStorage.setItem(STORE_KEY, JSON.stringify(storagePayload()));
+                    if (currentChanged) { try { renderChat(false); } catch (e2) {} }
+                    return;
+                  } catch (e3) {
+                    if (!storageIsQuotaErr(e3)) { storageOk = false; showStorageWarn(); return; }
+                  }
+                  if (strippedCount >= 500) break stripLoop;
+                }
+              }
+            }
+          } catch (e4) {}
+          storageOk = false; showStorageWarn();
+          if (currentChanged) { try { renderChat(false); } catch (e5) {} }
         }
 
         /* ---------- 日期 / 問候 / 每日一句 ---------- */
@@ -3358,6 +3572,18 @@
               });
               data.chatSettings = csCopy;
             }
+            /* 多組設定跟備份走，但每組嘅 API 鎖匙一律清空先出門（同 chatSettings
+               嘅規矩一樣）；activeChatProfileId 只係一個 id，冇機密，照留。
+               chatBgId 唔刪，等佢跟備份走。 */
+            if (Object.prototype.toString.call(data.chatProfiles) === "[object Array]") {
+              data.chatProfiles = data.chatProfiles.map(function (p) {
+                if (!p || typeof p !== "object") return p;
+                var c = {};
+                Object.keys(p).forEach(function (k) { c[k] = p[k]; });
+                c.apiKey = "";
+                return c;
+              });
+            }
             /* 日記（條目＋相＋錄音，全部已經係可序列化嘅字串）並入同一份備份 */
             if (diaryEntries.length || diaryUsable) data.diaryEntries = diaryEntries;
             var pack = {
@@ -3459,6 +3685,23 @@
             goalSeq = typeof d.goalSeq === "number" ? d.goalSeq : 0;
             goals.forEach(function (g) { if (g && typeof g.id === "number" && g.id > goalSeq) goalSeq = g.id; });
             $("txCurrency").value = activeLedger().currency;
+            /* 聊天背景跟備份走：合法預設 id 就恢復並即刻套用；custom 就試下
+               由背景圖庫讀返張圖，讀到先用，讀唔到就退返 default。
+               （chatProfiles／activeChatProfileId 同對話記錄一樣，導入唔覆蓋。） */
+            try {
+              if (typeof d.chatBgId === "string" && CHAT_BG_IDS.indexOf(d.chatBgId) >= 0) {
+                if (d.chatBgId === "custom") {
+                  chatBgId = "custom";
+                  chatBgTryLoadCustom(function (img) {
+                    if (img) { applyChatBg("custom"); }
+                    else { chatBgId = "default"; applyChatBg("default"); try { storageSave(); } catch (e) {} }
+                  });
+                } else {
+                  chatBgId = d.chatBgId;
+                  applyChatBg(chatBgId);
+                }
+              }
+            } catch (e) {}
             /* 寫入存檔 + 重畫：經期預測同頂部橫額、記賬總數、存款進度全部重算 */
             storageSave();
             renderPeriod();
@@ -3820,6 +4063,420 @@
             sel.value = chatSettings.model;
           }
         }
+        /* ---------- 多組 AI 設定（profiles） ----------
+           chatSettings 係而家生效嗰組嘅工作副本；切組即係將嗰組六個欄位
+           拷入 chatSettings 再重填表單。表單改動（change／保存設定）會同步
+           寫返入而家嗰組，免得切走切回唔見咗修改。city、mcpServers 全局共用。 */
+        var pendingChatProfileDeleteId = "";
+        function chatPresetDisplayName(preset) { return CHAT_PRESET_NAMES[preset] || "预设 1"; }
+        function chatActiveProfile() {
+          for (var i = 0; i < chatProfiles.length; i++) { if (chatProfiles[i].id === activeChatProfileId) return chatProfiles[i]; }
+          return chatProfiles[0] || null;
+        }
+        function chatProfileAutoName(p) {
+          var model = ((p.modelManual || "") + "").trim() || ((p.model || "") + "").trim();
+          return chatPresetDisplayName(p.preset) + (model ? " · " + model : "");
+        }
+        /* 將 chatSettings（啱啱由表單讀返）寫返入而家嗰組，連名字框一齊；
+           名字框空嘅，就用「服務顯示名 · 模型名」自動起一個。 */
+        function chatSyncSettingsToProfile() {
+          try {
+            var p = chatActiveProfile();
+            if (!p) return;
+            ["preset", "provider", "baseUrl", "apiKey", "model", "modelManual"].forEach(function (k) { p[k] = chatSettings[k] || ""; });
+            var nameEl = $("chatProfileName");
+            var nm = nameEl ? nameEl.value.trim() : "";
+            p.name = nm || chatProfileAutoName(p);
+            if (nameEl && !nm) nameEl.value = p.name;
+          } catch (e) {}
+        }
+        function chatApplyProfile(p) {
+          if (!p) return;
+          activeChatProfileId = p.id;
+          ["preset", "provider", "baseUrl", "apiKey", "model", "modelManual"].forEach(function (k) { chatSettings[k] = p[k] || ""; });
+          chatFillUIFromSettings();
+          updateBaseUrlHint();
+          var nameEl = $("chatProfileName");
+          if (nameEl) nameEl.value = p.name || "";
+          renderChatProfileList();
+          try { if (typeof renderCheckinCfg === "function") renderCheckinCfg(); } catch (e) {}
+        }
+        function renderChatProfileList() {
+          var box = $("chatProfileList");
+          if (!box) return;
+          box.innerHTML = "";
+          chatProfiles.forEach(function (p) {
+            var row = document.createElement("div");
+            row.className = "chat-profile-item" + (p.id === activeChatProfileId ? " on" : "");
+            var txt = document.createElement("div");
+            txt.className = "cp-text";
+            var nm = document.createElement("span");
+            nm.className = "cp-name";
+            nm.textContent = p.name || chatProfileAutoName(p);
+            var sub = document.createElement("span");
+            sub.className = "cp-sub";
+            var model = ((p.modelManual || "") + "").trim() || ((p.model || "") + "").trim();
+            sub.textContent = chatPresetDisplayName(p.preset) + " / " + (model || "未填模型");
+            txt.appendChild(nm);
+            txt.appendChild(sub);
+            row.appendChild(txt);
+            if (p.id === activeChatProfileId) {
+              var ck = document.createElement("span");
+              ck.className = "cp-check";
+              ck.textContent = "✓";
+              row.appendChild(ck);
+            }
+            var del = document.createElement("button");
+            del.type = "button";
+            del.className = "cp-del";
+            del.textContent = "刪除";
+            del.addEventListener("click", function (ev) {
+              if (ev && ev.stopPropagation) ev.stopPropagation();
+              pendingChatProfileDeleteId = p.id;
+              $("chatProfileDeleteText").textContent = "真係刪咗「" + (p.name || "") + "」呢组设定？入面嘅地址、鎖匙同模型會一併刪晒，冇得返轉頭。";
+              $("chatProfileDeleteConfirm").style.display = "block";
+            });
+            row.appendChild(del);
+            row.addEventListener("click", function () {
+              if (p.id === activeChatProfileId) return;
+              chatApplyProfile(p);
+              storageSave();
+            });
+            box.appendChild(row);
+          });
+        }
+        $("chatProfileDeleteNo").addEventListener("click", function () {
+          pendingChatProfileDeleteId = "";
+          $("chatProfileDeleteConfirm").style.display = "none";
+        });
+        $("chatProfileDeleteYes").addEventListener("click", function () {
+          var id = pendingChatProfileDeleteId;
+          pendingChatProfileDeleteId = "";
+          $("chatProfileDeleteConfirm").style.display = "none";
+          if (!id) return;
+          try {
+            var wasActive = (id === activeChatProfileId);
+            chatProfiles = chatProfiles.filter(function (p) { return p.id !== id; });
+            if (!chatProfiles.length) chatProfiles = [chatBlankProfile("预设 1")];
+            if (wasActive || !chatActiveProfile()) chatApplyProfile(chatProfiles[0]);
+            renderChatProfileList();
+            storageSave();
+          } catch (e) {}
+        });
+        $("chatProfileAdd").addEventListener("click", function () {
+          try {
+            chatReadSettingsFromUI();
+            chatSyncSettingsToProfile();
+            var act = chatActiveProfile();
+            var base = (act && act.name) ? act.name : "预设 1";
+            var names = {};
+            chatProfiles.forEach(function (p) { names[p.name] = true; });
+            var n = 2;
+            var candidate = base + " " + n;
+            while (names[candidate]) { n++; candidate = base + " " + n; }
+            var np = {
+              id: chatNewProfileId(), name: candidate,
+              preset: chatSettings.preset || "deepseek", provider: chatSettings.provider || "openai",
+              baseUrl: chatSettings.baseUrl || "", apiKey: chatSettings.apiKey || "",
+              model: chatSettings.model || "", modelManual: chatSettings.modelManual || ""
+            };
+            chatProfiles.push(np);
+            chatApplyProfile(np);
+            storageSave();
+            toast("新一组设定开好喇，用紧嗰组嘅值嚟起底，改少少就用得。");
+          } catch (e) {}
+        });
+        var chatProfileNameEl = $("chatProfileName");
+        if (chatProfileNameEl) chatProfileNameEl.addEventListener("change", function () {
+          chatReadSettingsFromUI();
+          chatSyncSettingsToProfile();
+          storageSave();
+          renderChatProfileList();
+        });
+
+        /* ---------- 聊天背景 ----------
+           只作用於 #chatMsgs 窗格；氣泡本身不透明純色，背景點深都唔影響閱讀。
+           自定圖片壓細之後存入獨立嘅 IndexedDB（davidCompanionChatBg），
+           同日記嗰個庫完全分開，唔會掂到 davidCompanionDiary。 */
+        var CHAT_BG_COLORS = { wa: "#ece5dd", green: "#e6f4ea", pink: "#fdeef1", bluegrey: "#e8edf0", dark: "#202c33" };
+        var chatBgCustomImg = null; // 自定背景圖 dataURL（IndexedDB 讀出嚟／啱啱上傳嗰張）
+        function chatBgHint(msg) {
+          var el = $("chatBgHint");
+          if (el) { el.textContent = msg || ""; el.style.display = msg ? "block" : "none"; }
+        }
+        function chatBgOpen(cb) {
+          if (!("indexedDB" in window)) { cb(null); return; }
+          var req;
+          try { req = window.indexedDB.open("davidCompanionChatBg", 1); } catch (e) { cb(null); return; }
+          req.onupgradeneeded = function () {
+            try { req.result.createObjectStore("kv"); } catch (e) {}
+          };
+          req.onsuccess = function () { cb(req.result); };
+          req.onerror = function () { cb(null); };
+          req.onblocked = function () { cb(null); };
+        }
+        function chatBgTryLoadCustom(cb) {
+          if (chatBgCustomImg) { cb(chatBgCustomImg); return; }
+          chatBgOpen(function (db) {
+            if (!db) { cb(null); return; }
+            try {
+              var req = db.transaction("kv", "readonly").objectStore("kv").get("customImage");
+              req.onsuccess = function () {
+                var v = req.result;
+                if (typeof v === "string" && v.indexOf("data:image/") === 0) { chatBgCustomImg = v; cb(v); }
+                else cb(null);
+              };
+              req.onerror = function () { cb(null); };
+            } catch (e) { cb(null); }
+          });
+        }
+        function chatBgStoreCustom(dataUrl, done) {
+          chatBgOpen(function (db) {
+            if (!db) { done(false); return; }
+            try {
+              var tx = db.transaction("kv", "readwrite");
+              tx.objectStore("kv").put(dataUrl, "customImage");
+              tx.oncomplete = function () { done(true); };
+              tx.onerror = function () { done(false); };
+              tx.onabort = function () { done(false); };
+            } catch (e) { done(false); }
+          });
+        }
+        function compressChatBgPhoto(file, cb) {
+          var url;
+          try { url = URL.createObjectURL(file); } catch (e) { cb(null); return; }
+          var img = new Image();
+          img.onload = function () {
+            var out = null;
+            try {
+              var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+              var scale = Math.min(1, 1280 / Math.max(w, h));
+              var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+              var cv = document.createElement("canvas");
+              cv.width = cw; cv.height = ch;
+              var cx = cv.getContext("2d");
+              cx.drawImage(img, 0, 0, cw, ch);
+              out = cv.toDataURL("image/jpeg", 0.8);
+            } catch (e) { out = null; }
+            try { URL.revokeObjectURL(url); } catch (e) {}
+            cb(out);
+          };
+          img.onerror = function () { try { URL.revokeObjectURL(url); } catch (e) {} cb(null); };
+          img.src = url;
+        }
+        function applyChatBg(id) {
+          try {
+            var box = $("chatMsgs");
+            if (!box) return;
+            if (id === "custom" && chatBgCustomImg) {
+              box.style.backgroundColor = "";
+              box.style.backgroundImage = "url(\"" + chatBgCustomImg + "\")";
+              box.style.backgroundSize = "cover";
+              box.style.backgroundPosition = "center";
+            } else if (CHAT_BG_COLORS[id]) {
+              box.style.backgroundImage = "";
+              box.style.backgroundColor = CHAT_BG_COLORS[id];
+            } else {
+              box.style.backgroundImage = "";
+              box.style.backgroundColor = "";
+            }
+            document.querySelectorAll("[data-chat-bg]").forEach(function (b) {
+              if (b.getAttribute("data-chat-bg") === id) b.classList.add("on");
+              else b.classList.remove("on");
+            });
+          } catch (e) {}
+        }
+        function setChatBg(id) {
+          chatBgId = id;
+          applyChatBg(id);
+          storageSave();
+        }
+        document.querySelectorAll("[data-chat-bg]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var id = btn.getAttribute("data-chat-bg");
+            if (CHAT_BG_IDS.indexOf(id) < 0) return;
+            chatBgHint("");
+            setChatBg(id);
+          });
+        });
+        $("chatBgReset").addEventListener("click", function () { chatBgHint(""); setChatBg("default"); });
+        $("chatBgUploadBtn").addEventListener("click", function () { $("chatBgFile").click(); });
+        $("chatBgFile").addEventListener("change", function () {
+          var f = this.files && this.files[0];
+          this.value = "";
+          if (!f) return;
+          compressChatBgPhoto(f, function (dataUrl) {
+            if (!dataUrl) { chatBgHint("呢张相读唔入嚟，换一张试下。"); return; }
+            chatBgCustomImg = dataUrl;
+            chatBgId = "custom";
+            applyChatBg("custom");
+            storageSave();
+            chatBgStoreCustom(dataUrl, function (ok) {
+              if (!ok) chatBgHint("呢部機存唔到背景圖，今次開住先有效");
+              else chatBgHint("");
+            });
+          });
+        });
+
+        /* ---------- 聊天附件（圖片／文字檔案） ----------
+           待發附件只放記憶體，唔入存檔；撳發送嗰陣先至跟住訊息入記錄。
+           每條訊息最多 4 個附件（圖片＋檔案合計）。 */
+        var chatPendingImages = []; // [dataUrl]
+        var chatPendingFiles = [];  // [{name, text}]
+        var CHAT_MAX_ATTACH = 4;
+        function chatAttachTotal() { return chatPendingImages.length + chatPendingFiles.length; }
+        function renderChatAttachPreview() {
+          var box = $("chatAttachPreview");
+          if (!box) return;
+          box.innerHTML = "";
+          chatPendingImages.forEach(function (src, i) {
+            var chip = document.createElement("span");
+            chip.className = "attach-chip";
+            var im = document.createElement("img");
+            im.src = src;
+            im.alt = "待發圖片";
+            var x = document.createElement("button");
+            x.type = "button";
+            x.className = "ac-x";
+            x.textContent = "×";
+            x.setAttribute("aria-label", "移除呢張圖片");
+            x.addEventListener("click", function () { chatPendingImages.splice(i, 1); renderChatAttachPreview(); });
+            chip.appendChild(im);
+            chip.appendChild(x);
+            box.appendChild(chip);
+          });
+          chatPendingFiles.forEach(function (f, i) {
+            var chip = document.createElement("span");
+            chip.className = "attach-chip";
+            var nm = document.createElement("span");
+            nm.className = "ac-name";
+            nm.textContent = f.name;
+            var x = document.createElement("button");
+            x.type = "button";
+            x.className = "ac-x";
+            x.textContent = "×";
+            x.setAttribute("aria-label", "移除呢個檔案");
+            x.addEventListener("click", function () { chatPendingFiles.splice(i, 1); renderChatAttachPreview(); });
+            chip.appendChild(nm);
+            chip.appendChild(x);
+            box.appendChild(chip);
+          });
+        }
+        function chatCompressAttachImage(file, cb) {
+          var url;
+          try { url = URL.createObjectURL(file); } catch (e) { cb(null); return; }
+          var img = new Image();
+          img.onload = function () {
+            var out = null;
+            try {
+              var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+              var scale = Math.min(1, 1024 / Math.max(w, h));
+              var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+              var cv = document.createElement("canvas");
+              cv.width = cw; cv.height = ch;
+              var cx = cv.getContext("2d");
+              cx.drawImage(img, 0, 0, cw, ch);
+              out = cv.toDataURL("image/jpeg", 0.75);
+            } catch (e) { out = null; }
+            try { URL.revokeObjectURL(url); } catch (e) {}
+            cb(out);
+          };
+          img.onerror = function () { try { URL.revokeObjectURL(url); } catch (e) {} cb(null); };
+          img.src = url;
+        }
+        $("chatAttachBtn").addEventListener("click", function () {
+          var p = $("chatAttachPicker");
+          p.style.display = (p.style.display === "block") ? "none" : "block";
+        });
+        $("chatAttachPickImages").addEventListener("click", function () { $("chatAttachImages").click(); });
+        $("chatAttachPickFiles").addEventListener("click", function () { $("chatAttachFiles").click(); });
+        $("chatAttachImages").addEventListener("change", function () {
+          var files = this.files ? Array.prototype.slice.call(this.files) : [];
+          this.value = "";
+          $("chatAttachPicker").style.display = "none";
+          if (!files.length) return;
+          var skipped = 0;
+          files.forEach(function (f) {
+            if (chatAttachTotal() >= CHAT_MAX_ATTACH) { skipped++; return; }
+            chatCompressAttachImage(f, function (dataUrl) {
+              if (dataUrl) {
+                if (Math.floor(dataUrl.length * 0.75) > 1048576) { chatStatus("有張圖壓縮完都超過 1MB，冇收埋佢，換張細啲嘅。"); return; }
+                if (chatAttachTotal() >= CHAT_MAX_ATTACH) { chatStatus("每條訊息最多 4 个附件，多出嚟嗰啲冇收。"); return; }
+                chatPendingImages.push(dataUrl);
+                renderChatAttachPreview();
+                return;
+              }
+              /* canvas 用唔到：退回原檔 data URL，1MB 以內先至收 */
+              try {
+                if (f.size > 1048576) { chatStatus("有張圖太大，冇收埋佢，換張細啲嘅。"); return; }
+                var r = new FileReader();
+                r.onload = function () {
+                  var du = String(r.result || "");
+                  if (du.indexOf("data:") === 0 && chatAttachTotal() < CHAT_MAX_ATTACH) {
+                    chatPendingImages.push(du);
+                    renderChatAttachPreview();
+                  }
+                };
+                r.onerror = function () {};
+                r.readAsDataURL(f);
+              } catch (e) {}
+            });
+          });
+          if (skipped) chatStatus("每條訊息最多 4 个附件，多出嚟嗰啲冇收。");
+        });
+        $("chatAttachFiles").addEventListener("change", function () {
+          var files = this.files ? Array.prototype.slice.call(this.files) : [];
+          this.value = "";
+          $("chatAttachPicker").style.display = "none";
+          if (!files.length) return;
+          files.forEach(function (f) {
+            if (chatAttachTotal() >= CHAT_MAX_ATTACH) { chatStatus("每條訊息最多 4 个附件，多出嚟嗰啲冇收。"); return; }
+            try {
+              var r = new FileReader();
+              r.onload = function () {
+                var text = String(r.result || "");
+                if (!text) { chatStatus("「" + f.name + "」係空嘅，冇收埋佢。"); return; }
+                if (text.length > 20000) text = text.slice(0, 20000) + "…（已截断）";
+                if (chatAttachTotal() >= CHAT_MAX_ATTACH) { chatStatus("每條訊息最多 4 个附件，多出嚟嗰啲冇收。"); return; }
+                chatPendingFiles.push({ name: f.name, text: text });
+                renderChatAttachPreview();
+              };
+              r.onerror = function () { chatStatus("「" + f.name + "」讀唔到，冇收埋佢。"); };
+              r.readAsText(f);
+            } catch (e) { chatStatus("「" + f.name + "」讀唔到，冇收埋佢。"); }
+          });
+        });
+        /* 將一條記錄砌成發畀接口嗰條訊息：檔案內聯入正文；有圖（而且冇畀
+           超額保護清理走）就轉成 OpenAI 格式嘅 content blocks；冇圖就維持
+           純字串，同以前嘅行為一模一樣（包括 Anthropic 路徑）。 */
+        function chatBuildContextMessage(m) {
+          var text = typeof m.content === "string" ? m.content : "";
+          if (m.files && m.files.length) {
+            m.files.forEach(function (f) {
+              if (f && typeof f.name === "string" && typeof f.text === "string") {
+                text += "\n\n[档案：" + f.name + "]\n" + f.text;
+              }
+            });
+          }
+          var imgs = [];
+          if (!m.imagesStripped && Object.prototype.toString.call(m.images) === "[object Array]") {
+            imgs = m.images.filter(function (s) { return typeof s === "string" && !!s; });
+          }
+          if (!imgs.length) return { role: m.role, content: text };
+          var blocks = [{ type: "text", text: text }];
+          imgs.forEach(function (u) { blocks.push({ type: "image_url", image_url: { url: u } }); });
+          return { role: m.role, content: blocks };
+        }
+        function chatContextHasImage(ctx) {
+          for (var i = 0; i < ctx.length; i++) {
+            var c = ctx[i] && ctx[i].content;
+            if (Object.prototype.toString.call(c) === "[object Array]") {
+              for (var j = 0; j < c.length; j++) { if (c[j] && c[j].type === "image_url") return true; }
+            }
+          }
+          return false;
+        }
+
         /* ---------- MCP 工具設定 ----------
            粉絲自己接嘅 MCP 服務清單，存喺 chatSettings.mcpServers，跟聊天設定
            一齊入 localStorage；Token 唔入備份導出（export 嗰邊只抄指定欄位）。 */
@@ -4016,14 +4673,16 @@
           noBtn.addEventListener("click", function () {
             if (!chatReplyExtras) return;
             chatReplyExtras.confirmState = "cancelled";
-            renderChat();
+            renderChat(false);
           });
           row.appendChild(okBtn);
           row.appendChild(noBtn);
           card.appendChild(row);
           box.appendChild(card);
         }
-        function renderChat() {
+        /* scroll === false 嗰陣唔搶滾動（例如確認卡取消、超額清理後重畫）；
+           預設同以前一樣：發送、收到回覆、切換陪伴者、初次渲染都碌到最底。 */
+        function renderChat(scroll) {
           var box = $("chatMsgs");
           if (!box) return;
           chatShowErrDetail("");
@@ -4032,11 +4691,45 @@
           chatHistory.forEach(function (m) {
             var d = document.createElement("div");
             d.className = "chat-msg " + (m.role === "user" ? "me" : "him");
-            d.textContent = m.content;
+            if (m.images && m.images.length) {
+              m.images.forEach(function (src) {
+                var im = document.createElement("img");
+                im.className = "chat-img";
+                im.src = src;
+                im.alt = "訊息圖片";
+                im.addEventListener("click", function () { openImgOverlay(src); });
+                d.appendChild(im);
+              });
+            }
+            if (m.imagesStripped) {
+              var st = document.createElement("span");
+              st.className = "chat-stripped";
+              st.textContent = "[圖片已清理]";
+              d.appendChild(st);
+            }
+            if (m.files && m.files.length) {
+              m.files.forEach(function (f) {
+                var chip = document.createElement("span");
+                chip.className = "chat-file";
+                chip.textContent = (f && f.name) ? f.name : "档案";
+                d.appendChild(chip);
+              });
+            }
+            var tx = document.createElement("span");
+            tx.className = "chat-text";
+            tx.textContent = m.content;
+            d.appendChild(tx);
+            if (typeof m.ts === "number" && isFinite(m.ts)) {
+              var tm = document.createElement("span");
+              tm.className = "chat-time";
+              var dt = new Date(m.ts);
+              tm.textContent = pad2(dt.getHours()) + ":" + pad2(dt.getMinutes());
+              d.appendChild(tm);
+            }
             box.appendChild(d);
           });
           chatRenderExtras(box);
-          box.scrollTop = box.scrollHeight;
+          if (scroll !== false) box.scrollTop = box.scrollHeight;
         }
         function chatErrorLine(status) {
           if (currentPersona().custom) {
@@ -4145,19 +4838,26 @@
           var preset = CHAT_PRESETS[this.value] || CHAT_PRESETS.custom;
           if (this.value !== "custom" || preset.baseUrl) $("chatBaseUrl").value = preset.baseUrl;
           chatReadSettingsFromUI();
+          chatSyncSettingsToProfile();
           storageSave();
+          renderChatProfileList();
           updateBaseUrlHint();
         });
-        ["chatBaseUrl", "chatApiKey", "chatModelManual", "chatCity"].forEach(function (id) {
+        ["chatBaseUrl", "chatApiKey", "chatModelManual"].forEach(function (id) {
           var elc = $(id);
-          if (elc) elc.addEventListener("change", function () { chatReadSettingsFromUI(); storageSave(); });
+          if (elc) elc.addEventListener("change", function () { chatReadSettingsFromUI(); chatSyncSettingsToProfile(); storageSave(); renderChatProfileList(); });
         });
+        /* 城市係全部設定組共用嘅，唔寫入 profile */
+        var chatCitySaveEl = $("chatCity");
+        if (chatCitySaveEl) chatCitySaveEl.addEventListener("change", function () { chatReadSettingsFromUI(); storageSave(); });
         /* 城市改咗：即刻查一次，畀設定下面嗰行現狀更新返（查唔到都係軟著陸） */
         var cityInputEl = $("chatCity");
         if (cityInputEl) cityInputEl.addEventListener("change", function () { weatherRefreshLine(); });
-        $("chatModelSelect").addEventListener("change", function () { chatReadSettingsFromUI(); storageSave(); });
+        $("chatModelSelect").addEventListener("change", function () { chatReadSettingsFromUI(); chatSyncSettingsToProfile(); storageSave(); renderChatProfileList(); });
         $("chatSaveSettings").addEventListener("click", function () {
           chatReadSettingsFromUI();
+          chatSyncSettingsToProfile();
+          renderChatProfileList();
           storageSave();
           weatherRefreshLine();
           if (!chatSettings.apiKey) { chatModelStatus("設定記低咗，不過鎖匙嗰格仲係空嘅——冇鎖匙，邊度都去唔到。填埋佢。"); return; }
@@ -4357,27 +5057,51 @@
         function chatSendNow() {
           if (chatSending) return;
           var text = $("chatInput").value.trim();
-          if (!text) { chatShowErrDetail(""); chatStatus(chatT("一個字都冇，你叫我點答。打啲嘢先。", "還沒有輸入內容。先打幾個字，再發送。")); return; }
-          chatDeliver(text, null);
+          var hasAtt = false;
+          try { hasAtt = chatAttachTotal() > 0; } catch (e) { hasAtt = false; }
+          if (!text && !hasAtt) { chatShowErrDetail(""); chatStatus(chatT("一個字都冇，你叫我點答。打啲嘢先。", "還沒有輸入內容。先打幾個字，再發送。")); return; }
+          var atts = null;
+          if (hasAtt) atts = { images: chatPendingImages.slice(), files: chatPendingFiles.slice() };
+          chatDeliver(text, null, atts);
         }
         /* 真正掟出去嗰步：普通發送同確認卡「确认执行」共用。
-           confirmations 唔係 null 嗰陣，會原樣帶埋去今次請求。 */
-        function chatDeliver(text, confirmations) {
+           confirmations 唔係 null 嗰陣，會原樣帶埋去今次請求。
+           attachments 係可選第三參數 {images:[dataUrl], files:[{name,text}]}，
+           確認卡嗰條路唔傳，行為同以前一樣。 */
+        function chatDeliver(text, confirmations, attachments) {
           if (chatSending) return;
           chatReadSettingsFromUI(); storageSave();
           if (!chatSettings.apiKey) { chatShowErrDetail(""); chatStatus(chatT("鎖匙都未填，傾唔到。上去設定嗰度，填返你自己嗰條鎖匙先。", "還沒有填 API 鎖匙。請到上面的設定裡，填上你自己的鎖匙。")); return; }
           if (!chatSettings.baseUrl) { chatShowErrDetail(""); chatStatus(chatT("接口地址未填。上去設定嗰度補返，先傾到。", "接口地址還沒有填。請到設定裡補上。")); return; }
           if (!chatEffectiveModel()) { chatShowErrDetail(""); chatStatus(chatT("用邊個模型都未揀。拉一次模型嚟揀，或者手填返個模型名。", "還沒有選模型。請拉取模型清單選一個，或手動輸入模型名。")); return; }
+          /* 砌好今次條用戶訊息（未入記錄住）：純文字嗰陣保持舊有形狀，
+             有附件先至加 images／files 欄位；時間戳 ts 由而家開始先有。 */
+          var newMsg = { role: "user", content: text, ts: Date.now() };
+          if (attachments) {
+            if (attachments.images && attachments.images.length) newMsg.images = attachments.images.slice(0, 4);
+            if (attachments.files && attachments.files.length) newMsg.files = attachments.files.slice(0, 4);
+          }
+          var baseContext = chatHistory.concat([newMsg]).slice(-20).map(chatBuildContextMessage);
+          /* Claude 官方守衛：Anthropic 接口唔食 OpenAI 格式嘅圖片 blocks。
+             只要今次要發嘅上下文（連埋舊記錄）有任何一條帶圖，就成條攔住：
+             唔發請求、唔入記錄、唔清待發附件，等用家轉設定或者清對話。 */
+          if ((chatSettings.provider || "") === "anthropic" && chatContextHasImage(baseContext)) {
+            chatShowErrDetail("");
+            chatStatus("呢次要發嘅對話入面有圖片，但你而家用緊 Claude 官方接口，佢唔支援圖片。圖片要走 OpenAI 兼容接口：DeepSeek、ChatGPT 或者中轉站。轉返嗰啲設定，或者清咗帶圖片嗰段對話再試。");
+            return;
+          }
           chatReplyExtras = null;
-          chatHistory.push({ role: "user", content: text });
+          chatHistory.push(newMsg);
           if (chatHistory.length > 200) chatHistory = chatHistory.slice(chatHistory.length - 200);
           chatHistories[activePersonaId] = chatHistory;
           $("chatInput").value = "";
+          chatPendingImages = [];
+          chatPendingFiles = [];
+          try { renderChatAttachPreview(); } catch (e) {}
           chatStatus("");
           renderChat();
           storageSave();
           chatSetSending(true);
-          var baseContext = chatHistory.slice(-20).map(function (m) { return { role: m.role, content: m.content }; });
           /* 填咗城市就先查天氣（30 分鐘內有緩存就唔使再查），查到就將實況
              做一條 system 訊息掟喺發出去嗰串嘅最前面；查唔到／接口出事，
              weatherSystemText 回 null，照用原本嘅對話發，絕不阻塞发送。 */
@@ -4387,7 +5111,7 @@
           }).then(function (r) {
             chatSetSending(false);
             if (r.reply) {
-              chatHistory.push({ role: "assistant", content: r.reply });
+              chatHistory.push({ role: "assistant", content: r.reply, ts: Date.now() });
               if (chatHistory.length > 200) chatHistory = chatHistory.slice(chatHistory.length - 200);
               chatHistories[activePersonaId] = chatHistory;
               /* 接口帶返嘅 MCP 錯誤同待確認卡，掛喺呢條回覆下面；新嘅會換走舊嘅 */
@@ -4929,6 +5653,24 @@
         }
         chatFillUIFromSettings();
         updateBaseUrlHint();
+        /* 載入嗰陣遷移出嚟嘅設定組，即刻落一次盤，唔好等下次有其他改動先寫 */
+        try { storageSave(); } catch (e) {}
+        try {
+          var initProfile = chatActiveProfile();
+          if (initProfile) { var initNameEl = $("chatProfileName"); if (initNameEl) initNameEl.value = initProfile.name || ""; }
+          renderChatProfileList();
+        } catch (e) {}
+        /* 聊天背景：先套用存低嗰個選擇；係自定圖就非同步去背景圖庫攞返張圖，
+           攞到先至換上去，攞唔到就退返預設，唔好留個空窗。 */
+        try {
+          applyChatBg(chatBgId);
+          if (chatBgId === "custom") {
+            chatBgTryLoadCustom(function (img) {
+              if (img) applyChatBg("custom");
+              else { chatBgId = "default"; applyChatBg("default"); try { storageSave(); } catch (e) {} }
+            });
+          }
+        } catch (e) {}
         /* 有保存過城市嗰陣，開卡就查定一次，現狀行即刻有得睇（失敗靜靜收起） */
         try { if ((chatSettings.city || "").trim()) weatherRefreshLine(); } catch (e) {}
         renderMcpList();
