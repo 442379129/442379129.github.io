@@ -1239,7 +1239,7 @@
           <p class="sub">刷手機刷到唔停得手，係咪？我幫你落閘。揀好要鎖邊啲 App、鎖幾耐，撳個掣，呢度會生一個日曆鎖檔案畀你，加去你嗰個 AppLock 日曆，時間內你一開嗰啲 App，就會畀人提返出嚟。講明先：鎖檔案歸呢度生，搭嘢嗰部分——AppLock 日曆、快捷指令、自動化——要你自己跟教程搭好先，唔好到時鎖唔生效，又走嚟鬧我。</p>
           <label class="flabel" for="lockApps">要鎖邊啲 App（多個就用英文逗號隔開）</label>
           <input type="text" id="lockApps" placeholder="例如：抖音,小红书" aria-label="要鎖的 App 名字" />
-          <p class="hint">名要用返系統入面嗰個叫法，寫錯一個字都認唔到——例如 B 站要寫「哔哩哔哩」，唔好寫 B 站。</p>
+          <p class="hint" id="lockAppsHint">名要用返系統入面嗰個叫法，寫錯一個字都認唔到——例如 B 站要寫「哔哩哔哩」，唔好寫 B 站。</p>
           <div class="lockchips" id="lockChips" role="group" aria-label="常用 App 快捷選擇"></div>
           <label class="flabel">鎖幾耐</label>
           <div class="presets" id="lockDurations" role="group" aria-label="鎖的時長">
@@ -3152,7 +3152,12 @@
            純前端生成標準 iCalendar 檔案：SUMMARY 係 App 名（英文逗號串連），
            DTSTART＝而家、DTEND＝而家＋時長，UTC 時間，唔設 VALARM；
            DESCRIPTION 每次隨機抽 3–5 句提醒語。唔存任何記錄。 */
-        var LOCK_APPS_PRESET = ["抖音", "小红书", "哔哩哔哩", "微博", "快手", "淘宝"];
+        var __sysLang = "";
+        try { __sysLang = (navigator.language || (navigator.languages && navigator.languages[0]) || ""); } catch (e) { __sysLang = ""; }
+        var __isHant = /hant/i.test(__sysLang) || /^zh-(tw|hk|mo)\b/i.test(__sysLang);
+        var LOCK_APPS_PRESET = __isHant
+          ? ["抖音", "小紅書", "哔哩哔哩", "微博", "快手", "淘寶"]
+          : ["抖音", "小红书", "哔哩哔哩", "微博", "快手", "淘宝"];
         var LOCK_LINES = [
           "夠啦，返去做正經事。",
           "刷多十分鐘，唔會令你開心啲。",
@@ -3184,6 +3189,7 @@
         }
         (function initLockChips() {
           var box = $("lockChips");
+          $("lockApps").placeholder = __isHant ? "例如：抖音,小紅書" : "例如：抖音,小红书";
           LOCK_APPS_PRESET.forEach(function (name) {
             var b = document.createElement("button");
             b.type = "button";
