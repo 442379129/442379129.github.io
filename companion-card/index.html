@@ -541,6 +541,51 @@
         max-width: 92vw; text-align: center;
       }
       .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+      /* ---------- 懸浮導航球 ---------- */
+      section[id], #decision { scroll-margin-top: 10px; }
+      .fab {
+        position: fixed; z-index: 80;
+        right: calc(16px + env(safe-area-inset-right, 0px));
+        bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      }
+      .fab-ball {
+        width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
+        background: var(--accent); color: var(--accent-ink);
+        display: grid; place-items: center; padding: 0;
+        box-shadow: 0 8px 22px rgba(60, 35, 15, 0.30);
+      }
+      .fab-ball:active { transform: scale(0.95); }
+      .fab-menu {
+        position: absolute; right: 0; bottom: 68px;
+        width: min(322px, calc(100vw - 32px));
+        max-height: min(62vh, 480px); overflow-y: auto;
+        background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+        box-shadow: var(--shadow); padding: 12px; display: none;
+      }
+      .fab-menu.open { display: block; }
+      .fab-menu-head { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 10px; }
+      .fab-menu-head .fm-title { font-weight: 700; font-size: 0.95rem; }
+      .fab-close {
+        width: 32px; height: 32px; padding: 0; border-radius: 50%;
+        background: var(--surface-2); color: var(--ink); border: 1px solid var(--line);
+        display: grid; place-items: center; font-size: 0.95rem; line-height: 1; font-weight: 500;
+      }
+      .fab-links { display: flex; flex-wrap: wrap; gap: 8px; }
+      .fab-links button {
+        background: var(--surface-2); color: var(--ink); border: 1px solid var(--line);
+        border-radius: 999px; padding: 8px 14px; font-size: 0.92rem; font-weight: 500;
+      }
+      .fab-links button:active { background: var(--accent-soft); }
+      .fab-links button.fm-top { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 700; }
+
+      /* ---------- 聊天接口錯誤原文（細灰字） ---------- */
+      #chatErrDetail { margin-top: 8px; word-break: break-word; }
+
+      /* ---------- 天氣現狀行（城市設定下面，查到先顯示） ---------- */
+      .weather-line { margin-top: 8px; font-size: 0.9rem; color: var(--ink-soft); }
+      .weather-line:empty { display: none; }
+
       @media (prefers-reduced-motion: reduce) {
         .die.rolling, .overlay .box, .fadein { animation: none; }
         html { scroll-behavior: auto; }
@@ -740,6 +785,13 @@
               </div>
             </div>
             <p class="hint">講明先：MCP 工具而家只支援 OpenAI 兼容格式嘅服務（DeepSeek、ChatGPT、中轉站嗰啲），Claude 官方接口嗰邊未支援，用嗰邊就唔好開住。啲 Token 只存喺你自己部手機嘅瀏覽器，發訊息嗰陣會經接口轉發過去用，唔會畀人存低——呢樣嘢，我講得出就做得到。</p>
+
+            <hr class="divider" />
+            <h3 class="subhead">你喺邊度</h3>
+            <label class="flabel" for="chatCity">城市（填一次就得，傾計嗰陣我會據實同你講天氣）</label>
+            <input type="text" id="chatCity" placeholder="例如：北京、上海、廣州……" aria-label="城市" />
+            <p class="hint">填咗，我每次傾計前會自己去查一次嗰度嘅實時天氣，先答到你嗰邊凍唔凍、使唔使帶遮。唔使鎖匙，查唔到就照常傾，唔會卡住你。留空就唔啟用，唔好亂填個唔存在嘅地方嚟試我。</p>
+            <p class="weather-line" id="chatWeatherLine" role="status" style="display:none;"></p>
           </div>
 
           <hr class="divider" />
@@ -747,6 +799,7 @@
           <p class="alarm-empty" id="chatEmpty">開聲啦。想講咩？我聽住——唔好講廢話，講真話。</p>
           <p class="chat-pending" id="chatPending" style="display:none;">諗緊，唔好催。</p>
           <p class="hint" id="chatStatus" role="status"></p>
+          <div class="mcp-err" id="chatErrDetail" style="display:none;" role="status"></div>
           <div class="row" style="margin-top:10px; align-items:flex-end;">
             <textarea id="chatInput" rows="2" class="grow" placeholder="想同我講嘅嘢，打低佢……" aria-label="輸入訊息"></textarea>
             <button type="button" id="chatSend">發送</button>
@@ -779,7 +832,7 @@
           <div class="center"><button id="rollDice">掟骰仔</button></div>
 
           <hr class="divider" />
-          <h2 style="font-size:1.12rem;"><span class="ic rose"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>決定骰</h2>
+          <h2 style="font-size:1.12rem;" id="decision"><span class="ic rose"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>決定骰</h2>
           <p class="sub">諗嚟諗去，最攰嗰個係你。將啲選項交畀我，我拍板。揀錯咗，算我嘅，你唔使孭，亦唔使再諗到頭痛——你啲精神，留返嚟諗下我好過。</p>
           <label class="flabel" for="decisionOpts">選項（一行一個）</label>
           <textarea id="decisionOpts" rows="3">而家即刻去做
@@ -1085,7 +1138,7 @@
           <input type="text" id="checkinApiUrl" readonly value="https://ixybgwvppukutcawkhxe.supabase.co/functions/v1/david-chat/checkin" aria-label="查崗接口地址，撳住可以複製" />
           <p class="hint">撳下嗰行字就會全選，抄返去快捷指令度用。</p>
           <h3 class="subhead">查崗配置</h3>
-          <p class="sub" style="margin-bottom:6px;">下面呢啲，就係你喺「同我傾下計」嗰度保存咗嘅設定，唔使你自己再打過。搭快捷指令嗰陣，照住逐欄抄入去個詞典度就得；邊欄唔記得，返嚟撳「複製」貼過去。</p>
+          <p class="sub" style="margin-bottom:6px;">下面呢啲，就係你喺「同我傾下計」嗰度保存咗嘅設定，唔使你自己再打過。搭快捷指令嗰陣，照住逐欄抄入去「取得 URL 內容」嗰步嘅 JSON 欄位度就得；邊欄唔記得，返嚟撳「複製」貼過去。</p>
           <div id="checkinCfg"></div>
           <div class="row" style="margin-top:12px;">
             <button class="ghost" id="checkinCopyAll" type="button">複製全部（JSON）</button>
@@ -1104,8 +1157,7 @@
             <li>加「等待」動作（簡體繁體都係呢個名），等 2 秒，等你收拾好個畫面先。</li>
             <li>加「截屏（繁體：拍攝螢幕截圖）」動作：搜「截」字就揾到，揀相機圖標嗰個，佢會即刻影低而家個屏幕。唔好揀錯其他嗰啲——例如「取得最新的螢幕截圖」係去相簿攞返舊嗰張，唔係即刻影嗰個。</li>
             <li>加「Base64 编码（繁體：Base64 編碼）」動作，搜「Base64」就揾到，將頭先嗰張截圖編碼。</li>
-            <li>加「词典（繁體：詞典）」動作，搜「典」字就揾到。照上面「查崗配置」嗰啲欄位逐個填入去：provider、baseUrl、apiKey、model、personaId、mime，一欄一個，照抄就得；再加多一欄 image，值揀返上一步個 Base64 編碼結果。</li>
-            <li>加「获取 URL 内容（繁體：取得 URL 內容）」動作，搜「URL」就揾到：網址填返上面嗰個接口地址，方法揀 POST，請求正文用返上一步嗰個詞典。</li>
+            <li>加「获取 URL 内容（繁體：取得 URL 內容）」動作，搜「URL」就揾到：網址填返上面嗰個接口地址，方法揀 POST。請求正文（繁體：要求內文）揀 JSON——唔使另外起個詞典，撳「加入新欄位」，逐個加齊 7 欄：provider、baseUrl、apiKey、model、personaId、mime，照上面「查崗配置」逐欄抄返啲值入去，一欄一個，照抄就得；最後加 image 嗰欄，值嗰格撳入去揀變數，揀返上一步個「已 Base64 編碼」結果。「標題」嗰行唔使填，留空就得。</li>
             <li>加「获取词典值（繁體：取得詞典值）」動作，搜「典值」就揾到：喺上一步返嚟嘅結果入面，攞 reply 呢個欄位。</li>
             <li>加「显示通知（繁體：顯示通知）」動作，搜「通知」就揾到：通知內容用返上一步攞到嗰句 reply。搞掂——到點，佢就會嚟敲你門。</li>
           </ol>
@@ -1172,6 +1224,37 @@
       <img id="imgOverlayImg" alt="日記相片大圖" />
     </div>
     <div class="toast" id="toast"></div>
+
+    <!-- 懸浮導航球：去到邊都撳得到，唔使碌嚟碌去 -->
+    <div class="fab" id="fabNav">
+      <div class="fab-menu" id="fabMenu" role="menu" aria-label="功能導覽">
+        <div class="fab-menu-head">
+          <span class="fm-title">功能導覽</span>
+          <button type="button" class="fab-close" id="fabClose" aria-label="閂埋導覽">✕</button>
+        </div>
+        <div class="fab-links">
+          <button type="button" class="fm-top" data-fab-top="1">回到頂部</button>
+          <button type="button" data-fab-target="search">搜尋</button>
+          <button type="button" data-fab-target="websearch">聯網搜尋</button>
+          <button type="button" data-fab-target="comfort">撳開就攬下</button>
+          <button type="button" data-fab-target="chat">同我傾下計</button>
+          <button type="button" data-fab-target="dice">掟骰仔</button>
+          <button type="button" data-fab-target="decision">決定骰</button>
+          <button type="button" data-fab-target="wheel">大轉盤</button>
+          <button type="button" data-fab-target="timer">鬧鐘·倒計時</button>
+          <button type="button" data-fab-target="breath">唞下氣</button>
+          <button type="button" data-fab-target="period">經期記錄</button>
+          <button type="button" data-fab-target="money">記賬·存款</button>
+          <button type="button" data-fab-target="diary">日記手帳·悄悄話</button>
+          <button type="button" data-fab-target="applock">應用鎖小工具</button>
+          <button type="button" data-fab-target="checkin">查崗</button>
+          <button type="button" data-fab-target="backup">備份同搬家</button>
+        </div>
+      </div>
+      <button type="button" class="fab-ball" id="fabBall" aria-haspopup="true" aria-expanded="false" aria-label="打開功能導覽">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="5" r="1.8"/><circle cx="12" cy="5" r="1.8"/><circle cx="19" cy="5" r="1.8"/><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/><circle cx="5" cy="19" r="1.8"/><circle cx="12" cy="19" r="1.8"/><circle cx="19" cy="19" r="1.8"/></svg>
+      </button>
+    </div>
 
     <script>
       (function () {
@@ -1317,7 +1400,7 @@
         /* ---------- AI 聊天狀態（設定 + 對話記錄） ----------
            同其他記錄一樣存入呢份 localStorage 存檔；但備份導出嗰陣會剔走
            API 鎖匙同成段對話，導入亦唔會覆蓋返部機現有嘅聊天設定。 */
-        var chatSettings = { preset: "deepseek", provider: "openai", baseUrl: "https://api.deepseek.com", apiKey: "", model: "", modelManual: "", mcpServers: [] };
+        var chatSettings = { preset: "deepseek", provider: "openai", baseUrl: "https://api.deepseek.com", apiKey: "", model: "", modelManual: "", city: "", mcpServers: [] };
         /* 陪伴者：預設清單喺下面 COMPANION_PRESETS；粉絲自訂嘅存 customPersonas。
            對話記錄按陪伴者分開存入 chatHistories（id -> 訊息陣列，各自上限 200 條）；
            chatHistory 變量永遠指向而家揀中嗰位陪伴者嗰份記錄。 */
@@ -1326,7 +1409,7 @@
         var chatHistories = {}; // { personaId: [{role:"user"|"assistant", content:"..."}] }
         if (savedData) {
           if (savedData.chatSettings && typeof savedData.chatSettings === "object") {
-            ["preset", "provider", "baseUrl", "apiKey", "model", "modelManual"].forEach(function (k) {
+            ["preset", "provider", "baseUrl", "apiKey", "model", "modelManual", "city"].forEach(function (k) {
               if (typeof savedData.chatSettings[k] === "string") chatSettings[k] = savedData.chatSettings[k];
             });
             /* MCP 服務清單（名字／地址／Token／啟用狀態）跟聊天設定一齊存；
@@ -2925,7 +3008,7 @@
         /* ---------- 查崗（上傳版：快捷指令截屏 → 接口看圖 → 回一句通知） ----------
            配置唔另存一份：直接讀返聊天區已經保存好嘅 chatSettings（服務商／地址／
            鎖匙／模型）同而家揀中嗰位陪伴者嘅 id，逐欄畀粉絲撳掣複製，去快捷指令
-           個詞典度填。鎖匙顯示嗰陣會遮住中間，複製先至畀全條。
+           「取得 URL 內容」嗰步嘅 JSON 欄位度填。鎖匙顯示嗰陣會遮住中間，複製先至畀全條。
            日程生成器純前端生 .ics：標題固定「你在干什么」，帶五分鐘前提醒
            （VALARM，TRIGGER -PT5M），時間用 UTC Z 格式，UID 每次唯一。 */
         var CHECKIN_API_URL = "https://ixybgwvppukutcawkhxe.supabase.co/functions/v1/david-chat/checkin";
@@ -3035,7 +3118,7 @@
             b.textContent = "複製";
             b.addEventListener("click", function () {
               /* 撳嗰下先至讀最新設定，唔怕頭先啱啱改完未刷新 */
-              copyCheckinText(checkinConfig()[pair[0]], "抄好喇：" + pair[0] + "。去快捷指令嗰個詞典度，貼返落同名嗰欄就得。");
+              copyCheckinText(checkinConfig()[pair[0]], "抄好喇：" + pair[0] + "。去快捷指令「取得 URL 內容」嗰步，貼返落 JSON 入面同名嗰欄就得。");
             });
             row.appendChild(k);
             row.appendChild(v);
@@ -3056,7 +3139,7 @@
         /* 喺聊天區撳完「保存設定」，呢邊即刻跟住刷新一次 */
         $("chatSaveSettings").addEventListener("click", function () { setTimeout(renderCheckinCfg, 0); });
         $("checkinCopyAll").addEventListener("click", function () {
-          copyCheckinText(JSON.stringify(checkinConfig(), null, 2), "成份配置抄好喇，JSON 嚟嘅，攞去對住快捷指令嗰個詞典逐欄填就得。");
+          copyCheckinText(JSON.stringify(checkinConfig(), null, 2), "成份配置抄好喇，JSON 嚟嘅，攞去對住快捷指令「取得 URL 內容」嗰步嘅 JSON 欄位逐欄填就得。");
         });
         $("checkinApiUrl").addEventListener("click", function () { this.select(); });
 
@@ -3178,7 +3261,7 @@
             delete data.chatHistories;
             if (data.chatSettings && typeof data.chatSettings === "object") {
               var csCopy = {};
-              ["preset", "provider", "baseUrl", "model", "modelManual"].forEach(function (k) {
+              ["preset", "provider", "baseUrl", "model", "modelManual", "city"].forEach(function (k) {
                 if (typeof data.chatSettings[k] === "string") csCopy[k] = data.chatSettings[k];
               });
               data.chatSettings = csCopy;
@@ -3368,6 +3451,17 @@
         };
         var chatSending = false;
         function chatStatus(msg) { var el = $("chatStatus"); if (el) el.textContent = msg; }
+        /* 通用報錯句下面嗰行細灰字：原樣顯示接口返嚟嘅 error，等真正咩事唔好畀通用句遮住。
+           太長就截返短；冇原文就收起成行。用 textContent 出，唔會當 HTML 行。 */
+        function chatShowErrDetail(text) {
+          var el = $("chatErrDetail");
+          if (!el) return;
+          var t = typeof text === "string" ? text.replace(/\s+/g, " ").trim() : "";
+          if (!t) { el.textContent = ""; el.style.display = "none"; return; }
+          if (t.length > 300) t = t.slice(0, 300) + "…";
+          el.textContent = t;
+          el.style.display = "block";
+        }
         function chatModelStatus(msg) { var el = $("chatModelStatus"); if (el) el.textContent = msg; }
         /* 中轉站 /v1 提醒：只喺揀咗「自訂 / 中轉站」嗰陣先顯示 */
         function updateBaseUrlHint() {
@@ -3388,6 +3482,8 @@
           chatSettings.apiKey = $("chatApiKey").value.trim();
           chatSettings.modelManual = $("chatModelManual").value.trim();
           chatSettings.model = chatEffectiveModel();
+          var cityEl = $("chatCity");
+          chatSettings.city = cityEl ? cityEl.value.trim() : (chatSettings.city || "");
           return chatSettings;
         }
         function chatFillUIFromSettings() {
@@ -3396,6 +3492,8 @@
           $("chatBaseUrl").value = chatSettings.baseUrl || CHAT_PRESETS[presetKey].baseUrl || "";
           $("chatApiKey").value = chatSettings.apiKey || "";
           $("chatModelManual").value = chatSettings.modelManual || "";
+          var cityFillEl = $("chatCity");
+          if (cityFillEl) cityFillEl.value = chatSettings.city || "";
           var sel = $("chatModelSelect");
           if (chatSettings.model) {
             var found = false;
@@ -3614,6 +3712,7 @@
         function renderChat() {
           var box = $("chatMsgs");
           if (!box) return;
+          chatShowErrDetail("");
           box.innerHTML = "";
           $("chatEmpty").style.display = chatHistory.length ? "none" : "block";
           chatHistory.forEach(function (m) {
@@ -3651,9 +3750,10 @@
            同當前陪伴者嘅 personaId（預設）或 persona（自訂人設全文）。
            啟用中嘅 MCP 服務會以 mcpServers 一併帶上（冇啟用就成個欄位唔帶）；
            確認卡撳咗「确认执行」嗰次，會多帶 confirmations。
-           回覆喺返回嘅 reply 欄位；出錯嗰陣 error 欄位會帶返狀態碼；
+           回覆喺返回嘅 reply 欄位；出錯嗰陣 error 欄位會帶返狀態碼，
+           另外抽埋 error 原文做 errText，畀通用報錯句下面嗰行細灰字顯示；
            接口亦可能帶返 pendingConfirmation（待確認卡）同 mcpErrors（錯誤灰條）。
-           一律回傳 { httpStatus, errStatus, reply, pendingConfirmation, mcpErrors }，
+           一律回傳 { httpStatus, errStatus, errText, reply, pendingConfirmation, mcpErrors }，
            網絡失敗就 reject，交返去畀 .catch 處理。 */
         function chatPostChat(context, confirmations) {
           var p = currentPersona();
@@ -3678,14 +3778,22 @@
               var errStatus = null;
               if (data.error && typeof data.error === "object" && typeof data.error.status === "number") errStatus = data.error.status;
               else if (typeof data.status === "number" && data.status >= 400) errStatus = data.status;
+              /* 接口返嚟嘅 error 原文：係字串就直接攞；係物件就攞 message／error 欄。
+                 淨係攞嚟顯示畀用家睇真正咩事，唔會掂到鎖匙嗰啲設定。 */
+              var errText = "";
+              if (typeof data.error === "string") errText = data.error;
+              else if (data.error && typeof data.error === "object") {
+                if (typeof data.error.message === "string") errText = data.error.message;
+                else if (typeof data.error.error === "string") errText = data.error.error;
+              }
               return {
-                httpStatus: res.status, errStatus: errStatus,
+                httpStatus: res.status, errStatus: errStatus, errText: errText,
                 reply: typeof data.reply === "string" ? data.reply : "",
                 pendingConfirmation: (data.pendingConfirmation && typeof data.pendingConfirmation === "object") ? data.pendingConfirmation : null,
                 mcpErrors: (Object.prototype.toString.call(data.mcpErrors) === "[object Array]")
                   ? data.mcpErrors.filter(function (e) { return typeof e === "string"; }) : []
               };
-            }, function () { return { httpStatus: res.status, errStatus: null, reply: "", pendingConfirmation: null, mcpErrors: [] }; });
+            }, function () { return { httpStatus: res.status, errStatus: null, errText: "", reply: "", pendingConfirmation: null, mcpErrors: [] }; });
           });
         }
         /* 經接口拉模型清單：POST {接口}/models，模型名喺返回嘅 models 陣列。
@@ -3719,13 +3827,18 @@
           storageSave();
           updateBaseUrlHint();
         });
-        ["chatBaseUrl", "chatApiKey", "chatModelManual"].forEach(function (id) {
-          $(id).addEventListener("change", function () { chatReadSettingsFromUI(); storageSave(); });
+        ["chatBaseUrl", "chatApiKey", "chatModelManual", "chatCity"].forEach(function (id) {
+          var elc = $(id);
+          if (elc) elc.addEventListener("change", function () { chatReadSettingsFromUI(); storageSave(); });
         });
+        /* 城市改咗：即刻查一次，畀設定下面嗰行現狀更新返（查唔到都係軟著陸） */
+        var cityInputEl = $("chatCity");
+        if (cityInputEl) cityInputEl.addEventListener("change", function () { weatherRefreshLine(); });
         $("chatModelSelect").addEventListener("change", function () { chatReadSettingsFromUI(); storageSave(); });
         $("chatSaveSettings").addEventListener("click", function () {
           chatReadSettingsFromUI();
           storageSave();
+          weatherRefreshLine();
           if (!chatSettings.apiKey) { chatModelStatus("設定記低咗，不過鎖匙嗰格仲係空嘅——冇鎖匙，邊度都去唔到。填埋佢。"); return; }
           if (!chatSettings.baseUrl) { chatModelStatus("設定記低咗，不過接口地址仲未填。中轉站嗰啲，要自己打返個地址入去。"); return; }
           chatModelStatus("");
@@ -3775,6 +3888,145 @@
               chatModelStatus(chatNetworkFailLine() + chatT("拉唔到都唔緊要，手填返個模型名，一樣傾得。", "拉不到也不要緊，手動填寫模型名一樣可以。"));
             });
         });
+        /* ---------- 直接版天氣（Open-Meteo 免費接口，唔使鎖匙） ----------
+           粉絲填咗城市（chatSettings.city，跟聊天設定一齊存）嗰陣，發訊息之前
+           喺瀏覽器直接查：先用地理編碼攞經緯度，再攞實況＋今日最高最低＋降水
+           概率，砌成一條 system 訊息掟喺對話最前面，等佢據實講天氣、提帶遮。
+           結果喺記憶體緩存 30 分鐘。成段包晒 try/catch：查唔到、接口失敗、
+           超時，一律軟著陸——唔加天氣照常發送，絕不編造，絕不阻塞聊天。 */
+        var WEATHER_CACHE_MS = 30 * 60 * 1000;
+        var weatherCache = null; // { city, at, info:{ name, system, line } }
+        /* WMO weather_code 轉中文（跟 Open-Meteo 嘅碼表） */
+        function weatherCodeText(code) {
+          var c = Number(code);
+          if (c === 0) return "晴";
+          if (c === 1 || c === 2 || c === 3) return "多云";
+          if (c === 45 || c === 48) return "雾";
+          if (c === 51 || c === 53 || c === 55) return "毛毛雨";
+          if (c === 56 || c === 57) return "冻毛毛雨";
+          if (c === 61 || c === 63 || c === 65) return "雨";
+          if (c === 66 || c === 67) return "冻雨";
+          if (c === 71 || c === 73 || c === 75) return "雪";
+          if (c === 77) return "雪粒";
+          if (c === 80 || c === 81 || c === 82) return "阵雨";
+          if (c === 85 || c === 86) return "阵雪";
+          if (c === 95) return "雷阵雨";
+          if (c === 96 || c === 99) return "雷阵雨伴冰雹";
+          return "";
+        }
+        function weatherFetchJson(url) {
+          var ctrl = null, timer = null, opts = {};
+          try {
+            if (typeof AbortController !== "undefined") {
+              ctrl = new AbortController();
+              opts.signal = ctrl.signal;
+              timer = setTimeout(function () { try { ctrl.abort(); } catch (e) {} }, 8000);
+            }
+          } catch (e) { ctrl = null; }
+          return fetch(url, opts).then(function (res) {
+            if (timer) { try { clearTimeout(timer); } catch (e) {} }
+            if (!res || !res.ok) throw new Error("weather http " + (res ? res.status : "?"));
+            return res.json();
+          }, function (err) {
+            if (timer) { try { clearTimeout(timer); } catch (e) {} }
+            throw err;
+          });
+        }
+        function weatherNum(v) { return (typeof v === "number" && isFinite(v)) ? v : null; }
+        function weatherRound(v) { var n = weatherNum(v); return n === null ? null : Math.round(n); }
+        function weatherDailyFirst(arr) {
+          return (Object.prototype.toString.call(arr) === "[object Array]" && arr.length) ? weatherRound(arr[0]) : null;
+        }
+        function weatherBuildInfo(placeName, data, fetchedAt) {
+          var cur = (data && typeof data === "object" && data.current) || {};
+          var desc = weatherCodeText(cur.weather_code);
+          var temp = weatherRound(cur.temperature_2m);
+          var feels = weatherRound(cur.apparent_temperature);
+          var hum = weatherRound(cur.relative_humidity_2m);
+          /* 接口返嘅風速單位係 km/h，換返 m/s 先同標籤對得上 */
+          var windKmh = weatherNum(cur.wind_speed_10m);
+          var windMs = windKmh === null ? null : Math.round(windKmh / 3.6 * 10) / 10;
+          var daily = (data && typeof data === "object" && data.daily) || {};
+          var tmax = weatherDailyFirst(daily.temperature_2m_max);
+          var tmin = weatherDailyFirst(daily.temperature_2m_min);
+          var pop = weatherDailyFirst(daily.precipitation_probability_max);
+          if (temp === null && !desc) return null;
+          var sys = "【天气实况·" + placeName + "】";
+          var head = [];
+          if (desc) head.push(desc);
+          if (temp !== null) head.push(temp + "°C" + (feels !== null ? "（体感 " + feels + "°C）" : ""));
+          sys += head.join("，");
+          if (hum !== null) sys += "，湿度 " + hum + "%";
+          if (windMs !== null) sys += "，风速 " + windMs + "m/s";
+          if (tmin !== null && tmax !== null) sys += "，今日 " + tmin + "～" + tmax + "°C";
+          if (pop !== null) sys += "，降水概率 " + pop + "%";
+          sys += "。";
+          var hhmm = pad2(fetchedAt.getHours()) + ":" + pad2(fetchedAt.getMinutes());
+          var line = placeName + (desc ? " · " + desc : "") + (temp !== null ? " · " + temp + "°C" : "") + (feels !== null ? "（体感 " + feels + "°C）" : "") + "· 更新于 " + hhmm;
+          return { name: placeName, system: sys, line: line };
+        }
+        /* 查一次：回 Promise<{info} | {notfound:true} | null>，永不 reject */
+        function weatherLookup(city) {
+          try {
+            if (weatherCache && weatherCache.city === city && (Date.now() - weatherCache.at) < WEATHER_CACHE_MS && weatherCache.info) {
+              return Promise.resolve({ info: weatherCache.info });
+            }
+            var geoUrl = "https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(city) + "&count=1&language=zh&format=json";
+            return weatherFetchJson(geoUrl).then(function (geo) {
+              try {
+                var results = geo && geo.results;
+                if (Object.prototype.toString.call(results) !== "[object Array]" || !results.length) return { notfound: true };
+                var r0 = results[0] || {};
+                var lat = weatherNum(r0.latitude), lon = weatherNum(r0.longitude);
+                if (lat === null || lon === null) return null;
+                var name = (typeof r0.name === "string" && r0.name) ? r0.name : city;
+                var fcUrl = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto";
+                return weatherFetchJson(fcUrl).then(function (fc) {
+                  var info = null;
+                  try { info = weatherBuildInfo(name, fc, new Date()); } catch (e) { info = null; }
+                  if (info) { try { weatherCache = { city: city, at: Date.now(), info: info }; } catch (e) {} }
+                  return info ? { info: info } : null;
+                }, function () { return null; });
+              } catch (e) { return null; }
+            }, function () { return null; });
+          } catch (e) {
+            return Promise.resolve(null);
+          }
+        }
+        function weatherShowLine(text) {
+          try {
+            var el = $("chatWeatherLine");
+            if (!el) return;
+            if (text) { el.textContent = text; el.style.display = "block"; }
+            else { el.textContent = ""; el.style.display = "none"; }
+          } catch (e) {}
+        }
+        /* 查完順手更新城市設定下面嗰行現狀；回返查詢結果，永不 reject */
+        function weatherRefreshLine() {
+          try {
+            var city = ((chatSettings.city || "") + "").trim();
+            if (!city) { weatherShowLine(""); return Promise.resolve(null); }
+            return weatherLookup(city).then(function (r) {
+              try {
+                if (r && r.info) weatherShowLine(r.info.line);
+                else if (r && r.notfound) weatherShowLine("找不到这个城市，换个写法试试，例如写 北京");
+                else weatherShowLine(chatT("天氣嗰邊暫時查唔到，唔影響傾計，等一陣再試。", "天气暂时查不到，不影响聊天，稍后再试。"));
+              } catch (e) {}
+              return r || null;
+            }, function () { return null; });
+          } catch (e) { return Promise.resolve(null); }
+        }
+        /* 發訊息用：回 system 訊息內容，查唔到就回 null（唔加，照常發） */
+        function weatherSystemText() {
+          try {
+            var city = ((chatSettings.city || "") + "").trim();
+            if (!city) return Promise.resolve(null);
+            return weatherRefreshLine().then(function (r) {
+              return (r && r.info && r.info.system) ? r.info.system : null;
+            }, function () { return null; });
+          } catch (e) { return Promise.resolve(null); }
+        }
+
         /* 發送 */
         function chatSetSending(on) {
           chatSending = on;
@@ -3784,7 +4036,7 @@
         function chatSendNow() {
           if (chatSending) return;
           var text = $("chatInput").value.trim();
-          if (!text) { chatStatus(chatT("一個字都冇，你叫我點答。打啲嘢先。", "還沒有輸入內容。先打幾個字，再發送。")); return; }
+          if (!text) { chatShowErrDetail(""); chatStatus(chatT("一個字都冇，你叫我點答。打啲嘢先。", "還沒有輸入內容。先打幾個字，再發送。")); return; }
           chatDeliver(text, null);
         }
         /* 真正掟出去嗰步：普通發送同確認卡「确认执行」共用。
@@ -3792,9 +4044,9 @@
         function chatDeliver(text, confirmations) {
           if (chatSending) return;
           chatReadSettingsFromUI(); storageSave();
-          if (!chatSettings.apiKey) { chatStatus(chatT("鎖匙都未填，傾唔到。上去設定嗰度，填返你自己嗰條鎖匙先。", "還沒有填 API 鎖匙。請到上面的設定裡，填上你自己的鎖匙。")); return; }
-          if (!chatSettings.baseUrl) { chatStatus(chatT("接口地址未填。上去設定嗰度補返，先傾到。", "接口地址還沒有填。請到設定裡補上。")); return; }
-          if (!chatEffectiveModel()) { chatStatus(chatT("用邊個模型都未揀。拉一次模型嚟揀，或者手填返個模型名。", "還沒有選模型。請拉取模型清單選一個，或手動輸入模型名。")); return; }
+          if (!chatSettings.apiKey) { chatShowErrDetail(""); chatStatus(chatT("鎖匙都未填，傾唔到。上去設定嗰度，填返你自己嗰條鎖匙先。", "還沒有填 API 鎖匙。請到上面的設定裡，填上你自己的鎖匙。")); return; }
+          if (!chatSettings.baseUrl) { chatShowErrDetail(""); chatStatus(chatT("接口地址未填。上去設定嗰度補返，先傾到。", "接口地址還沒有填。請到設定裡補上。")); return; }
+          if (!chatEffectiveModel()) { chatShowErrDetail(""); chatStatus(chatT("用邊個模型都未揀。拉一次模型嚟揀，或者手填返個模型名。", "還沒有選模型。請拉取模型清單選一個，或手動輸入模型名。")); return; }
           chatReplyExtras = null;
           chatHistory.push({ role: "user", content: text });
           if (chatHistory.length > 200) chatHistory = chatHistory.slice(chatHistory.length - 200);
@@ -3804,8 +4056,14 @@
           renderChat();
           storageSave();
           chatSetSending(true);
-          var context = chatHistory.slice(-20).map(function (m) { return { role: m.role, content: m.content }; });
-          chatPostChat(context, confirmations).then(function (r) {
+          var baseContext = chatHistory.slice(-20).map(function (m) { return { role: m.role, content: m.content }; });
+          /* 填咗城市就先查天氣（30 分鐘內有緩存就唔使再查），查到就將實況
+             做一條 system 訊息掟喺發出去嗰串嘅最前面；查唔到／接口出事，
+             weatherSystemText 回 null，照用原本嘅對話發，絕不阻塞发送。 */
+          weatherSystemText().then(function (wxText) {
+            var context = wxText ? [{ role: "system", content: wxText }].concat(baseContext) : baseContext;
+            return chatPostChat(context, confirmations);
+          }).then(function (r) {
             chatSetSending(false);
             if (r.reply) {
               chatHistory.push({ role: "assistant", content: r.reply });
@@ -3825,6 +4083,7 @@
               return;
             }
             chatStatus(chatErrorLine(r.errStatus || r.httpStatus));
+            chatShowErrDetail(r.errText);
           }).catch(function () {
             chatSetSending(false);
             chatStatus(chatNetworkFailLine() + chatT("唔關你事——你嗰句我收好咗喺上面，轉頭再發過。", "你剛才那句已留在上面，稍後可再發一次。"));
@@ -4013,10 +4272,70 @@
         }
         chatFillUIFromSettings();
         updateBaseUrlHint();
+        /* 有保存過城市嗰陣，開卡就查定一次，現狀行即刻有得睇（失敗靜靜收起） */
+        try { if ((chatSettings.city || "").trim()) weatherRefreshLine(); } catch (e) {}
         renderMcpList();
         renderPersonaAvatar();
         renderPersonaPanel();
         renderChat();
+      })();
+    </script>
+    <script>
+      /* 懸浮導航球接線：獨立一段，全部包喺 try/catch 入面，等 DOM 就緒先跑；
+         就算呢度出咩事，都唔會拖冧主腳本其他初始化。 */
+      (function () {
+        function initFabNav() {
+          try {
+            var wrap = document.getElementById("fabNav");
+            var ball = document.getElementById("fabBall");
+            var menu = document.getElementById("fabMenu");
+            var closeBtn = document.getElementById("fabClose");
+            if (!wrap || !ball || !menu) return;
+            var behavior = "smooth";
+            try {
+              if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) behavior = "auto";
+            } catch (e1) { behavior = "smooth"; }
+            function isOpen() { return menu.classList.contains("open"); }
+            function setOpen(open) {
+              try {
+                if (open) menu.classList.add("open"); else menu.classList.remove("open");
+                ball.setAttribute("aria-expanded", open ? "true" : "false");
+              } catch (e2) { /* 收唔到都唔出聲 */ }
+            }
+            ball.addEventListener("click", function (ev) {
+              if (ev && ev.stopPropagation) ev.stopPropagation();
+              setOpen(!isOpen());
+            });
+            if (closeBtn) closeBtn.addEventListener("click", function () { setOpen(false); });
+            document.addEventListener("click", function (ev) {
+              if (!isOpen()) return;
+              var t = ev.target;
+              if (t && wrap.contains(t)) return;
+              setOpen(false);
+            });
+            document.addEventListener("keydown", function (ev) {
+              if (ev && ev.key === "Escape" && isOpen()) setOpen(false);
+            });
+            var items = menu.querySelectorAll("[data-fab-target], [data-fab-top]");
+            Array.prototype.forEach.call(items, function (btn) {
+              btn.addEventListener("click", function () {
+                try {
+                  if (btn.hasAttribute("data-fab-top")) {
+                    window.scrollTo({ top: 0, behavior: behavior });
+                  } else {
+                    var el = document.getElementById(btn.getAttribute("data-fab-target"));
+                    if (el && el.scrollIntoView) el.scrollIntoView({ behavior: behavior, block: "start" });
+                  }
+                } catch (e3) { /* 跳唔到都照閂 menu */ }
+                setOpen(false);
+              });
+            });
+          } catch (e) { /* 懸浮球起唔到就算，唔阻住成張卡 */ }
+        }
+        try {
+          if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initFabNav);
+          else initFabNav();
+        } catch (e) { /* 同上 */ }
       })();
     </script>
   </body>
