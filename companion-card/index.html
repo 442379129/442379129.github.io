@@ -1522,7 +1522,7 @@
         <!-- 備份同搬家 -->
         <section class="card span2" id="backup">
           <h2><span class="ic sage"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>備份同搬家</h2>
-          <p class="sub">搬屋要執嘢，搬卡一樣。換網址、換賬號、換手機之前，先喺舊嗰邊撳「導出備份」，將記錄收成一個檔案存去部機；去到新嗰邊，撳「導入」，揀返個檔案，經期、賬本、收支、存款目標，連日記手帳啲相合同錄音，一件都唔會少。唔好懶——冇備份就搬，唔見咗嗰陣喊都冇用，仲要累我心痛。</p>
+          <p class="sub">搬屋要執嘢，搬卡一樣。換網址、換賬號、換手機之前，先喺舊嗰邊撳「導出備份」，將記錄收成一個檔案存去部機；去到新嗰邊，撳「導入」，揀返個檔案，經期、賬本、收支、存款目標，連日記手帳啲相合同錄音、對話記錄、改過嘅人設同頭像，一件都唔會少（對話入面啲圖片唔跟，只留文字；鎖匙唔入備份，去到新嗰邊要重新填返）。唔好懶——冇備份就搬，唔見咗嗰陣喊都冇用，仲要累我心痛。</p>
           <div class="row">
             <button id="exportBackup" type="button">導出備份</button>
           </div>
@@ -1531,14 +1531,14 @@
           <input type="file" id="importFile" accept=".json,application/json" aria-label="揀備份檔案導入" />
           <div class="note" id="importConfirm" style="display:none;">
             <p style="margin:0 0 6px;" id="importSummary"></p>
-            <p style="margin:0;">講清楚先：導入會將而家張卡嘅記錄<strong>全部蓋過</strong>，換成備份入面嗰啲，冇得返轉頭。肯定先撳確認。</p>
+            <p style="margin:0;">講清楚先：導入會將而家張卡嘅記錄——經期、賬本、日記、對話記錄、人設，<strong>全部蓋過</strong>，換成備份入面嗰啲，冇得返轉頭。肯定先撳確認。</p>
             <div class="row" style="margin-top:10px;">
               <button id="confirmImport" type="button">確認導入，蓋過佢</button>
               <button class="ghost" id="cancelImport" type="button">算數，唔導住</button>
             </div>
           </div>
           <p class="hint" id="backupStatus" role="status"></p>
-          <p class="hint">個備份檔案入面得你自己啲記錄，收好佢，唔好周圍傳。</p>
+          <p class="hint">個備份檔案入面有你嘅對話記錄，係你自己啲私隱，收好佢，千祈唔好周圍傳，唔好發畀任何人。</p>
         </section>
       </div>
 
@@ -3946,7 +3946,7 @@
            導入：揀檔案 → 驗格式 → 頁面內顯示覆蓋確認（唔用會被攔截嘅彈窗）
            → 確認先寫入、重畫全部相關分區同重算預測橫額。 */
         var BACKUP_FORMAT = "davidCompanionCard-backup";
-        var BACKUP_VERSION = 1;
+        var BACKUP_VERSION = 2;
         var pendingImport = null;
         function backupStatus(msg) { $("backupStatus").textContent = msg; }
         function countTxsIn(lgs) {
@@ -3956,12 +3956,54 @@
           });
           return n;
         }
+        /* 備份用嘅對話記錄淨化：文字全留，圖片剝走（data URI 最食位），留個
+           [圖片已清理] 標記；冇文字又冇檔案、得返張圖嗰啲，留個 [圖片] 佔位，
+           唔好變空白訊息。每位最多留最近 200 條，同平時上限一致。 */
+        function backupTextOnlyHistories(map) {
+          var out = {};
+          if (!map || typeof map !== "object") return out;
+          Object.keys(map).forEach(function (pid) {
+            var arr = map[pid];
+            if (Object.prototype.toString.call(arr) !== "[object Array]") return;
+            var cleaned = arr.filter(function (m) {
+              return m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string";
+            }).map(function (m) {
+              var c = chatSanitizeHistoryMsg(m);
+              var hadImages = Object.prototype.toString.call(c.images) === "[object Array]" && c.images.length > 0;
+              if (hadImages) {
+                delete c.images;
+                c.imagesStripped = true;
+                if (!c.content && !(c.files && c.files.length)) c.content = "[圖片]";
+              }
+              return c;
+            }).slice(-200);
+            if (cleaned.length) out[pid] = cleaned;
+          });
+          return out;
+        }
+        function backupCountHistoryMsgs(map) {
+          var n = 0;
+          if (map && typeof map === "object") {
+            Object.keys(map).forEach(function (pid) {
+              if (Object.prototype.toString.call(map[pid]) === "[object Array]") n += map[pid].length;
+            });
+          }
+          return n;
+        }
+        function backupCountArr(a) {
+          return Object.prototype.toString.call(a) === "[object Array]" ? a.length : 0;
+        }
         function describeData(d) {
           var pe = Object.prototype.toString.call(d.periodEntries) === "[object Array]" ? d.periodEntries.length : 0;
           var lg = Object.prototype.toString.call(d.ledgers) === "[object Array]" ? d.ledgers.length : 0;
           var gl = Object.prototype.toString.call(d.goals) === "[object Array]" ? d.goals.length : 0;
           var dy = Object.prototype.toString.call(d.diaryEntries) === "[object Array]" ? d.diaryEntries.length : 0;
-          return "備份入面有：經期記錄 " + pe + " 次、賬本 " + lg + " 本（收支共 " + countTxsIn(d.ledgers) + " 筆）、存款目標 " + gl + " 個、日記 " + dy + " 篇。";
+          var parts = ["經期記錄 " + pe + " 次", "賬本 " + lg + " 本（收支共 " + countTxsIn(d.ledgers) + " 筆）", "存款目標 " + gl + " 個", "日記 " + dy + " 篇"];
+          var chatN = backupCountHistoryMsgs(d.chatHistories) + backupCountHistoryMsgs(d.storyHistories);
+          if (chatN) parts.push("對話記錄 " + chatN + " 條");
+          var perN = backupCountArr(d.customPersonas) + backupCountArr(d.copiedPersonas) + backupCountArr(d.storyCustomPersonas);
+          if (perN) parts.push("自訂／複製人設 " + perN + " 位");
+          return "備份入面有：" + parts.join("、") + "。";
         }
         function diaryApproxBytes() {
           var n = 0;
@@ -3994,14 +4036,13 @@
                 return;
               }
             }
-            /* AI 聊天：鎖匙同成段對話唔入備份——鎖匙係秘密，對話係私隱，
-               兩樣都唔跟住個檔案周圍走。剩低服務商、接口地址同模型名先入。 */
+            /* 對話記錄跟備份走（v2 起）：文字全留，圖片剝走（見
+               backupTextOnlyHistories）；人設改版、頭像、陪伴者選擇、自訂
+               同複製人設全部跟埋去，搬過去唔會變返大偉。鎖匙永遠唔入備份，
+               剩低服務商、接口地址同模型名先入。 */
             delete data.chatHistory;
-            delete data.chatHistories;
-            delete data.storyHistories;
-            delete data.personaOverrides;
-            delete data.storyPersonaOverrides;
-            delete data.avatarOverrides;
+            data.chatHistories = backupTextOnlyHistories(data.chatHistories);
+            data.storyHistories = backupTextOnlyHistories(data.storyHistories);
             if (data.chatSettings && typeof data.chatSettings === "object") {
               var csCopy = {};
               ["preset", "provider", "baseUrl", "model", "modelManual", "city"].forEach(function (k) {
@@ -4055,7 +4096,7 @@
             document.body.removeChild(a);
             setTimeout(function () { try { URL.revokeObjectURL(url); } catch (e) {} }, 4000);
             var sizeMB = blob.size / 1048576;
-            backupStatus("執好喇，成副家當跟身，搬去邊都唔驚。備份出咗喇，收好個檔案；搬到新嗰邊，撳「導入」揀返佢就返晒嚟。" + (sizeMB >= 1 ? "（呢份備份大約 " + sizeMB.toFixed(1) + " MB，連埋日記啲相合同聲，屬正常。）" : ""));
+            backupStatus("執好喇，成副家當跟身，搬去邊都唔驚。備份出咗喇，收好個檔案；搬到新嗰邊，撳「導入」揀返佢就返晒嚟。鎖匙唔跟備份走，去到新嗰邊記得重新填返。" + (sizeMB >= 1 ? "（呢份備份大約 " + sizeMB.toFixed(1) + " MB，連埋日記啲相合同聲，屬正常。）" : ""));
           } catch (e) {
             backupStatus("導出唔到，部機唔合作，唔關你事。再試下，或者換個瀏覽器。");
           }
@@ -4137,6 +4178,151 @@
             goalSeq = typeof d.goalSeq === "number" ? d.goalSeq : 0;
             goals.forEach(function (g) { if (g && typeof g.id === "number" && g.id > goalSeq) goalSeq = g.id; });
             $("txCurrency").value = activeLedger().currency;
+            /* 陪伴者身份 + 對話記錄 + 人設改版（v2 備份先有；舊版備份冇呢啲
+               欄位，就留返而家嗰啲，唔會蓋走）。鎖匙同 MCP Token 永遠唔蓋。
+               校驗同開卡載入嗰套一樣，寫完之後重新整理頁面，由載入流程
+               再校一次、成張卡一齊畫返。 */
+            if (Object.prototype.toString.call(d.customPersonas) === "[object Array]") {
+              customPersonas = d.customPersonas.filter(function (p) {
+                return p && typeof p.id === "string" && typeof p.name === "string" && typeof p.desc === "string";
+              });
+            }
+            if (Object.prototype.toString.call(d.copiedPersonas) === "[object Array]") {
+              copiedPersonas = d.copiedPersonas.filter(function (p) {
+                return p && typeof p.id === "string" && typeof p.name === "string";
+              }).map(function (p) {
+                return {
+                  id: p.id, name: p.name,
+                  blurb: typeof p.blurb === "string" ? p.blurb : "",
+                  avatar: (typeof p.avatar === "string" && p.avatar.length <= 400000) ? p.avatar : "",
+                  baseId: typeof p.baseId === "string" ? p.baseId : "",
+                  rootKey: (typeof p.rootKey === "string" && p.rootKey) ? p.rootKey : p.id,
+                  rootName: (typeof p.rootName === "string" && p.rootName) ? p.rootName : p.name,
+                  version: (typeof p.version === "number" && p.version >= 1) ? Math.floor(p.version) : 1,
+                  basePersona: (typeof p.basePersona === "string") ? p.basePersona.slice(0, 4000) : ""
+                };
+              });
+            }
+            try {
+              if (d.personaOverrides && typeof d.personaOverrides === "object") {
+                personaOverrides = {};
+                Object.keys(d.personaOverrides).forEach(function (k) {
+                  var v = d.personaOverrides[k];
+                  if (typeof v === "string" && v.trim() && v.length <= 4000) personaOverrides[k] = v;
+                });
+              }
+              if (d.avatarOverrides && typeof d.avatarOverrides === "object") {
+                avatarOverrides = {};
+                Object.keys(d.avatarOverrides).forEach(function (k) {
+                  var v = d.avatarOverrides[k];
+                  if (typeof v === "string" && v.indexOf("data:image/") === 0 && v.length <= 400000) avatarOverrides[k] = v;
+                });
+              }
+            } catch (e2) {}
+            if (d.chatHistories && typeof d.chatHistories === "object") {
+              chatHistories = {};
+              Object.keys(d.chatHistories).forEach(function (pid) {
+                var arr = d.chatHistories[pid];
+                if (Object.prototype.toString.call(arr) === "[object Array]") {
+                  chatHistories[pid] = arr.filter(function (m) {
+                    return m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string";
+                  }).map(chatSanitizeHistoryMsg).slice(-200);
+                }
+              });
+            }
+            if (typeof d.activePersonaId === "string") activePersonaId = d.activePersonaId;
+            if (!allPersonas().some(function (p) { return p.id === activePersonaId; })) activePersonaId = "david";
+            if (!chatHistories[activePersonaId]) chatHistories[activePersonaId] = [];
+            chatHistory = chatHistories[activePersonaId];
+            if (d.cardMode === "story" || d.cardMode === "companion") cardMode = d.cardMode;
+            if (Object.prototype.toString.call(d.storyCustomPersonas) === "[object Array]") {
+              storyCustomPersonas = d.storyCustomPersonas.filter(function (p) {
+                return p && typeof p.id === "string" && typeof p.name === "string" && typeof p.desc === "string";
+              }).map(function (p) {
+                return {
+                  id: p.id, name: p.name, desc: p.desc.slice(0, 4000),
+                  gender: (p.gender === "男" || p.gender === "女" || p.gender === "其他") ? p.gender : "",
+                  avatar: (typeof p.avatar === "string" && p.avatar.indexOf("data:image/") === 0 && p.avatar.length <= 400000) ? p.avatar : "",
+                  bgImg: (typeof p.bgImg === "string" && p.bgImg.indexOf("data:image/") === 0 && p.bgImg.length <= 400000) ? p.bgImg : "",
+                  intro: (typeof p.intro === "string") ? p.intro.slice(0, 200) : "",
+                  bgIntro: (typeof p.bgIntro === "string") ? p.bgIntro.slice(0, 2000) : "",
+                  opening: (typeof p.opening === "string") ? p.opening.slice(0, 2000) : "",
+                  exampleDialogue: (typeof p.exampleDialogue === "string") ? p.exampleDialogue.slice(0, 4000) : "",
+                  outputRules: (typeof p.outputRules === "string") ? p.outputRules.slice(0, 2000) : "",
+                  rootName: (typeof p.rootName === "string") ? p.rootName.slice(0, 200) : "",
+                  version: (typeof p.version === "number" && isFinite(p.version)) ? p.version : 0
+                };
+              });
+            }
+            if (typeof d.storyActiveCharId === "string") storyActiveCharId = d.storyActiveCharId;
+            if (typeof d.storySyncedFromCompanionId === "string") storySyncedFromCompanionId = d.storySyncedFromCompanionId;
+            if (d.storySetups && typeof d.storySetups === "object") {
+              storySetups = {};
+              Object.keys(d.storySetups).forEach(function (cid) {
+                var st = d.storySetups[cid];
+                if (st && typeof st === "object") {
+                  storySetups[cid] = {
+                    user: (typeof st.user === "string") ? st.user.slice(0, 4000) : "",
+                    worldview: (typeof st.worldview === "string") ? st.worldview.slice(0, 4000) : ""
+                  };
+                }
+              });
+            }
+            if (d.storyPersonaOverrides && typeof d.storyPersonaOverrides === "object") {
+              storyPersonaOverrides = {};
+              Object.keys(d.storyPersonaOverrides).forEach(function (k) {
+                var sv = d.storyPersonaOverrides[k];
+                if (typeof sv === "string" && sv.trim() && sv.length <= 4000) storyPersonaOverrides[k] = sv;
+              });
+            }
+            if (d.storyHistories && typeof d.storyHistories === "object") {
+              storyHistories = {};
+              Object.keys(d.storyHistories).forEach(function (cid) {
+                var arr = d.storyHistories[cid];
+                if (Object.prototype.toString.call(arr) === "[object Array]") {
+                  storyHistories[cid] = arr.filter(function (m) {
+                    return m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string";
+                  }).map(chatSanitizeHistoryMsg).slice(-200);
+                }
+              });
+            }
+            /* 聊天設定：只還原唔係秘密嗰啲欄位，鎖匙同 MCP 清單留返而家嗰啲 */
+            if (d.chatSettings && typeof d.chatSettings === "object") {
+              ["preset", "provider", "baseUrl", "model", "modelManual", "city"].forEach(function (k) {
+                if (typeof d.chatSettings[k] === "string") chatSettings[k] = d.chatSettings[k];
+              });
+            }
+            /* 多組設定：還原各組，鎖匙按 id 帶返而家嗰把（新組就空住，等粉絲自己填） */
+            if (Object.prototype.toString.call(d.chatProfiles) === "[object Array]") {
+              var cleanedProfiles = d.chatProfiles.map(chatSanitizeProfile).filter(function (p) { return !!p; });
+              if (cleanedProfiles.length) {
+                var currentKeys = {};
+                chatProfiles.forEach(function (p) { if (p && p.id) currentKeys[p.id] = p.apiKey || ""; });
+                cleanedProfiles.forEach(function (p) { if (currentKeys[p.id]) p.apiKey = currentKeys[p.id]; });
+                chatProfiles = cleanedProfiles;
+                if (typeof d.activeChatProfileId === "string" && chatProfiles.some(function (p) { return p.id === d.activeChatProfileId; })) {
+                  activeChatProfileId = d.activeChatProfileId;
+                } else {
+                  activeChatProfileId = chatProfiles[0].id;
+                }
+              }
+            }
+            /* 聲音設定：還原，兩家鎖匙留返而家嗰啲 */
+            if (d.voiceSettings && typeof d.voiceSettings === "object") {
+              var newVoice = voiceSanitizeSettings(d.voiceSettings);
+              ["minimax", "elevenlabs"].forEach(function (k) {
+                if (voiceSettings[k] && typeof voiceSettings[k].apiKey === "string" && voiceSettings[k].apiKey) {
+                  if (newVoice[k]) newVoice[k].apiKey = voiceSettings[k].apiKey;
+                }
+              });
+              voiceSettings = newVoice;
+            }
+            /* 分區摘要開關：只收布林值 */
+            if (d.ctxToggles && typeof d.ctxToggles === "object") {
+              ["money", "period", "diary"].forEach(function (k) {
+                if (typeof d.ctxToggles[k] === "boolean") ctxToggles[k] = d.ctxToggles[k];
+              });
+            }
             /* 聊天背景跟備份走：合法預設 id 就恢復並即刻套用；custom 就試下
                由背景圖庫讀返張圖，讀到先用，讀唔到就退返 default。
                （chatProfiles／activeChatProfileId 同對話記錄一樣，導入唔覆蓋。） */
@@ -4159,6 +4345,13 @@
             renderPeriod();
             renderLedgers();
             renderGoals();
+            /* 導入完成之後重新整理頁面：開卡載入流程會再校一次成個存檔、
+               成張卡一齊畫返，對話記錄同人設先至齊齊整整返晒嚟。
+               日記寫入 IndexedDB 係非同步，要等佢寫完先好重新整理。 */
+            var finishImport = function () {
+              try { if (window.sessionStorage) sessionStorage.setItem("ccImported", "1"); } catch (e0) {}
+              location.reload();
+            };
             /* 日記：備份入面有日記先至成批換返入 IndexedDB；
                舊備份冇日記嗰陣，而家部機啲日記原封不動，唔會畀舊檔蓋走。 */
             if (Object.prototype.toString.call(d.diaryEntries) === "[object Array]") {
@@ -4173,20 +4366,16 @@
               });
               diaryStoreReplaceAll(rows, function (ok) {
                 if (ok) {
-                  diaryEntries = rows.slice().sort(function (a, b) { return b.ts - a.ts; });
-                  diarySeq = 0;
-                  diaryEntries.forEach(function (r) { if (r.id > diarySeq) diarySeq = r.id; });
-                  renderDiary();
-                  updateBackupSizeHint();
+                  finishImport();
                 } else {
-                  diaryStatus("備份入面啲日記搬唔入嚟，部機唔合作。其他記錄已經導入好，日記嗰部分，留返個備份檔，陣間再試。");
+                  $("importConfirm").style.display = "none";
+                  $("importFile").value = "";
+                  diaryStatus("備份入面啲日記搬唔入嚟，部機唔合作。其他記錄已經導入好，重新整理頁面就會見到；日記嗰部分，留返個備份檔，陣間再試。");
                 }
               });
+            } else {
+              finishImport();
             }
-            $("importConfirm").style.display = "none";
-            $("importFile").value = "";
-            backupStatus("搬返嚟喇，一件冇少——我點過數。" + describeData(d) + "全部返晒嚟，自己碌落去睇下。");
-            toast(pickSay(SAY.importOk));
           } catch (e) {
             $("importConfirm").style.display = "none";
             backupStatus("導入嗰陣出咗岔子，冇寫入去，你啲嘢冇唔見。再試下；唔得就留返個備份檔，唔好刪。");
@@ -8304,6 +8493,14 @@
         renderPersonaAvatar();
         renderPersonaPanel();
         renderChat();
+        /* 剛剛導入完備份（導入嗰邊重新整理咗頁面）：喺備份區留句話，
+           等粉絲知對話記錄同人設已經返晒嚟，鎖匙要重新填。 */
+        try {
+          if (window.sessionStorage && sessionStorage.getItem("ccImported") === "1") {
+            sessionStorage.removeItem("ccImported");
+            backupStatus("搬返嚟喇，對話記錄同人設都返晒嚟。鎖匙唔跟備份走，去「同我傾下計」嘅設定度重新填返就得。");
+          }
+        } catch (e) {}
         /* 查崗回傳：iOS 快捷指令／安卓 MacroDroid 用
            ?persona=xxx&checkinmsg=yyy 打開卡片嗰陣，將 AI 嗰句查崗回覆
            插進對應陪伴者嘅聊天記錄，之後將網址擦乾淨，唔好刷新重插。
