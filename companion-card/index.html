@@ -499,6 +499,9 @@
       .chat-msg.me { align-self: flex-end; background: #dcf8c6; color: #1c1c1c; border-bottom-right-radius: 5px; }
       .chat-msg .chat-text { display: block; }
       .chat-time { display: block; text-align: right; font-size: 0.68rem; color: #8a8a8a; margin-top: 2px; line-height: 1.2; }
+      .chat-speak { align-self: flex-end; margin-top: 4px; padding: 2px 10px; font-size: 0.8rem; line-height: 1.5; background: transparent; border: 1px solid #d8cfba; border-radius: 999px; color: #7a7264; cursor: pointer; }
+      .chat-speak.playing { border-color: #b4552d; color: #b4552d; }
+      .chat-speak:disabled { opacity: 0.5; cursor: default; }
       .chat-img { display: block; max-width: 100%; border-radius: 8px; margin: 2px 0 4px; cursor: pointer; }
       .chat-file {
         display: inline-block; background: rgba(0, 0, 0, 0.07); border-radius: 8px;
@@ -892,6 +895,51 @@
             <p class="weather-line" id="chatWeatherLine" role="status" style="display:none;"></p>
 
             <hr class="divider" />
+            <h3 class="subhead">聲音：朗讀同語音輸入</h3>
+            <p class="sub" style="margin-bottom:6px;">想我開聲讀回覆、或者你講嘢唔使打字，就喺度接返個聲音服務入嚟。MiniMax 同 ElevenLabs 兩家都得，揀邊家、用邊把聲，你自己話事。鎖匙同聊天鎖匙一樣，只存喺你部手機，備份唔會帶走。</p>
+            <label class="flabel" for="voiceProvider">用邊家聲音服務</label>
+            <select id="voiceProvider">
+              <option value="minimax">MiniMax</option>
+              <option value="elevenlabs">ElevenLabs</option>
+            </select>
+            <div id="voiceMinimaxBox">
+              <label class="flabel" for="voiceMinimaxKey">MiniMax API 鎖匙</label>
+              <input type="password" id="voiceMinimaxKey" placeholder="貼上你自己嗰條 MiniMax 鎖匙" autocomplete="off" aria-label="MiniMax API 鎖匙" />
+              <label class="flabel" for="voiceMinimaxBase">接口地址（國際版同國內版地址唔同，鎖匙唔可以混用）</label>
+              <input type="text" id="voiceMinimaxBase" placeholder="https://api.minimax.io" aria-label="MiniMax 接口地址" />
+              <p class="hint">國際版用 https://api.minimax.io，國內版用 https://api.minimaxi.com——用邊個地址，就要用喺嗰邊申請嘅鎖匙，唔好撈埋。</p>
+              <label class="flabel" for="voiceMinimaxGroup">Group ID（選填，國內版克隆聲音嗰陣先使）</label>
+              <input type="text" id="voiceMinimaxGroup" placeholder="留空就唔帶" aria-label="MiniMax Group ID" />
+              <label class="flabel" for="voiceMinimaxModel">模型</label>
+              <input type="text" id="voiceMinimaxModel" placeholder="speech-02-hd" aria-label="MiniMax 模型" />
+              <label class="flabel" for="voiceMinimaxVoice">用邊把聲</label>
+              <select id="voiceMinimaxVoice"></select>
+              <label class="flabel" for="voiceMinimaxVoiceManual">手動輸入 voice_id（呢格有字，就用呢格嗰個——克隆／捏出嚟嘅聲填呢度）</label>
+              <input type="text" id="voiceMinimaxVoiceManual" placeholder="例如：你克隆返嚟嗰個 voice_id" aria-label="手動輸入 MiniMax voice_id" />
+            </div>
+            <div id="voiceElevenBox" style="display:none;">
+              <label class="flabel" for="voiceElevenKey">ElevenLabs API 鎖匙</label>
+              <input type="password" id="voiceElevenKey" placeholder="貼上你自己嗰條 ElevenLabs 鎖匙" autocomplete="off" aria-label="ElevenLabs API 鎖匙" />
+              <label class="flabel" for="voiceElevenModel">模型</label>
+              <input type="text" id="voiceElevenModel" placeholder="eleven_multilingual_v2" aria-label="ElevenLabs 模型" />
+              <div class="row" style="margin-top:12px;">
+                <button type="button" class="ghost" id="voiceFetchVoices">拉取聲音列表</button>
+              </div>
+              <p class="hint" id="voiceFetchStatus" role="status"></p>
+              <label class="flabel" for="voiceElevenVoice">用邊把聲（拉取完，喺度揀——現成嘅、你自己捏嘅、克隆嘅都會喺入面）</label>
+              <select id="voiceElevenVoice">
+                <option value="">未拉取過——拉唔到都唔緊要，手填下面嗰格一樣用得</option>
+              </select>
+              <label class="flabel" for="voiceElevenVoiceManual">手動輸入 Voice ID（呢格有字，就用呢格嗰個）</label>
+              <input type="text" id="voiceElevenVoiceManual" placeholder="例如：pNInz6obpgDQGcFmaJgB" aria-label="手動輸入 Voice ID" />
+            </div>
+            <p class="hint">講明先：撳喇叭嗰陣，嗰句回覆會連同你嘅鎖匙經接口轉去你揀嗰間聲音服務度合成；錄音轉文字嗰陣，段錄音亦一樣。音頻同鎖匙只過路，唔會存低。仲有，ElevenLabs 嗰邊，即時克隆同捏出嚟嘅聲只屬於你自己個賬戶，別人攞到個 ID 都用唔到；想畀人用，要用 Professional 克隆再分享——呢個係佢哋嘅規矩，唔係卡嘅限制。</p>
+            <div class="row" style="margin-top:12px;">
+              <button type="button" id="voiceSaveSettings">保存聲音設定</button>
+            </div>
+            <p class="hint" id="voiceSaveStatus" role="status"></p>
+
+            <hr class="divider" />
             <h3 class="subhead">聊天背景</h3>
             <p class="sub" style="margin-bottom:6px;">淨係換下面傾計嗰個窗嘅底，氣泡唔受影響，幾深色都睇得清。</p>
             <div class="chat-bg-swatches" id="chatBgSwatches">
@@ -929,6 +977,7 @@
           <div class="row" style="margin-top:10px; align-items:flex-end;">
             <button type="button" class="ghost" id="chatAttachBtn" aria-label="加附件">＋</button>
             <textarea id="chatInput" rows="2" class="grow" placeholder="想同我講嘅嘢，打低佢……" aria-label="輸入訊息"></textarea>
+            <button type="button" class="ghost" id="chatMicBtn" aria-label="語音輸入">🎤</button>
             <button type="button" id="chatSend">發送</button>
           </div>
           <div class="row" style="margin-top:10px;">
@@ -1528,6 +1577,9 @@
            同其他記錄一樣存入呢份 localStorage 存檔；但備份導出嗰陣會剔走
            API 鎖匙同成段對話，導入亦唔會覆蓋返部機現有嘅聊天設定。 */
         var chatSettings = { preset: "deepseek", provider: "openai", baseUrl: "https://api.deepseek.com", apiKey: "", model: "", modelManual: "", city: "", mcpServers: [] };
+        /* 聲音設定（全局共用，唔入多組 AI 設定）：voiceBlankSettings 喺下面
+           聲音區定義，函數聲明會提升，呢度直接用得。 */
+        var voiceSettings = voiceBlankSettings();
         /* 陪伴者：預設清單喺下面 COMPANION_PRESETS；粉絲自訂嘅存 customPersonas。
            對話記錄按陪伴者分開存入 chatHistories（id -> 訊息陣列，各自上限 200 條）；
            chatHistory 變量永遠指向而家揀中嗰位陪伴者嗰份記錄。 */
@@ -1680,6 +1732,8 @@
           }
           /* 聊天背景選擇：只收合法 id，非法就退返 default */
           if (typeof savedData.chatBgId === "string" && CHAT_BG_IDS.indexOf(savedData.chatBgId) >= 0) chatBgId = savedData.chatBgId;
+          /* 聲音設定：讀入 + 校驗，舊版冇就用預設（MiniMax + 青涩青年音色） */
+          voiceSettings = voiceSanitizeSettings(savedData.voiceSettings);
         }
         if (!chatProfiles.length) {
           /* 完全冇存檔嗰陣，都要保證至少有一組 */
@@ -1696,7 +1750,8 @@
             goals: goals, goalSeq: goalSeq, wakeLockOn: wakeLockOn,
             chatSettings: chatSettings, chatHistories: chatHistories, customPersonas: customPersonas, copiedPersonas: copiedPersonas, activePersonaId: activePersonaId,
             personaOverrides: personaOverrides, avatarOverrides: avatarOverrides,
-            chatProfiles: chatProfiles, activeChatProfileId: activeChatProfileId, chatBgId: chatBgId
+            chatProfiles: chatProfiles, activeChatProfileId: activeChatProfileId, chatBgId: chatBgId,
+            voiceSettings: voiceSettings
           };
         }
         function storageIsQuotaErr(e) {
@@ -3568,6 +3623,21 @@
                 return c;
               });
             }
+            /* 聲音設定跟備份走，但兩家嘅語音鎖匙一律清空先出門（同聊天鎖匙
+               嘅規矩一樣）；拉返嚟嘅聲音名單唔係秘密，照留。 */
+            if (data.voiceSettings && typeof data.voiceSettings === "object") {
+              var vsCopy = {};
+              Object.keys(data.voiceSettings).forEach(function (k) { vsCopy[k] = data.voiceSettings[k]; });
+              ["minimax", "elevenlabs"].forEach(function (k) {
+                if (vsCopy[k] && typeof vsCopy[k] === "object") {
+                  var sub = {};
+                  Object.keys(vsCopy[k]).forEach(function (f) { sub[f] = vsCopy[k][f]; });
+                  sub.apiKey = "";
+                  vsCopy[k] = sub;
+                }
+              });
+              data.voiceSettings = vsCopy;
+            }
             /* 日記（條目＋相＋錄音，全部已經係可序列化嘅字串）並入同一份備份 */
             if (diaryEntries.length || diaryUsable) data.diaryEntries = diaryEntries;
             var pack = {
@@ -4781,6 +4851,7 @@
         function renderChat(scroll) {
           var box = $("chatMsgs");
           if (!box) return;
+          try { voiceStopPlayback(); } catch (e) {}
           chatShowErrDetail("");
           box.innerHTML = "";
           $("chatEmpty").style.display = chatHistory.length ? "none" : "block";
@@ -4821,6 +4892,15 @@
               var dt = new Date(m.ts);
               tm.textContent = pad2(dt.getHours()) + ":" + pad2(dt.getMinutes());
               d.appendChild(tm);
+            }
+            if (m.role !== "user") {
+              var spk = document.createElement("button");
+              spk.type = "button";
+              spk.className = "chat-speak";
+              spk.textContent = "🔊 讀";
+              spk.setAttribute("aria-label", "讀出呢句回覆");
+              spk.addEventListener("click", function () { voiceSpeak(m.content, spk); });
+              d.appendChild(spk);
             }
             box.appendChild(d);
           });
@@ -4929,6 +5009,375 @@
             }, function () { return { httpStatus: res.status, errStatus: null, data: {} }; });
           });
         }
+        /* ---------- 聲音：朗讀（TTS）+ 語音輸入（STT） ----------
+           兩家服務商：MiniMax（T2A v2 + speech_to_text）同 ElevenLabs
+           （text-to-speech + Scribe + voices 列表）。全部經同一個 Supabase
+           函數嘅 /tts、/stt、/voices 端口轉發，粉絲嘅語音鎖匙只過路、
+           只存喺自己部手機，備份導出會剔走鎖匙（同聊天鎖匙一樣規矩）。
+           設定係全局共用（唔入多組 AI 設定嗰啲組）。 */
+        var VOICE_MINIMAX_VOICES = [
+          { id: "male-qn-qingse", label: "青涩青年音色" },
+          { id: "male-qn-jingying", label: "精英男声" },
+          { id: "male-qn-badao", label: "霸道男声" },
+          { id: "male-qn-daxuesheng", label: "大学生男声" },
+          { id: "male-jike", label: "低沉男声" },
+          { id: "presenter_male", label: "男主播" },
+          { id: "presenter_female", label: "女主播" },
+          { id: "female-shaonv", label: "少女音色" },
+          { id: "female-yujie", label: "御姐音色" },
+          { id: "female-chengshu", label: "成熟女声" },
+          { id: "female-tianmei", label: "甜美女声" },
+          { id: "Wise_Woman", label: "Wise Woman" },
+          { id: "Friendly_Person", label: "Friendly Person" },
+          { id: "Deep_Voice_Man", label: "Deep Voice Man" },
+          { id: "Charming_Lady", label: "Charming Lady" },
+          { id: "cute_boy", label: "cute boy" },
+          { id: "warm_man", label: "warm man" },
+          { id: "Chinese (Mandarin)_News_Anchor", label: "普通话新闻主播" },
+          { id: "Chinese (Mandarin)_Radio_Host", label: "普通话电台主播" },
+          { id: "Chinese (Mandarin)_Crisp_Girl", label: "普通话清脆女声" }
+        ];
+        function voiceBlankSettings() {
+          return {
+            provider: "minimax",
+            minimax: { apiKey: "", baseUrl: "https://api.minimax.io", groupId: "", model: "speech-02-hd", voiceId: "male-qn-qingse", voiceIdManual: "" },
+            elevenlabs: { apiKey: "", baseUrl: "https://api.elevenlabs.io", model: "eleven_multilingual_v2", voiceId: "", voiceIdManual: "", voices: [] }
+          };
+        }
+        function voiceSanitizeSettings(s) {
+          var out = voiceBlankSettings();
+          if (!s || typeof s !== "object") return out;
+          if (s.provider === "elevenlabs" || s.provider === "minimax") out.provider = s.provider;
+          ["minimax", "elevenlabs"].forEach(function (k) {
+            var src = s[k];
+            if (!src || typeof src !== "object") return;
+            ["apiKey", "baseUrl", "groupId", "model", "voiceId", "voiceIdManual"].forEach(function (f) {
+              if (typeof src[f] === "string") out[k][f] = src[f];
+            });
+          });
+          if (s.elevenlabs && Object.prototype.toString.call(s.elevenlabs.voices) === "[object Array]") {
+            out.elevenlabs.voices = s.elevenlabs.voices.filter(function (v) {
+              return v && typeof v.id === "string" && !!v.id;
+            }).map(function (v) {
+              return { id: v.id, name: typeof v.name === "string" ? v.name : v.id, category: typeof v.category === "string" ? v.category : "" };
+            }).slice(0, 500);
+          }
+          if (!out.minimax.baseUrl) out.minimax.baseUrl = "https://api.minimax.io";
+          if (!out.minimax.model) out.minimax.model = "speech-02-hd";
+          if (!out.minimax.voiceId) out.minimax.voiceId = "male-qn-qingse";
+          if (!out.elevenlabs.baseUrl) out.elevenlabs.baseUrl = "https://api.elevenlabs.io";
+          if (!out.elevenlabs.model) out.elevenlabs.model = "eleven_multilingual_v2";
+          return out;
+        }
+        function voiceReadSettingsFromUI() {
+          voiceSettings.provider = $("voiceProvider").value === "elevenlabs" ? "elevenlabs" : "minimax";
+          voiceSettings.minimax.apiKey = $("voiceMinimaxKey").value.trim();
+          voiceSettings.minimax.baseUrl = $("voiceMinimaxBase").value.trim() || "https://api.minimax.io";
+          voiceSettings.minimax.groupId = $("voiceMinimaxGroup").value.trim();
+          voiceSettings.minimax.model = $("voiceMinimaxModel").value.trim() || "speech-02-hd";
+          voiceSettings.minimax.voiceId = $("voiceMinimaxVoice").value;
+          voiceSettings.minimax.voiceIdManual = $("voiceMinimaxVoiceManual").value.trim();
+          voiceSettings.elevenlabs.apiKey = $("voiceElevenKey").value.trim();
+          voiceSettings.elevenlabs.model = $("voiceElevenModel").value.trim() || "eleven_multilingual_v2";
+          voiceSettings.elevenlabs.voiceId = $("voiceElevenVoice").value;
+          voiceSettings.elevenlabs.voiceIdManual = $("voiceElevenVoiceManual").value.trim();
+          return voiceSettings;
+        }
+        function voiceRenderMinimaxList() {
+          var sel = $("voiceMinimaxVoice");
+          var keep = voiceSettings.minimax.voiceId || "male-qn-qingse";
+          sel.innerHTML = "";
+          VOICE_MINIMAX_VOICES.forEach(function (v) {
+            var o = document.createElement("option");
+            o.value = v.id; o.textContent = v.label + "（" + v.id + "）";
+            sel.appendChild(o);
+          });
+          sel.value = keep;
+          if (!sel.value) sel.value = "male-qn-qingse";
+        }
+        var VOICE_ELEVEN_CATS = { premade: "現成聲音", cloned: "克隆聲音", generated: "捏出嚟嘅聲", professional: "專業克隆" };
+        function voiceRenderElevenList() {
+          var sel = $("voiceElevenVoice");
+          var keep = voiceSettings.elevenlabs.voiceId || "";
+          sel.innerHTML = "";
+          var list = voiceSettings.elevenlabs.voices || [];
+          if (!list.length) {
+            var ph = document.createElement("option");
+            ph.value = ""; ph.textContent = "未拉取過——拉唔到都唔緊要，手填下面嗰格一樣用得";
+            sel.appendChild(ph);
+            return;
+          }
+          var groups = {};
+          list.forEach(function (v) {
+            var c = VOICE_ELEVEN_CATS[v.category] || "其他";
+            if (!groups[c]) groups[c] = [];
+            groups[c].push(v);
+          });
+          ["現成聲音", "克隆聲音", "捏出嚟嘅聲", "專業克隆", "其他"].forEach(function (c) {
+            if (!groups[c]) return;
+            var og = document.createElement("optgroup");
+            og.label = c;
+            groups[c].forEach(function (v) {
+              var o = document.createElement("option");
+              o.value = v.id; o.textContent = v.name;
+              og.appendChild(o);
+            });
+            sel.appendChild(og);
+          });
+          if (keep) sel.value = keep;
+        }
+        function voiceToggleBoxes() {
+          var p = voiceSettings.provider;
+          $("voiceMinimaxBox").style.display = p === "minimax" ? "block" : "none";
+          $("voiceElevenBox").style.display = p === "elevenlabs" ? "block" : "none";
+        }
+        function voiceFillUIFromSettings() {
+          $("voiceProvider").value = voiceSettings.provider;
+          $("voiceMinimaxKey").value = voiceSettings.minimax.apiKey || "";
+          $("voiceMinimaxBase").value = voiceSettings.minimax.baseUrl || "https://api.minimax.io";
+          $("voiceMinimaxGroup").value = voiceSettings.minimax.groupId || "";
+          $("voiceMinimaxModel").value = voiceSettings.minimax.model || "speech-02-hd";
+          $("voiceMinimaxVoiceManual").value = voiceSettings.minimax.voiceIdManual || "";
+          $("voiceElevenKey").value = voiceSettings.elevenlabs.apiKey || "";
+          $("voiceElevenModel").value = voiceSettings.elevenlabs.model || "eleven_multilingual_v2";
+          $("voiceElevenVoiceManual").value = voiceSettings.elevenlabs.voiceIdManual || "";
+          voiceRenderMinimaxList();
+          voiceRenderElevenList();
+          voiceToggleBoxes();
+        }
+        function voiceSaveStatus(msg) { var el = $("voiceSaveStatus"); if (el) el.textContent = msg; }
+        function voiceFetchStatus(msg) { var el = $("voiceFetchStatus"); if (el) el.textContent = msg; }
+        /* 而家生效嗰組聲音設定：讀表單（唔使撳保存都即刻用得），手填
+           voice_id／Voice ID 嗰格有字就優先用嗰個。needVoice 嗰陣（朗讀）
+           冇聲都唔得；語音輸入唔使聲，淨係要鎖匙。 */
+        function voiceActiveConfig(needVoice) {
+          voiceReadSettingsFromUI();
+          var p = voiceSettings.provider;
+          if (p === "elevenlabs") {
+            var e = voiceSettings.elevenlabs;
+            var vid = (e.voiceIdManual || "").trim() || (e.voiceId || "").trim();
+            if (!e.apiKey) return null;
+            if (needVoice && !vid) return null;
+            return { provider: "elevenlabs", apiKey: e.apiKey, baseUrl: "https://api.elevenlabs.io", model: e.model || "eleven_multilingual_v2", voiceId: vid };
+          }
+          var m = voiceSettings.minimax;
+          var vid2 = (m.voiceIdManual || "").trim() || (m.voiceId || "").trim();
+          if (!m.apiKey) return null;
+          if (needVoice && !vid2) return null;
+          return { provider: "minimax", apiKey: m.apiKey, baseUrl: (m.baseUrl || "https://api.minimax.io").replace(/\/+$/, ""), groupId: m.groupId || "", model: m.model || "speech-02-hd", voiceId: vid2 };
+        }
+        /* 朗讀前洗一洗文字：表情符號同 markdown 符號讀出嚟會怪怪哋，
+           抌咗佢；太長就截返短，唔好一次讀成篇文。 */
+        function voiceCleanText(t) {
+          var s = (t || "").replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, "").replace(/[\u2600-\u27BF\u2B00-\u2BFF\uFE0F]/g, "");
+          s = s.replace(/[*_`#>\[\](){}|\\]/g, "");
+          s = s.replace(/\s+/g, " ").trim();
+          return s.slice(0, 1200);
+        }
+        var voiceAudio = null;
+        var voicePlayingBtn = null;
+        var voiceSpeakSeq = 0;
+        function voiceStopPlayback() {
+          try {
+            if (voiceAudio) { voiceAudio.pause(); voiceAudio.removeAttribute("src"); voiceAudio.load(); }
+          } catch (e) {}
+          if (voicePlayingBtn) {
+            try { voicePlayingBtn.classList.remove("playing"); voicePlayingBtn.textContent = "🔊 讀"; voicePlayingBtn.disabled = false; } catch (e) {}
+            voicePlayingBtn = null;
+          }
+        }
+        function voiceSpeak(text, btn) {
+          if (voicePlayingBtn === btn) { voiceStopPlayback(); return; }
+          voiceStopPlayback();
+          var cfg = voiceActiveConfig(true);
+          if (!cfg) {
+            toast(chatT("聲音嗰邊未設定好——鎖匙同把聲，兩樣都要齊。上去聲音設定嗰度填返。", "聲音還沒有設定好，鎖匙和聲音都要填。請到聲音設定裡補上。"));
+            return;
+          }
+          var clean = voiceCleanText(text);
+          if (!clean) { toast(chatT("呢句冇嘢好讀。", "這句沒有可朗讀的內容。")); return; }
+          var mySeq = ++voiceSpeakSeq;
+          btn.disabled = true;
+          btn.textContent = "讀緊…";
+          var body = { provider: cfg.provider, baseUrl: cfg.baseUrl, apiKey: cfg.apiKey, model: cfg.model, voiceId: cfg.voiceId, text: clean };
+          if (cfg.groupId) body.groupId = cfg.groupId;
+          fetch(CHAT_API_BASE + "/tts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+          }).then(function (res) {
+            return res.json().then(function (data) { return { httpStatus: res.status, data: data || {} }; },
+              function () { return { httpStatus: res.status, data: {} }; });
+          }).then(function (r) {
+            if (mySeq !== voiceSpeakSeq) return;
+            btn.disabled = false;
+            if (!r.data.audio || r.data.error) {
+              btn.textContent = "🔊 讀";
+              var em = typeof r.data.error === "string" ? r.data.error : "";
+              chatShowErrDetail(em);
+              toast(chatT("讀唔到，聲音嗰邊出咗問題。睇下下面嗰行灰字講咩。", "朗讀失敗，請看下面的灰字說明。"));
+              return;
+            }
+            if (!voiceAudio) voiceAudio = new Audio();
+            voiceAudio.src = "data:" + (r.data.mime || "audio/mpeg") + ";base64," + r.data.audio;
+            voicePlayingBtn = btn;
+            btn.classList.add("playing");
+            btn.textContent = "⏹ 停";
+            voiceAudio.onended = function () { voiceStopPlayback(); };
+            voiceAudio.onerror = function () { voiceStopPlayback(); toast(chatT("播唔到呢段聲。", "無法播放這段聲音。")); };
+            var pr = voiceAudio.play();
+            if (pr && pr.catch) pr.catch(function () { voiceStopPlayback(); toast(chatT("播唔到，瀏覽器唔畀播——再撳一次試下。", "瀏覽器阻止了播放，再點一次試試。")); });
+          }, function () {
+            if (mySeq !== voiceSpeakSeq) return;
+            btn.disabled = false;
+            btn.textContent = "🔊 讀";
+            toast(chatT("連唔到個接口，網絡可能斷咗。等一陣再試。", "連接接口失敗，可能是網絡問題。"));
+          });
+        }
+        /* 語音輸入：錄音（同日記錄音同一套 MediaRecorder 做法）→ /stt 轉文字
+           → 填入輸入框，等粉絲自己睇過先發送。 */
+        var voiceRecSupported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+        var voiceRecorder = null, voiceRecChunks = [], voiceRecStream = null, voiceRecSecs = 0, voiceRecIv = null, voiceTranscribing = false;
+        function voiceRecStopTracks() {
+          if (voiceRecStream) { voiceRecStream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} }); voiceRecStream = null; }
+        }
+        function voiceRecResetBtn() {
+          var btn = $("chatMicBtn");
+          if (btn) { btn.textContent = "🎤"; btn.classList.remove("rec-on"); btn.disabled = false; }
+          if (voiceRecIv) { clearInterval(voiceRecIv); voiceRecIv = null; }
+        }
+        function voiceSendStt(blob) {
+          var cfg = voiceActiveConfig(false);
+          if (!cfg) {
+            chatStatus(chatT("聲音嗰邊未設定好——鎖匙未填，轉唔到文字。上去聲音設定嗰度填返。", "聲音還沒有設定好，鎖匙未填，無法轉文字。請到聲音設定裡補上。"));
+            return;
+          }
+          voiceTranscribing = true;
+          var btn = $("chatMicBtn");
+          if (btn) btn.disabled = true;
+          chatStatus(chatT("聽緊你講咩……", "正在辨識你說的話……"));
+          var fd = new FormData();
+          fd.append("provider", cfg.provider);
+          fd.append("baseUrl", cfg.baseUrl);
+          fd.append("apiKey", cfg.apiKey);
+          if (cfg.groupId) fd.append("groupId", cfg.groupId);
+          fd.append("file", blob, "recording.m4a");
+          fetch(CHAT_API_BASE + "/stt", { method: "POST", body: fd }).then(function (res) {
+            return res.json().then(function (data) { return { httpStatus: res.status, data: data || {} }; },
+              function () { return { httpStatus: res.status, data: {} }; });
+          }).then(function (r) {
+            voiceTranscribing = false;
+            if (btn) btn.disabled = false;
+            var text = (r.data && typeof r.data.text === "string") ? r.data.text.trim() : "";
+            if (r.data && r.data.error) {
+              chatShowErrDetail(typeof r.data.error === "string" ? r.data.error : "");
+              chatStatus(chatT("聽唔明，轉唔到文字。睇下下面嗰行灰字講咩。", "辨識失敗，請看下面的灰字說明。"));
+              return;
+            }
+            if (!text) { chatStatus(chatT("聽唔到你講咗咩——再講一次，講大聲啲。", "沒有聽到內容，請再說一次。")); return; }
+            var inp = $("chatInput");
+            var cur = inp.value;
+            inp.value = (cur && !/\s$/.test(cur) ? cur + " " : cur) + text;
+            inp.focus();
+            chatStatus("");
+          }, function () {
+            voiceTranscribing = false;
+            if (btn) btn.disabled = false;
+            chatStatus(chatT("連唔到個接口，網絡可能斷咗。等一陣再試。", "連接接口失敗，可能是網絡問題。"));
+          });
+        }
+        if (!voiceRecSupported) {
+          var micBtn0 = $("chatMicBtn");
+          if (micBtn0) micBtn0.style.display = "none";
+        }
+        $("chatMicBtn").addEventListener("click", function () {
+          if (voiceTranscribing) return;
+          if (voiceRecorder && voiceRecorder.state === "recording") {
+            try { voiceRecorder.stop(); } catch (e) {}
+            return;
+          }
+          if (!voiceRecSupported) return;
+          var cfg0 = voiceActiveConfig(false);
+          if (!cfg0) {
+            chatStatus(chatT("聲音嗰邊未設定好——鎖匙未填，錄嚟都轉唔到。上去聲音設定嗰度填返。", "聲音還沒有設定好，鎖匙未填。請到聲音設定裡補上。"));
+            return;
+          }
+          navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+            voiceRecStream = stream; voiceRecChunks = [];
+            try { voiceRecorder = new MediaRecorder(stream); }
+            catch (e) { voiceRecStopTracks(); voiceRecorder = null; chatStatus(chatT("開唔到錄音，部機唔合作。", "無法開始錄音。")); return; }
+            voiceRecorder.ondataavailable = function (ev) { if (ev.data && ev.data.size) voiceRecChunks.push(ev.data); };
+            voiceRecorder.onstop = function () {
+              voiceRecStopTracks();
+              voiceRecResetBtn();
+              var blob = new Blob(voiceRecChunks, { type: (voiceRecorder && voiceRecorder.mimeType) || "audio/mp4" });
+              voiceRecorder = null;
+              chatStatus("");
+              if (!blob.size) return;
+              voiceSendStt(blob);
+            };
+            voiceRecorder.start();
+            voiceRecSecs = 0;
+            var btn = $("chatMicBtn");
+            btn.textContent = "⏹"; btn.classList.add("rec-on");
+            chatStatus(chatT("錄緊，0 秒（最長 2 分鐘）——講完撳多次就停。", "錄音中，0 秒（最長 2 分鐘），說完再點一次停止。"));
+            voiceRecIv = setInterval(function () {
+              voiceRecSecs++;
+              chatStatus(chatT("錄緊，" + voiceRecSecs + " 秒（最長 2 分鐘）——講完撳多次就停。", "錄音中，" + voiceRecSecs + " 秒（最長 2 分鐘），說完再點一次停止。"));
+              if (voiceRecSecs >= 120 && voiceRecorder && voiceRecorder.state === "recording") {
+                try { voiceRecorder.stop(); } catch (e) {}
+              }
+            }, 1000);
+          }).catch(function () {
+            chatStatus(chatT("開唔到咪，部機唔畀權限，唔關你事。去瀏覽器設定畀返個咪嘅權限先。", "無法開啟咪高峰，請在瀏覽器設定裡允許咪高峰權限。"));
+          });
+        });
+        $("voiceProvider").addEventListener("change", function () {
+          voiceReadSettingsFromUI();
+          voiceToggleBoxes();
+          storageSave();
+        });
+        $("voiceSaveSettings").addEventListener("click", function () {
+          voiceReadSettingsFromUI();
+          storageSave();
+          var cfg = voiceActiveConfig(true);
+          if (!cfg) { voiceSaveStatus(chatT("設定記低咗，不過鎖匙或者把聲仲未齊——兩樣齊晒先讀到、轉到。", "設定已儲存，但鎖匙或聲音還沒有齊，兩樣齊了才能用。")); return; }
+          voiceSaveStatus("");
+          toast(chatT("聲音設定收好喇。", "聲音設定已儲存。"));
+        });
+        $("voiceFetchVoices").addEventListener("click", function () {
+          voiceReadSettingsFromUI(); storageSave();
+          var e = voiceSettings.elevenlabs;
+          if (!e.apiKey) { voiceFetchStatus(chatT("鎖匙都未填，拉咩聲。填咗條鎖匙先，再撳過。", "還沒有填 API 鎖匙，填好後再拉取。")); return; }
+          var btn = this;
+          btn.disabled = true;
+          voiceFetchStatus(chatT("拉緊，等下……", "正在拉取，請稍等。"));
+          fetch(CHAT_API_BASE + "/voices", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ provider: "elevenlabs", baseUrl: "https://api.elevenlabs.io", apiKey: e.apiKey })
+          }).then(function (res) {
+            return res.json().then(function (data) { return { httpStatus: res.status, data: data || {} }; },
+              function () { return { httpStatus: res.status, data: {} }; });
+          }).then(function (r) {
+            btn.disabled = false;
+            if (r.data && r.data.error) {
+              voiceFetchStatus(chatT("拉唔到——" + (typeof r.data.error === "string" ? r.data.error : "對方回咗個錯") + "。手填 Voice ID 一樣用得。", "拉取失敗，手動填寫 Voice ID 一樣可以用。"));
+              return;
+            }
+            var list = (r.data && r.data.voices) || [];
+            if (!list.length) { voiceFetchStatus(chatT("嗰邊冇畀到聲音清單返嚟。手填 Voice ID 啦。", "那邊沒有返回聲音清單。請手動填寫 Voice ID。")); return; }
+            voiceSettings.elevenlabs.voices = list.filter(function (v) { return v && typeof v.id === "string"; }).map(function (v) {
+              return { id: v.id, name: typeof v.name === "string" ? v.name : v.id, category: typeof v.category === "string" ? v.category : "" };
+            });
+            storageSave();
+            voiceRenderElevenList();
+            voiceFetchStatus(chatT("拉到 " + voiceSettings.elevenlabs.voices.length + " 把聲，喺下面揀返把啱心水嘅。", "拉到 " + voiceSettings.elevenlabs.voices.length + " 個聲音，在下面選一個。"));
+          }, function () {
+            btn.disabled = false;
+            voiceFetchStatus(chatT("連唔到個接口，網絡可能斷咗。等一陣再試。", "連接接口失敗，可能是網絡問題。"));
+          });
+        });
         /* 設定區摺疊 */
         var chatSettingsOpen = true;
         $("chatSettingsToggle").addEventListener("click", function () {
@@ -5769,6 +6218,7 @@
           $("chatSettingsToggle").textContent = "打開設定";
         }
         chatFillUIFromSettings();
+        voiceFillUIFromSettings();
         updateBaseUrlHint();
         /* 載入嗰陣遷移出嚟嘅設定組，即刻落一次盤，唔好等下次有其他改動先寫 */
         try { storageSave(); } catch (e) {}
