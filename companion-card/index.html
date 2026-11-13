@@ -1435,13 +1435,13 @@
         <!-- 查崗 -->
         <section class="card span2" id="checkin">
           <h2><span class="ic rose"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span>查崗</h2>
-          <p class="sub">想我定時嚟睇下你有冇偷懶？呢個查崗咁行：到點問一聲 → 你確認 → 截屏 → 發去你自己揀嗰個 AI 服務睇圖 → 回一句通知。唔使裝 Aru，成件事就係你部機、一條快捷指令，同你自己揀嗰個 AI 服務。成條流程，冇一步係揹住你做嘅。</p>
+          <p class="sub">想我定時嚟睇下你有冇偷懶？呢個查崗咁行：到點問一聲 → 你確認 → 截屏 → 發去你自己揀嗰個 AI 服務睇圖 → 回一句通知。唔使裝 Aru，成件事就係你部機、一條快捷指令，同你自己揀嗰個 AI 服務。成條流程，冇一步係揹住你做嘅。安卓手機睇最下面「安卓版（MacroDroid）」嗰 part。</p>
           <div class="note cknotes" style="margin-top:0;">
             <p>講清楚幾樣嘢，先好用：</p>
             <p>一、截圖之前一定會先問你。唔方便嗰陣，撳取消就得——唔會偷偷截，呢條係死線。</p>
             <p>二、張截圖只係過路：接口唔保存、唔記錄，睇完就散，唔會留低任何嘢。</p>
             <p>三、模型只會講你喺度做緊咩大類——刷視頻、學習、傾偈嗰啲，絕對唔會復述你屏幕上面嘅具體文字、號碼、密碼或者聊天內容。呢啲，唔到佢講。</p>
-            <p>四、呢套嘢只適用於 iOS，要用 iOS 嘅快捷指令；安卓用唔到，唔好喺安卓機度白費心機。</p>
+            <p>四、上面呢套係 iOS 嘅做法，要用 iOS 嘅快捷指令；安卓手機用下面「安卓版（MacroDroid）」嗰個辦法，一樣問先截、回一句、彈返嚟呢張卡。</p>
             <p>五、你揀嗰個模型一定要識睇圖——例如 GPT-4o、Gemini，或者中轉站入面識睇圖嗰啲模型。純文字模型睇唔到圖，畀佢都係白畀。</p>
           </div>
           <label class="flabel" for="checkinApiUrl">接口地址（快捷指令要 POST 去呢度）</label>
@@ -1469,7 +1469,10 @@
             <li>加「Base64 编码（繁體：Base64 編碼）」動作，搜「Base64」就揾到，將頭先嗰張截圖編碼。</li>
             <li>加「获取 URL 内容（繁體：取得 URL 內容）」動作，搜「URL」就揾到：網址填返上面嗰個接口地址，方法揀 POST。請求正文（繁體：要求內文）揀 JSON——唔使另外起個詞典，撳「加入新欄位」，逐個加齊 7 欄：provider、baseUrl、apiKey、model、personaId、mime，照上面「查崗配置」逐欄抄返啲值入去，一欄一個，照抄就得；最後加 image 嗰欄，值嗰格撳入去揀變數，揀返上一步個「已 Base64 編碼」結果。「標題」嗰行唔使填，留空就得。</li>
             <li>加「获取词典值（繁體：取得詞典值）」動作，搜「典值」就揾到：喺上一步返嚟嘅結果入面，攞 reply 呢個欄位。</li>
-            <li>加「显示通知（繁體：顯示通知）」動作，搜「通知」就揾到：通知內容用返上一步攞到嗰句 reply。搞掂——到點，佢就會嚟敲你門。</li>
+            <li>加「显示通知（繁體：顯示通知）」動作，搜「通知」就揾到：通知內容用返上一步攞到嗰句 reply。</li>
+            <li>加「URL 编码（繁體：URL 編碼）」動作，搜「URL」就揾到：內容用返嗰句 reply，將佢編碼，準備塞入網址。</li>
+            <li>加「文本（繁體：文字）」動作：內容打齊成條網址——https://442379129.github.io/companion-card/?persona=david&amp;checkinmsg=，後面接返上一步編碼完嗰個結果。persona 後面填返上面「查崗配置」嗰個 personaId，照抄就得。唔好直接喺「打開」嗰步入面拼網址，會報 RTF 轉換錯誤，一定要經「文字」呢步拼好先。</li>
+            <li>加「打开 URL（繁體：打開 URL）」動作，搜「URL」就揾到：內容淨係放上一步「文字」嗰個結果。搞掂——到點，佢就會嚟敲你門：通知有嗰句，跳返嚟卡度，聊天記錄入面都有嗰句（如果開卡嗰陣喺劇情版，嗰句會入咗陪伴版記錄，切返陪伴版先見到）。</li>
           </ol>
           <p class="hint">仲有一句：第一次運行嗰陣，iOS 可能會彈權限出嚟問你，撳「始終允許」就得，之後就唔使次次批。</p>
           <h3 class="subhead">查崗日程生成器</h3>
@@ -1489,6 +1492,18 @@
           </div>
           <p class="hint" id="checkinSchStatus" role="status"></p>
           <p class="hint">記住：日程標題一定要同快捷指令觸發條件入面篩嗰句對得上——改一邊，就要改埋另一邊。對唔上，成件事就唔成立，唔好到時又走嚟鬧我。</p>
+          <h3 class="subhead">安卓版（MacroDroid）——突襲查崗</h3>
+          <div class="note cknotes" id="checkinAndroid">
+            <p>安卓冇快捷指令，用 MacroDroid 做，一樣問先截、回一句、彈返嚟呢張卡；時間唔使定死，改做突襲：每小時掟一次骰，掟中先查。</p>
+            <p>一、裝 MacroDroid（開發商 ArloSoft）：有 Google Play 就喺 Play 商店裝；冇就去官網 macrodroid.com 或者 APKPure／APKMirror，唔好裝破解版。免費版夠用。</p>
+            <p>二、權限畀足：無障礙服務（最緊要）、通知、電池優化選唔優化／無限制、自啟動、最近任務鎖定、常駐通知、懸浮窗（彈窗要用到）。唔同牌子個名唔同，照關鍵字搜。</p>
+            <p>三、加宏：觸發器「定期時間」每 1 小時；約束加時間段（例如 08:00–23:00），半夜唔查；動作「設置變量」整個局部整數 dice，隨機值 1 到 5；「條件判斷」dice 等於 1 先繼續。</p>
+            <p>四、骰子掟中之後：Confirm Next 問「现在可以截屏吗？」（一定要呢個動作，撳取消就成條宏停，唔會截）；等 2 秒；Take Screenshot 存去 /storage/emulated/0/Pictures/Screenshots/checkin.jpg（JPG，唔好揀 PNG）；再等 2 秒。</p>
+            <p>五、HTTP 請求 POST 去上面嗰個接口地址，正文 JSON，7 個欄位照上面「查崗配置」抄：provider、baseUrl、apiKey、model、personaId，mime 填 image/jpeg，image 填 {file_base64:/storage/emulated/0/Pictures/Screenshots/checkin.jpg}。呢行轉 base64 嘅寫法未經真機核實——如果發出去係原文、接口話冇圖，停低唔好硬試，等接口改版配合。</p>
+            <p>六、解析 JSON 攞 reply；顯示通知用 reply；Confirm Next 彈窗都用 reply（點確定就跳卡，取消就留低）；打開網站填 https://442379129.github.io/companion-card/?persona=david&amp;checkinmsg= 加 reply 變量（打開網站嗰步識自己編碼，未經真機核實），persona 換返你嗰位嘅 id；最後刪咗 checkin.jpg，截圖唔留底。</p>
+            <p>七、測試嗰陣觸發器改每 1 分鐘、骰子改 1 到 2，掟中就應該：問你 → 截屏 → 通知同彈窗都有 AI 嗰句 → 點確定跳返嚟卡度，聊天記錄入面都有嗰句 → 截圖刪咗。測完改返每 1 小時、1 到 5。平時用卡嗰個瀏覽器要設做默認瀏覽器，唔係嗰句會入咗另一份卡。</p>
+            <p>詳細版連輕量版（唔截屏、按前台 App 彈固定粵語）喺指南第 8 節。</p>
+          </div>
         </section>
 
         <!-- 備份同搬家 -->
@@ -8276,6 +8291,38 @@
         renderPersonaAvatar();
         renderPersonaPanel();
         renderChat();
+        /* 查崗回傳：iOS 快捷指令／安卓 MacroDroid 用
+           ?persona=xxx&checkinmsg=yyy 打開卡片嗰陣，將 AI 嗰句查崗回覆
+           插進對應陪伴者嘅聊天記錄，之後將網址擦乾淨，唔好刷新重插。
+           只認 allPersonas() 入面有嘅 id，唔認就留喺而家呢位；
+           劇情版開住嗰陣，句嘢照入陪伴版記錄，切返陪伴版先見到。 */
+        try {
+          var _ckParams = new URLSearchParams(window.location.search);
+          var _ckMsg = _ckParams.get("checkinmsg");
+          if (_ckMsg) {
+            var _ckText = _ckMsg.trim().slice(0, 2000);
+            var _ckPid = _ckParams.get("persona");
+            if (_ckText) {
+              var _ckTarget = activePersonaId;
+              if (_ckPid) {
+                var _ckList = allPersonas();
+                for (var _cki = 0; _cki < _ckList.length; _cki++) {
+                  if (_ckList[_cki].id === _ckPid) { _ckTarget = _ckPid; break; }
+                }
+              }
+              if (_ckTarget !== activePersonaId) switchPersona(_ckTarget);
+              var _ckLast = chatHistory.length ? chatHistory[chatHistory.length - 1] : null;
+              if (!_ckLast || _ckLast.role !== "assistant" || _ckLast.content !== _ckText) {
+                chatHistory.push({ role: "assistant", content: _ckText, ts: Date.now() });
+                if (chatHistory.length > 200) chatHistory = chatHistory.slice(chatHistory.length - 200);
+                chatHistories[_ckTarget] = chatHistory;
+                storageSave();
+                renderChat(true);
+              }
+            }
+            try { window.history.replaceState(null, "", window.location.pathname + window.location.hash); } catch (e2) {}
+          }
+        } catch (e3) {}
         try { applyCopyPack(); } catch (e) {}
         try { storySyncCharFromCompanion(); } catch (e) {}
         try { applyCardMode(); } catch (e) {}
