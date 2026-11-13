@@ -1278,6 +1278,14 @@
             <input type="text" id="newLedgerName" class="grow" placeholder="新賬本名，例如：旅行、屋企、人情" aria-label="新賬本名" />
             <select id="newLedgerCur" style="width:130px; flex:none;" aria-label="新賬本貨幣"></select>
             <button class="ghost" id="addLedger" type="button">加賬本</button>
+            <button class="ghost" id="delLedger" type="button">刪呢本</button>
+          </div>
+          <div class="note" id="ledgerDeleteConfirm" style="display:none;">
+            <p style="margin:0 0 6px;" id="ledgerDeleteText"></p>
+            <div class="row">
+              <button type="button" id="ledgerDeleteYes">確認刪除</button>
+              <button type="button" class="ghost" id="ledgerDeleteNo">算數，留返</button>
+            </div>
           </div>
 
           <div class="sum-row">
@@ -3000,11 +3008,14 @@
         var ledgers = [{ id: 1, name: "日常賬本", currency: "HKD", txs: [] }];
         var ledgerSeq = 1, txSeq = 0;
         var activeLedgerId = 1;
+        var pendingDelLedgerId = null;
         function activeLedger() {
           for (var i = 0; i < ledgers.length; i++) if (ledgers[i].id === activeLedgerId) return ledgers[i];
           return ledgers[0];
         }
         function renderLedgers() {
+          pendingDelLedgerId = null;
+          $("ledgerDeleteConfirm").style.display = "none";
           var tabs = $("ledgerTabs");
           tabs.innerHTML = "";
           ledgers.forEach(function (lg) {
@@ -3078,6 +3089,35 @@
           $("newLedgerName").value = "";
           renderLedgers(); storageSave();
           toast("新賬本開好喇：「" + name + "」。又多一攤嘢，畀我陪你一齊睇住");
+        });
+        $("delLedger").addEventListener("click", function () {
+          var lg = activeLedger();
+          if (!lg) return;
+          if (ledgers.length <= 1) { toast("得返一本賬本喇，留返佢啦"); return; }
+          pendingDelLedgerId = lg.id;
+          $("ledgerDeleteText").textContent = "真係刪咗「" + lg.name + "」呢本賬本？入面 " + lg.txs.length + " 筆記錄會一齊冇晒，返唔到轉頭。";
+          $("ledgerDeleteConfirm").style.display = "block";
+          $("ledgerDeleteConfirm").scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+        $("ledgerDeleteNo").addEventListener("click", function () {
+          pendingDelLedgerId = null;
+          $("ledgerDeleteConfirm").style.display = "none";
+        });
+        $("ledgerDeleteYes").addEventListener("click", function () {
+          var id = pendingDelLedgerId;
+          pendingDelLedgerId = null;
+          $("ledgerDeleteConfirm").style.display = "none";
+          if (id == null) return;
+          var idx = -1, name = "";
+          ledgers.forEach(function (lg, i) { if (lg.id === id) { idx = i; name = lg.name; } });
+          if (idx < 0 || ledgers.length <= 1) return;
+          ledgers.splice(idx, 1);
+          if (activeLedgerId === id) {
+            activeLedgerId = ledgers[0].id;
+            $("txCurrency").value = ledgers[0].currency;
+          }
+          renderLedgers(); storageSave();
+          toast("「" + name + "」刪咗喇，乾手淨腳");
         });
         $("addTx").addEventListener("click", function () {
           var amt = parseFloat($("txAmount").value);
