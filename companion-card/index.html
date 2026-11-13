@@ -1865,6 +1865,7 @@
         var storyHistories = {}; // { charId: [{role, content, ts}] }
         var storyHistory = [];
         var storySetups = {}; // { charId: {user, worldview} } 每位 char 各有一份 user 人設同世界觀
+        var storyPersonaOverrides = {}; // 劇情版專用人設改版 {charId: 人設全文}，同陪伴版 personaOverrides 分開，唔入備份
         var storySending = false;
         var editingStoryCharId = "";
         var pendingDeleteStoryCharId = "";
@@ -2018,6 +2019,12 @@
               }
             });
           }
+          if (savedData.storyPersonaOverrides && typeof savedData.storyPersonaOverrides === "object") {
+            Object.keys(savedData.storyPersonaOverrides).forEach(function (k) {
+              var sv = savedData.storyPersonaOverrides[k];
+              if (typeof sv === "string" && sv.trim() && sv.length <= 4000) storyPersonaOverrides[k] = sv;
+            });
+          }
           /* 舊版得一份通用 user／世界觀嗰陣，搬去而家呢位 char 名下，唔好抌咗佢 */
           if (!Object.keys(storySetups).length && (typeof savedData.storyUserPersona === "string" || typeof savedData.storyWorldview === "string")) {
             var legacyTarget = storyActiveCharId || activePersonaId;
@@ -2099,7 +2106,7 @@
             voiceSettings: voiceSettings, ctxToggles: ctxToggles,
             cardMode: cardMode, storyCustomPersonas: storyCustomPersonas, storyActiveCharId: storyActiveCharId,
             storySyncedFromCompanionId: storySyncedFromCompanionId, storyHistories: storyHistories,
-            storySetups: storySetups
+            storySetups: storySetups, storyPersonaOverrides: storyPersonaOverrides
           };
         }
         function storageIsQuotaErr(e) {
@@ -3952,6 +3959,7 @@
             delete data.chatHistories;
             delete data.storyHistories;
             delete data.personaOverrides;
+            delete data.storyPersonaOverrides;
             delete data.avatarOverrides;
             if (data.chatSettings && typeof data.chatSettings === "object") {
               var csCopy = {};
@@ -5763,7 +5771,14 @@
             model: chatEffectiveModel(),
             messages: context
           };
-          if (p.copy) {
+          /* 劇情版嗰邊：有劇情版專用改版就用佢，冇就跟陪伴版嗰套解法。
+             陪伴版嗰邊永遠唔會睇到 storyPersonaOverrides。 */
+          var storyOv = null;
+          if (opts && opts.isStory) {
+            try { storyOv = storyPersonaOverrides[p.id]; } catch (e) {}
+          }
+          if (typeof storyOv === "string" && storyOv) body.persona = storyOv;
+          else if (p.copy) {
             var cov = null;
             try { cov = personaOverrides[p.id]; } catch (e) {}
             if (typeof cov === "string" && cov) body.persona = cov;
@@ -6942,7 +6957,13 @@
            得返 char 嗰行一個改人設嘅入口。 */
         function personaPanelOpen() {
           var panel = $("personaPanel");
-          if (cardMode === "story") panel.classList.add("story-focus"); else panel.classList.remove("story-focus");
+          panel.classList.remove("story-focus");
+          panel.style.display = "block";
+          $("personaAvatar").setAttribute("aria-expanded", "true");
+        }
+        function personaPanelOpenStoryFocus() {
+          var panel = $("personaPanel");
+          panel.classList.add("story-focus");
           panel.style.display = "block";
           $("personaAvatar").setAttribute("aria-expanded", "true");
         }
@@ -7060,7 +7081,7 @@
           editBtn.textContent = "改人设";
           editBtn.addEventListener("click", function (e) {
             if (e && e.stopPropagation) e.stopPropagation();
-            try { if (p.storyOnly) storyOpenCharForm(p.id); else openPersonaEditor(p.id); } catch (err) {}
+            try { if (p.storyOnly) storyOpenCharForm(p.id); else openPersonaEditor(p.id, true); } catch (err) {}
           });
           box.appendChild(editBtn);
           var cpBtn = document.createElement("button");
@@ -7102,7 +7123,7 @@
                     : (p.copy
                       ? "真係還原「" + p.name + "」個頭像？會用返复制嗰阵嗰張，你上傳嗰張會清走。"
                       : "真係還原「" + p.name + "」個頭像？會用返預設嗰張，你上傳嗰張會清走。");
-                  try { personaPanelOpen(); } catch (e3) {}
+                  try { personaPanelOpenStoryFocus(); } catch (e3) {}
                   $("avatarResetConfirm").style.display = "block";
                   try { $("avatarResetConfirm").scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e4) {}
                 } catch (err) {}
@@ -7151,6 +7172,15 @@
             bl.textContent = p.blurb || "";
             tx.appendChild(nm);
             tx.appendChild(bl);
+            try {
+              var hasStoryMod = !p.storyOnly && typeof storyPersonaOverrides[p.id] === "string" && !!storyPersonaOverrides[p.id];
+              if (hasStoryMod) {
+                var bd2 = document.createElement("span");
+                bd2.className = "p-badge";
+                bd2.textContent = "劇情版已改";
+                tx.appendChild(bd2);
+              }
+            } catch (e) {}
             row.appendChild(av);
             row.appendChild(tx);
             if (p.id === storyActiveCharId) {
@@ -7183,7 +7213,7 @@
                 e.stopPropagation();
                 pendingDeletePersonaId = p.id;
                 $("personaDeleteText").textContent = "真係刪咗「" + p.name + "」？呢個人設同佢嘅對話記錄會一併刪晒，冇得返轉頭。";
-                try { personaPanelOpen(); } catch (e2) {}
+                try { personaPanelOpenStoryFocus(); } catch (e2) {}
                 $("personaDeleteConfirm").style.display = "block";
                 try { $("personaDeleteConfirm").scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e3) {}
               });
@@ -7498,7 +7528,7 @@
           if (exTxt) sysParts.push("【示例对话】\n" + exTxt);
           if (ruleTxt) sysParts.push("【输出规则】\n" + ruleTxt);
           var context = [{ role: "system", content: sysParts.join("\n") }].concat(baseContext);
-          chatPostChat(context, null, { persona: currentChar(), noMcp: true }).then(function (r) {
+          chatPostChat(context, null, { persona: currentChar(), noMcp: true, isStory: true }).then(function (r) {
             storySetSending(false);
             if (r.reply) {
               storyHistory.push({ role: "assistant", content: r.reply, ts: Date.now() });
@@ -7587,6 +7617,7 @@
           storyCustomPersonas = storyCustomPersonas.filter(function (p) { return p.id !== id; });
           delete storyHistories[id];
           delete storySetups[id];
+          delete storyPersonaOverrides[id];
           pendingDeleteStoryCharId = "";
           $("storyCharDeleteConfirm").style.display = "none";
           storyEnsureCharValid();
@@ -7748,6 +7779,7 @@
            唔會上傳去任何地方，一樣唔入備份。成段包住 try/catch，
            出咩岔子都唔會拖冧頁面同傾計。 */
         var editingPersonaId = "";
+        var editingStoryPersona = false; // 編輯器而家改緊劇情版嗰份（true）定陪伴版嗰份（false）
         var pendingAvatarForId = "";
         var pendingAvatarResetId = "";
         function avatarFeatureOk() {
@@ -7886,27 +7918,45 @@
           }
           return false;
         }
-        function openPersonaEditor(id) {
+        function openPersonaEditor(id, isStory) {
           editingPersonaId = id;
+          editingStoryPersona = !!isStory;
+          var wasStory = editingStoryPersona;
           /* 編輯器喺陪伴者面板入面：由劇情版撳入嚟嗰陣，面板可能收埋咗，
-             先打開佢，唔係編輯器開咗都睇唔到。 */
-          try { personaPanelOpen(); } catch (e) {}
+             先打開佢，唔係編輯器開咗都睇唔到。劇情版嗰邊只顯示編輯器本身，
+             名單收埋，等用家唔會喺上面改錯第二個人。 */
+          try { if (wasStory) personaPanelOpenStoryFocus(); else personaPanelOpen(); } catch (e) {}
           var p = personaById(id);
           var name = p ? p.name : id;
           try { $("personaResetConfirm").style.display = "none"; } catch (e) {}
-          try { $("personaEditTitle").textContent = "改人设：" + name; } catch (e) {}
+          try { $("personaEditTitle").textContent = wasStory ? "改人设：" + name + "（剧情版）" : "改人设：" + name; } catch (e) {}
           try { $("personaEditPanel").style.display = "block"; } catch (e) {}
           /* 由劇情版撳入嚟嗰陣，編輯器喺頁頂嘅面板入面，唔碌過去用家睇唔到，
              以為個掣冇反應——碌到編輯器面前（同 MCP 刪除確認同一個教訓）。 */
           try { $("personaEditPanel").scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) {}
           var ta = $("personaEditText");
-          /* 自訂人設冇預設原文，唔使上網拉：直接編輯佢本身嗰段描述，
-             亦冇「还原预设」呢回事，收起個掣。 */
-          try { $("personaEditReset").style.display = (p && p.custom) ? "none" : ""; } catch (e) {}
+          /* 兩個板塊嘅人設分開存：劇情版改嘅係 storyPersonaOverrides，陪伴版
+             改嘅係 personaOverrides，邊邊改都唔會掂到另一邊。劇情版未改過
+             嗰陣，就跟陪伴版嗰版（陪伴版改版／快照／預設原文）。 */
+          var storyTxt = "";
+          if (wasStory) { try { storyTxt = (typeof storyPersonaOverrides[id] === "string") ? storyPersonaOverrides[id] : ""; } catch (e2) {} }
+          /* 劇情版嘅「还原预设」係跟返陪伴版嗰版，所以連自訂人設都有得撳；
+             陪伴版嗰邊自訂人設冇預設原文，收起個掣。 */
+          try { $("personaEditReset").style.display = (p && p.custom && !wasStory) ? "none" : ""; } catch (e) {}
+          if (storyTxt) {
+            if (ta) ta.value = storyTxt;
+            personaEditCountUpdate();
+            personaEditStatus("呢版係劇情版改過嗰版，淨係影響劇情版，陪伴版唔會變。想跟返陪伴版嗰版，撳下面「还原预设」。");
+            return;
+          }
+          /* 自訂人設冇預設原文，唔使上網拉：陪伴版嗰邊直接編輯佢本身嗰段
+             描述；劇情版嗰邊就用嗰段描述做起點，改完存入劇情版嗰份。 */
           if (p && p.custom) {
             if (ta) ta.value = (p.desc || "").slice(0, 4000);
             personaEditCountUpdate();
-            personaEditStatus("呢位係你自創嘅，改完撳「保存」，之後傾計就會用你改呢版；唔改就撳「取消」。");
+            personaEditStatus(wasStory
+              ? "而家跟緊陪伴版嗰段描述。喺呢度改完，只會影響劇情版；陪伴版嗰邊唔會變。"
+              : "呢位係你自創嘅，改完撳「保存」，之後傾計就會用你改呢版；唔改就撳「取消」。");
             return;
           }
           var existing = "";
@@ -7917,9 +7967,11 @@
           if (existing) {
             if (ta) ta.value = existing;
             personaEditCountUpdate();
-            personaEditStatus(cp
-              ? "呢位而家用緊你改過嗰版（只存喺你部機）。想用返复制嗰阵嗰版，撳下面「还原预设」。"
-              : "呢位而家用緊你改過嗰版（只存喺你部機）。想用返預設，撳下面「还原预设」。");
+            personaEditStatus(wasStory
+              ? "而家跟緊陪伴版改過嗰版。喺呢度改完，只會影響劇情版；陪伴版嗰邊唔會變。"
+              : (cp
+                ? "呢位而家用緊你改過嗰版（只存喺你部機）。想用返复制嗰阵嗰版，撳下面「还原预设」。"
+                : "呢位而家用緊你改過嗰版（只存喺你部機）。想用返預設，撳下面「还原预设」。"));
             return;
           }
           /* 副本有人設快照（复制嗰陣帶過嚟嗰版）就直接用，唔使上網拉；
@@ -7927,7 +7979,9 @@
           if (cp && cp.basePersona) {
             if (ta) ta.value = cp.basePersona.slice(0, 4000);
             personaEditCountUpdate();
-            personaEditStatus("呢版係复制嗰陣帶過嚟嘅人設。改完撳「保存」，之後傾計就會用你改呢版；唔改就撳「取消」。");
+            personaEditStatus(wasStory
+              ? "呢版係复制嗰陣帶過嚟嘅人設（陪伴版嗰邊）。喺呢度改完只會影響劇情版；唔改就撳「取消」。"
+              : "呢版係复制嗰陣帶過嚟嘅人設。改完撳「保存」，之後傾計就會用你改呢版；唔改就撳「取消」。");
             return;
           }
           if (ta) ta.value = "";
@@ -7937,21 +7991,23 @@
             fetch(CHAT_API_BASE + "/personas", { method: "GET" }).then(function (res) {
               return res.json().then(function (data) { return data; }, function () { return null; });
             }).then(function (data) {
-              if (editingPersonaId !== id) return;
+              if (editingPersonaId !== id || editingStoryPersona !== wasStory) return;
               var map = parsePersonasMap(data);
               personaCacheSave(map);
               var txt = (typeof map[lookupId] === "string") ? map[lookupId] : "";
               if (txt) {
                 if (ta) ta.value = txt.slice(0, 4000);
                 personaEditCountUpdate();
-                personaEditStatus("拉到喇。改完撳「保存」，之後傾計就會用你改呢版；唔改就撳「取消」。");
+                personaEditStatus(wasStory
+                  ? "拉到喇。呢版係陪伴版嗰邊嘅原文，喺呢度改完只會影響劇情版；唔改就撳「取消」。"
+                  : "拉到喇。改完撳「保存」，之後傾計就會用你改呢版；唔改就撳「取消」。");
               } else if (!personaCacheFill(lookupId, ta, isDavidVoice)) {
                 personaEditStatus(isDavidVoice
                   ? "接口嗰邊冇返到呢位嘅人設原文返嚟。你可以照樣喺下面打字改，打完撳保存，一樣生效。"
                   : "沒有拉到這位的人設原文。你可以照樣在下面輸入，保存後一樣生效。");
               }
             }, function () {
-              if (editingPersonaId !== id) return;
+              if (editingPersonaId !== id || editingStoryPersona !== wasStory) return;
               if (!personaCacheFill(lookupId, ta, isDavidVoice)) {
                 personaEditStatus(isDavidVoice
                   ? "拉唔到接口嗰邊嘅預設人設——多數係網絡問題。你可以照樣喺下面打字改，打完撳保存，一樣生效。"
@@ -7966,6 +8022,7 @@
         }
         function closePersonaEditor() {
           editingPersonaId = "";
+          editingStoryPersona = false;
           try { $("personaEditPanel").style.display = "none"; } catch (e) {}
           try { $("personaResetConfirm").style.display = "none"; } catch (e) {}
           try { personaPanelHideIfStory(); } catch (e2) {}
@@ -8008,6 +8065,17 @@
               var id = editingPersonaId;
               if (!id) { closePersonaEditor(); return; }
               var v = $("personaEditText").value.slice(0, 4000);
+              if (editingStoryPersona) {
+                /* 劇情版嗰份：存入 storyPersonaOverrides，陪伴版嗰邊唔郁；
+                   清空就等於跟返陪伴版嗰版。 */
+                if (v.trim()) storyPersonaOverrides[id] = v; else delete storyPersonaOverrides[id];
+                storageSave();
+                closePersonaEditor();
+                renderPersonaPanel();
+                try { renderStoryCharList(); renderStoryChatHead(); } catch (e2) {}
+                toast(v.trim() ? "劇情版人設保存好喇，淨係影響劇情版，陪伴版唔會變。" : "劇情版跟返陪伴版嗰版人設。");
+                return;
+              }
               var pSave = personaById(id);
               if (pSave && pSave.custom) {
                 if (!v.trim()) { personaEditStatus("人設描述唔可以留空——寫返啲嘢先保存到。"); return; }
@@ -8025,9 +8093,11 @@
             try {
               var p = personaById(editingPersonaId);
               var nm = p ? p.name : "";
-              $("personaResetText").textContent = copyById(editingPersonaId)
-                ? "真係還原「" + nm + "」嘅人設？你改過嗰版會清走，用返复制嗰陣嗰版，冇得返轉頭。"
-                : "真係還原「" + nm + "」嘅預設人設？你改過嗰版會清走，冇得返轉頭。";
+              $("personaResetText").textContent = editingStoryPersona
+                ? "真係還原「" + nm + "」嘅劇情版人設？劇情版改過嗰版會清走，跟返陪伴版嗰版，冇得返轉頭。"
+                : (copyById(editingPersonaId)
+                  ? "真係還原「" + nm + "」嘅人設？你改過嗰版會清走，用返复制嗰陣嗰版，冇得返轉頭。"
+                  : "真係還原「" + nm + "」嘅預設人設？你改過嗰版會清走，冇得返轉頭。");
               $("personaResetConfirm").style.display = "block";
             } catch (e) {}
           });
@@ -8036,6 +8106,15 @@
           });
           $("personaResetYes").addEventListener("click", function () {
             try {
+              if (editingStoryPersona) {
+                if (editingPersonaId) delete storyPersonaOverrides[editingPersonaId];
+                storageSave();
+                closePersonaEditor();
+                renderPersonaPanel();
+                try { renderStoryCharList(); renderStoryChatHead(); } catch (e2) {}
+                toast("還原好喇，劇情版跟返陪伴版嗰版人設。");
+                return;
+              }
               var wasCopy = !!copyById(editingPersonaId);
               if (editingPersonaId) delete personaOverrides[editingPersonaId];
               storageSave();
@@ -8087,12 +8166,6 @@
           });
         } catch (e) {}
         $("personaAvatar").addEventListener("click", function () {
-          if (cardMode === "story") {
-            /* 陪伴者面板返咗陪伴版：喺劇情版撳頭像，就切返過去開面板。 */
-            setCardMode("companion");
-            personaPanelOpen();
-            return;
-          }
           var panel = $("personaPanel");
           var open = panel.style.display !== "none";
           if (open) personaPanelClose(); else personaPanelOpen();
@@ -8134,6 +8207,7 @@
           delete storyHistories[id];
           delete storySetups[id];
           delete personaOverrides[id];
+          delete storyPersonaOverrides[id];
           try { delete avatarOverrides[id]; } catch (e) {}
           pendingDeletePersonaId = "";
           $("personaDeleteConfirm").style.display = "none";
