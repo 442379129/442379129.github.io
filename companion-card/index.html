@@ -4718,6 +4718,9 @@
               pendingMcpDeleteIndex = idx;
               $("mcpDeleteText").textContent = "真係刪咗「" + s.name + "」？佢嘅地址同 Token 會一併刪晒，冇得返轉頭。";
               $("mcpDeleteConfirm").style.display = "block";
+              /* 確認框喺成個設定區最底，唔碌過去睇唔到，會以為撳刪除冇反應——
+                 彈出嚟嗰陣直接碌到佢面前。 */
+              try { $("mcpDeleteConfirm").scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) {}
             });
             row.appendChild(nm);
             row.appendChild(url);
