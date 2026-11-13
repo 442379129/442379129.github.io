@@ -222,8 +222,8 @@
       .jump a:active { background: var(--surface-2); }
 
       /* ---------- 區塊 ---------- */
-      .grid { display: grid; gap: 18px; margin-top: 16px; }
-      @media (min-width: 760px) { .grid { grid-template-columns: 1fr 1fr; } .span2 { grid-column: span 2; } }
+      .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; margin-top: 16px; }
+      @media (min-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .span2 { grid-column: span 2; } }
       section.card {
         background: var(--surface);
         border: 1px solid var(--line);
@@ -231,6 +231,9 @@
         box-shadow: var(--shadow);
         padding: 22px;
         scroll-margin-top: 14px;
+        min-width: 0;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
       section.card h2 {
         font-family: "Noto Serif TC", "Songti TC", "Songti SC", "PMingLiU", serif;
