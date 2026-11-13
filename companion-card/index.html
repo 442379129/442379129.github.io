@@ -1386,7 +1386,7 @@
         <!-- 應用鎖小工具 -->
         <section class="card span2" id="applock">
           <h2><span class="ic gold"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>應用鎖小工具</h2>
-          <p class="sub">刷手機刷到唔停得手，係咪？我幫你落閘。揀好要鎖邊啲 App、鎖幾耐，撳個掣，呢度會生一個日曆鎖檔案畀你，加去你嗰個 AppLock 日曆，時間內你一開嗰啲 App，就會畀人提返出嚟。講明先：鎖檔案歸呢度生，搭嘢嗰部分——AppLock 日曆、快捷指令、自動化——要你自己跟教程搭好先，唔好到時鎖唔生效，又走嚟鬧我。</p>
+          <p class="sub">刷手機刷到唔停得手，係咪？我幫你落閘。揀好要鎖邊啲 App、鎖幾耐，撳個掣，呢度會生一個日曆鎖檔案畀你，加去你嗰個 AppLock 日曆，時間內你一開嗰啲 App，就會畀人提返出嚟。講明先：鎖檔案歸呢度生，搭嘢嗰部分——AppLock 日曆、快捷指令、自動化——要你自己跟教程搭好先，唔好到時鎖唔生效，又走嚟鬧我。安卓手機唔用呢套，睇最下面「安卓版」。</p>
           <label class="flabel" for="lockApps">要鎖邊啲 App（多個就用英文逗號隔開）</label>
           <input type="text" id="lockApps" placeholder="例如：抖音,小红书" aria-label="要鎖的 App 名字" />
           <p class="hint" id="lockAppsHint">名要用返系統入面嗰個叫法，寫錯一個字都認唔到——例如 B 站要寫「哔哩哔哩」，唔好寫 B 站。</p>
@@ -1415,7 +1415,20 @@
             <input type="text" id="lockCardUrl" readonly value="https://442379129.github.io/companion-card/" aria-label="呢張卡嘅網址，撳住可以複製" />
             <p>鎖唔生效，唔好慌，查三處：日曆名係咪 AppLock、事件標題入面有冇嗰個 App 名、自動化係咪揀咗「立即運行」。十次有九次，都係衰喺呢三處。</p>
             <p>仲有一處，真係有人喺真機度衰過：自動化個觸發條件「打開 App 時」入面，要揀埋你要鎖嗰個 App，先算數。淨係起咗個觸發條件、冇揀 App，係等於冇觸發過——你開個 App，佢唔會彈返你出嚟，唔好到時又話個鎖唔生效。</p>
-            <p>最後一句：呢個辦法只適用於 iOS，要用 iOS 嘅快捷指令同日曆自動化；安卓用唔到，唔好喺安卓機度白費心機。</p>
+            <p>最後一句：上面呢個辦法只適用於 iOS，要用 iOS 嘅快捷指令同日曆自動化；安卓手機用下面「安卓版（MacroDroid）」嗰個辦法，一樣彈提醒、彈返嚟呢張卡。</p>
+          </div>
+          <div class="note locknotes" id="lockAndroid">
+            <p><strong>安卓版（MacroDroid）——安卓手機用呢個：</strong>安卓冇快捷指令同日曆自動化，改用 MacroDroid，效果同 iPhone 版一樣：時間段內一開嗰啲 App，就彈句提醒、再彈返嚟呢張卡；時間段內翻去，又再彈返。都係軟鎖，唔係鐵閘。</p>
+            <ol>
+              <li>裝 MacroDroid（開發商 ArloSoft）：有 Google Play 就喺 Play 商店裝；冇就去官網 macrodroid.com 或者 APKPure、APKMirror 呢啲鏡像站落 APK。唔好裝破解版／Mod 版。免費版得 5 個宏，一個宏管晒所有要鎖嘅 App，夠用。</li>
+              <li>權限畀足，缺一都可能實戰唔彈：無障礙服務（最緊要，觸發器靠佢；去設定搵「無障礙」→ MacroDroid → 開）＋通知＋電池優化關咗（唔限制）＋自啟動＋最近任務入面鎖定 MacroDroid＋MacroDroid 入面開常駐通知。唔同牌子叫法唔同，搜關鍵字。</li>
+              <li>加宏：觸發器揀「應用啟動」（Application Launched），勾埋要鎖嘅 App（可多選，唔揀就等於冇觸發過）→ 約束加時間段（例如 23:00–23:59）→ 動作「顯示通知」寫提醒句（例如「停！先想想再進！」）→ 動作「打開網站」填呢張卡嘅網址（上面嗰行，撳住複製）→ 保存，確認宏嘅開關開著。</li>
+              <li>預設瀏覽器設為平時用卡嗰個，唔係跳過去係張空白新卡（設定、鑰匙都喺你平時嗰個瀏覽器度）。</li>
+              <li>試：時間段內開被鎖嘅 App，應該彈通知＋跳返嚟呢張卡；翻去又彈返。時間段外開，咩都唔發生，係正常嘅。想停就撥一下宏開關，想開返又撥一下。</li>
+            </ol>
+            <p>想要陪伴者現寫嗰句（同 iPhone 版一樣）：宏入面加 HTTP 請求去 /lockline 接口，攞返 reply 嚟顯示，鑰匙放喺宏入面，唔好外傳。詳細步驟連埋 6 個欄位點填，喺指南第 7 節「安卓版」入面。</p>
+            <p>鎖唔生效，查：時間段啱唔啱、宏開關、無障礙仲開唔開（國產機會偷偷關咗，關咗重開）、電池／自啟動／鎖定／常駐通知、重啟手機、刪宏重建（唔好複製舊嘅）。</p>
+            <p>詳細版連埋進階版喺指南：<a href="https://442379129.github.io/companion-card/guide.html#applock-android">指南第 7 節：安卓版應用鎖</a></p>
           </div>
         </section>
 
