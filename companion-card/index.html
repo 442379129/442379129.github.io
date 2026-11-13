@@ -502,6 +502,8 @@
       .chat-speak { align-self: flex-end; margin-top: 4px; padding: 2px 10px; font-size: 0.8rem; line-height: 1.5; background: transparent; border: 1px solid #d8cfba; border-radius: 999px; color: #7a7264; cursor: pointer; }
       .chat-speak.playing { border-color: #b4552d; color: #b4552d; }
       .chat-speak:disabled { opacity: 0.5; cursor: default; }
+      .ctx-check { display: block; margin: 8px 0; line-height: 1.5; cursor: pointer; }
+      .ctx-check input { margin-right: 8px; }
       .chat-img { display: block; max-width: 100%; border-radius: 8px; margin: 2px 0 4px; cursor: pointer; }
       .chat-file {
         display: inline-block; background: rgba(0, 0, 0, 0.07); border-radius: 8px;
@@ -938,6 +940,15 @@
               <button type="button" id="voiceSaveSettings">保存聲音設定</button>
             </div>
             <p class="hint" id="voiceSaveStatus" role="status"></p>
+
+            <hr class="divider" />
+            <h3 class="subhead">讓 AI 知道你嘅近況（可選）</h3>
+            <p class="sub" style="margin-bottom:6px;">開咗下面邊個，傾計嗰陣就會附多一行嗰個區嘅摘要畀 AI，等佢答得貼心啲。預設全部關，唔開就乜都唔會發。摘要係喺你部手機度計好先發，唔係成份記錄掟過去。</p>
+            <label class="ctx-check"><input type="checkbox" id="ctxMoney" /> 記賬：本月使咗幾多、最大頭係邊類</label>
+            <label class="ctx-check"><input type="checkbox" id="ctxPeriod" /> 經期：離下次仲有幾多日</label>
+            <label class="ctx-check"><input type="checkbox" id="ctxDiary" /> 日記：最近一篇幾時寫、入面出現最多嗰個詞</label>
+            <p class="hint">講明先：開咗嘅摘要會跟住每條訊息發去你揀嗰間 AI 服務。日記嗰行只會講日期同出現最多嗰個詞，唔會發日記內容——內容永遠留喺你部手機。</p>
+            <p class="hint" id="ctxPreview" style="white-space:pre-line;"></p>
 
             <hr class="divider" />
             <h3 class="subhead">聊天背景</h3>
@@ -1580,6 +1591,8 @@
         /* 聲音設定（全局共用，唔入多組 AI 設定）：voiceBlankSettings 喺下面
            聲音區定義，函數聲明會提升，呢度直接用得。 */
         var voiceSettings = voiceBlankSettings();
+        /* 傾計附帶嘅其他分區摘要開關：預設全部關，開咗先會附。 */
+        var ctxToggles = { money: false, period: false, diary: false };
         /* 陪伴者：預設清單喺下面 COMPANION_PRESETS；粉絲自訂嘅存 customPersonas。
            對話記錄按陪伴者分開存入 chatHistories（id -> 訊息陣列，各自上限 200 條）；
            chatHistory 變量永遠指向而家揀中嗰位陪伴者嗰份記錄。 */
@@ -1734,6 +1747,12 @@
           if (typeof savedData.chatBgId === "string" && CHAT_BG_IDS.indexOf(savedData.chatBgId) >= 0) chatBgId = savedData.chatBgId;
           /* 聲音設定：讀入 + 校驗，舊版冇就用預設（MiniMax + 青涩青年音色） */
           voiceSettings = voiceSanitizeSettings(savedData.voiceSettings);
+          /* 分區摘要開關：只收布林值，舊版冇就全關 */
+          if (savedData.ctxToggles && typeof savedData.ctxToggles === "object") {
+            ["money", "period", "diary"].forEach(function (k) {
+              if (typeof savedData.ctxToggles[k] === "boolean") ctxToggles[k] = savedData.ctxToggles[k];
+            });
+          }
         }
         if (!chatProfiles.length) {
           /* 完全冇存檔嗰陣，都要保證至少有一組 */
@@ -1751,7 +1770,7 @@
             chatSettings: chatSettings, chatHistories: chatHistories, customPersonas: customPersonas, copiedPersonas: copiedPersonas, activePersonaId: activePersonaId,
             personaOverrides: personaOverrides, avatarOverrides: avatarOverrides,
             chatProfiles: chatProfiles, activeChatProfileId: activeChatProfileId, chatBgId: chatBgId,
-            voiceSettings: voiceSettings
+            voiceSettings: voiceSettings, ctxToggles: ctxToggles
           };
         }
         function storageIsQuotaErr(e) {
@@ -5384,6 +5403,7 @@
           chatSettingsOpen = !chatSettingsOpen;
           $("chatSettings").style.display = chatSettingsOpen ? "block" : "none";
           this.textContent = chatSettingsOpen ? "收起設定" : "打開設定";
+          try { ctxRenderPreview(); } catch (e) {}
         });
         /* 揀預設：即刻填返對應接口地址 */
         $("chatPreset").addEventListener("change", function () {
@@ -5600,6 +5620,116 @@
           } catch (e) { return Promise.resolve(null); }
         }
 
+        /* ---------- 分區摘要：記賬／經期／日記（可選附帶） ----------
+           三個開關，預設全關。開咗嗰個，發訊息嗰陣先喺本地計一行摘要，
+           同天氣實況合併成同一條 system 訊息發出去；日記只計日期同出現
+           最多嗰個詞，內容一個字都唔會發。摘要唔入聊天記錄，下次發送再計過。 */
+        var CTX_STOPWORDS = {};
+        ["今天", "明天", "昨天", "现在", "时候", "觉得", "感觉", "真的", "有点", "一下", "一些", "可以", "没有", "不是", "就是", "还是", "知道", "看到", "听到", "起来", "回来", "过去", "过来", "出来", "我们", "你们", "他们", "自己", "什么", "怎么", "多少", "这样", "那样", "这里", "那里", "哪里", "这个", "那个", "这些", "那些", "一起", "一点", "一次", "一天", "日记", "手帐", "然后", "因为", "所以", "如果", "虽然", "但是", "而且", "或者", "以及", "为了", "关于", "其实", "可能", "应该", "已经", "正在", "非常", "特别", "一样", "晚上", "早上", "中午", "下午", "半夜", "凌晨", "平时", "最近", "刚才", "一直", "总是", "经常", "偶尔", "突然", "慢慢", "好好", "the", "and", "for", "with", "that", "this", "have", "from", "about", "into", "your", "you", "are", "was", "were", "been", "will", "would", "can", "could", "should", "today", "really", "just", "like", "feel", "think", "know", "want", "need", "much", "more", "very", "when", "what", "then", "than", "but", "she", "her", "him", "his", "its", "our", "they", "them", "their"].forEach(function (w) { CTX_STOPWORDS[w] = true; });
+        function ctxMoneyLine() {
+          try {
+            var lg = activeLedger();
+            if (!lg) return null;
+            var now = new Date();
+            var prefix = now.getFullYear() + "-" + pad2(now.getMonth() + 1);
+            var total = 0, byCat = {};
+            lg.txs.forEach(function (tx) {
+              if (tx.type !== "out") return;
+              if (typeof tx.date !== "string" || tx.date.indexOf(prefix) !== 0) return;
+              if (tx.currency && tx.currency !== lg.currency) return;
+              var amt = +tx.amount || 0;
+              total += amt;
+              var c = tx.category || "未分類";
+              byCat[c] = (byCat[c] || 0) + amt;
+            });
+            if (!total) return "【记账摘要】本月在「" + lg.name + "」还没有记支出。";
+            var topCat = "", topAmt = 0;
+            Object.keys(byCat).forEach(function (c) { if (byCat[c] > topAmt) { topAmt = byCat[c]; topCat = c; } });
+            return "【记账摘要】本月在「" + lg.name + "」共支出 " + fmtMoney(lg.currency, total) + "，最大头是「" + topCat + "」（" + fmtMoney(lg.currency, topAmt) + "）。";
+          } catch (e) { return null; }
+        }
+        function ctxPeriodLine() {
+          try {
+            var calc = periodCalc();
+            if (!calc) return null;
+            var until = dayDiff(new Date(), calc.next);
+            if (until > 0) return "【经期状态】离下次经期预计还有 " + until + " 天（预计 " + fmtDateCN(calc.next) + "）。";
+            if (until === 0) return "【经期状态】预计今天来经期。";
+            return "【经期状态】预计的经期日子已过了 " + (-until) + " 天，还没记新记录。";
+          } catch (e) { return null; }
+        }
+        /* 日記詞頻：取最近 10 篇，英文詞直接計，中文跑兩字滑窗，停用詞
+           同帶語氣助詞嘅組合剔走，只留出現最多嗰一個。內容本身唔會離開手機。 */
+        function ctxTopKeyword() {
+          try {
+            var entries = diaryEntries.slice().sort(function (a, b) { return b.ts - a.ts; }).slice(0, 10);
+            var counts = {}, order = [];
+            function bump(w) {
+              if (!w || w.length < 2) return;
+              if (CTX_STOPWORDS[w]) return;
+              if (/[的了着过吗啊吧呢哦嗯呀啦]/.test(w)) return;
+              if (/\d{4,}/.test(w) || w.indexOf("@") >= 0) return;
+              if (!counts[w]) { counts[w] = 0; order.push(w); }
+              counts[w]++;
+            }
+            entries.forEach(function (en) {
+              var text = (en.text || "").slice(0, 2000);
+              if (!text) return;
+              var words = text.match(/[A-Za-z][A-Za-z0-9_'-]{1,}/g) || [];
+              words.forEach(function (w) { bump(w.toLowerCase()); });
+              var runs = text.match(/[\u4e00-\u9fff]{2,}/g) || [];
+              runs.forEach(function (run) {
+                for (var i = 0; i + 1 < run.length; i++) bump(run.slice(i, i + 2));
+              });
+            });
+            var best = "", bestN = 0;
+            order.forEach(function (w) { if (counts[w] > bestN) { bestN = counts[w]; best = w; } });
+            return best || null;
+          } catch (e) { return null; }
+        }
+        function ctxDiaryLine() {
+          try {
+            if (!diaryEntries.length) return null;
+            var latest = diaryEntries.slice().sort(function (a, b) { return b.ts - a.ts; })[0];
+            var d = new Date(latest.ts);
+            var when = fmtDateCN(d);
+            if (d.getFullYear() !== new Date().getFullYear()) when = d.getFullYear() + " 年 " + when;
+            var line = "【日记近况】最近一篇日记写于 " + when + "。";
+            var kw = ctxTopKeyword();
+            if (kw) line += "最近的日记里出现最多的词是「" + kw + "」。";
+            return line;
+          } catch (e) { return null; }
+        }
+        function ctxModuleLines() {
+          var lines = [];
+          if (ctxToggles.money) { var a = ctxMoneyLine(); if (a) lines.push(a); }
+          if (ctxToggles.period) { var b = ctxPeriodLine(); if (b) lines.push(b); }
+          if (ctxToggles.diary) { var c = ctxDiaryLine(); if (c) lines.push(c); }
+          return lines;
+        }
+        function ctxRenderPreview() {
+          var el = $("ctxPreview");
+          if (!el) return;
+          var lines = [];
+          if (ctxToggles.money) { var ml = ctxMoneyLine(); lines.push(ml || "记账：未有记录，发送时不会附这行。"); }
+          if (ctxToggles.period) { var pl = ctxPeriodLine(); lines.push(pl || "经期：未有记录，发送时不会附这行。"); }
+          if (ctxToggles.diary) { var dl = ctxDiaryLine(); lines.push(dl || "日记：未有记录，发送时不会附这行。"); }
+          el.textContent = lines.length ? "现在开了的，发送时会附上：\n" + lines.join("\n") : "三个都没开，发送时不会附任何摘要。";
+        }
+        function ctxFillUI() {
+          $("ctxMoney").checked = !!ctxToggles.money;
+          $("ctxPeriod").checked = !!ctxToggles.period;
+          $("ctxDiary").checked = !!ctxToggles.diary;
+          ctxRenderPreview();
+        }
+        [["ctxMoney", "money"], ["ctxPeriod", "period"], ["ctxDiary", "diary"]].forEach(function (pair) {
+          $(pair[0]).addEventListener("change", function () {
+            ctxToggles[pair[1]] = this.checked;
+            storageSave();
+            ctxRenderPreview();
+          });
+        });
+
         /* 發送 */
         function chatSetSending(on) {
           chatSending = on;
@@ -5657,8 +5787,14 @@
           /* 填咗城市就先查天氣（30 分鐘內有緩存就唔使再查），查到就將實況
              做一條 system 訊息掟喺發出去嗰串嘅最前面；查唔到／接口出事，
              weatherSystemText 回 null，照用原本嘅對話發，絕不阻塞发送。 */
+          /* 開咗嘅分區摘要（記賬／經期／日記）喺本地計好，同天氣實況
+             合併成同一條 system 訊息掟喺最前面；乜都冇開就同以前一樣。 */
+          var ctxLines = ctxModuleLines();
           weatherSystemText().then(function (wxText) {
-            var context = wxText ? [{ role: "system", content: wxText }].concat(baseContext) : baseContext;
+            var sysParts = [];
+            if (wxText) sysParts.push(wxText);
+            ctxLines.forEach(function (l) { sysParts.push(l); });
+            var context = sysParts.length ? [{ role: "system", content: sysParts.join("\n") }].concat(baseContext) : baseContext;
             return chatPostChat(context, confirmations);
           }).then(function (r) {
             chatSetSending(false);
@@ -6219,6 +6355,7 @@
         }
         chatFillUIFromSettings();
         voiceFillUIFromSettings();
+        ctxFillUI();
         updateBaseUrlHint();
         /* 載入嗰陣遷移出嚟嘅設定組，即刻落一次盤，唔好等下次有其他改動先寫 */
         try { storageSave(); } catch (e) {}
