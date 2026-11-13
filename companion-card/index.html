@@ -124,6 +124,27 @@
       #storyMode .span2 { grid-column: auto; }
       .story-img-preview { margin: 8px 0 0; }
       .story-img-preview img { max-width: 140px; max-height: 140px; border-radius: 10px; border: 1px solid var(--line); display: block; }
+
+      /* ---------- 劇情版小說視圖：正文直接鋪喺深色背景上面，唔用對話氣泡 ---------- */
+      #storyMsgs.story-novel { gap: 22px; padding: 20px 16px; }
+      #storyMsgs.story-novel .chat-msg { max-width: none; padding: 0; border-radius: 0; box-shadow: none; background: transparent; }
+      #storyMsgs.story-novel .chat-msg.him, #storyMsgs.story-novel .chat-msg.me { background: transparent; }
+      #storyMsgs.story-novel .story-prose { display: block; color: #f6f2e9; font-size: 1.02rem; line-height: 1.85; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.85), 0 0 2px rgba(0, 0, 0, 0.6); white-space: pre-wrap; word-break: break-word; }
+      #storyMsgs.story-novel .story-prose em { font-style: italic; color: #eec9d8; font-family: "Noto Serif TC", "Songti TC", "Songti SC", serif; }
+      #storyMsgs.story-novel .story-prose strong { font-weight: 700; color: #ffffff; }
+      #storyMsgs.story-novel .story-prose code { background: rgba(255, 255, 255, 0.14); color: #f6f2e9; }
+      #storyMsgs.story-novel .story-dialogue { color: #a9c6ff; }
+      @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+        #storyMsgs.story-novel .story-dialogue { background: linear-gradient(92deg, #8fb8ff 0%, #c49bff 100%); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; text-shadow: none; }
+      }
+      #storyMsgs.story-novel .story-user-block { display: block; background: rgba(8, 8, 12, 0.55); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 12px; padding: 10px 14px; color: #f6f2e9; font-size: 0.98rem; line-height: 1.7; white-space: pre-wrap; word-break: break-word; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8); }
+      #storyMsgs.story-novel .story-user-block em { font-style: italic; color: #eec9d8; }
+      #storyMsgs.story-novel .story-user-block code { background: rgba(255, 255, 255, 0.14); color: #f6f2e9; }
+      #storyMsgs.story-novel .chat-time { color: rgba(255, 255, 255, 0.55); text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8); }
+      #storyMsgs.story-novel .chat-actions .chat-speak, #storyMsgs.story-novel .chat-actions .chat-menu { border-color: rgba(255, 255, 255, 0.35); color: rgba(255, 255, 255, 0.85); background: rgba(0, 0, 0, 0.3); text-shadow: none; }
+      #storyMsgs.story-novel .chat-speak.playing { border-color: #e8b48f; color: #ffd9b0; }
+      #storyMsgs.story-novel .chat-quote { background: rgba(0, 0, 0, 0.4); border-left-color: #c49bff; color: rgba(255, 255, 255, 0.8); }
+      #storyMsgs.story-novel .chat-quote .q-who { color: #c9a8ff; }
       .persona-avatar {
         flex: none; width: 46px; height: 46px; padding: 0; margin-top: 8px;
         border-radius: 50%; overflow: hidden; background: var(--surface-2);
@@ -1556,7 +1577,7 @@
           <h2 id="storyChatTitle">行劇情</h2>
           <p class="sub" id="storyChatHint"></p>
           <p class="sub" id="storyBgIntro" style="display:none;"></p>
-          <div class="chat-msgs" id="storyMsgs"></div>
+          <div class="chat-msgs story-novel" id="storyMsgs"></div>
           <p class="alarm-empty" id="storyEmpty">未開始。上面揀好 char，寫好 user 同世界觀，喺度打第一句，個故事就開始。</p>
           <p class="chat-pending" id="storyPending" style="display:none;">諗緊，唔好催。</p>
           <p class="hint" id="storyStatus" role="status"></p>
@@ -1960,7 +1981,9 @@
                 bgIntro: (typeof p.bgIntro === "string") ? p.bgIntro.slice(0, 2000) : "",
                 opening: (typeof p.opening === "string") ? p.opening.slice(0, 2000) : "",
                 exampleDialogue: (typeof p.exampleDialogue === "string") ? p.exampleDialogue.slice(0, 4000) : "",
-                outputRules: (typeof p.outputRules === "string") ? p.outputRules.slice(0, 2000) : ""
+                outputRules: (typeof p.outputRules === "string") ? p.outputRules.slice(0, 2000) : "",
+                rootName: (typeof p.rootName === "string") ? p.rootName.slice(0, 200) : "",
+                version: (typeof p.version === "number" && isFinite(p.version)) ? p.version : 0
               };
             });
           }
@@ -6602,18 +6625,25 @@
           renderStoryChatHead();
           renderStoryChat();
         }
-        /* 呢位 char 有自己背景圖嗰陣，聊天窗就用佢張圖；冇就用返全局聊天背景。 */
+        /* 小說視圖嘅窗格背景：有圖（呢位 char 嘅背景圖優先，冇就用全局自定圖）
+           就鋪圖加深色漸層壓暗，等白字睇得清；冇圖就用深色底。陪伴版嗰邊唔受影響。 */
         function storyApplyCharBg() {
           var box = $("storyMsgs");
           if (!box) return;
           var c = currentChar();
-          if (c && c.storyOnly && c.bgImg) {
-            box.style.backgroundColor = "";
-            box.style.backgroundImage = "url(\"" + c.bgImg + "\")";
+          var img = "";
+          if (c && c.storyOnly && c.bgImg) img = c.bgImg;
+          else if (chatBgId === "custom" && chatBgCustomImg) img = chatBgCustomImg;
+          if (img) {
+            box.style.backgroundColor = "#15181f";
+            box.style.backgroundImage = "linear-gradient(rgba(8,8,12,0.55), rgba(8,8,12,0.55)), url(\"" + img + "\")";
             box.style.backgroundSize = "cover";
             box.style.backgroundPosition = "center";
           } else {
-            try { applyChatBg(chatBgId); } catch (e) {}
+            box.style.backgroundImage = "";
+            box.style.backgroundColor = "#15181f";
+            box.style.backgroundSize = "";
+            box.style.backgroundPosition = "";
           }
         }
         function renderStoryChatHead() {
@@ -6634,6 +6664,96 @@
             h.textContent = "用緊陪伴版同一組 AI 設定" + (prof ? "（" + prof + (mdl ? " · " + mdl : "") + "）" : "") + "，改設定去返陪伴版「同我傾下計」嗰度。呢段對話只存喺劇情版，同陪伴版嘅傾計分開。";
           }
           try { storyApplyCharBg(); } catch (e) {}
+        }
+        /* 劇情版專屬複製：只複製故事自訂 char，副本只喺劇情版出現，編號跟返
+           最初嗰位排（同陪伴版複製同一套規矩）；設定同開場白一併帶過去，記錄全新。 */
+        function storyDuplicateChar(sourceId) {
+          var src = storyCustomById(sourceId);
+          if (!src) return;
+          var rootName = src.rootName || src.name;
+          var maxV = 0;
+          storyCustomPersonas.forEach(function (x) {
+            if ((x.rootName || x.name) === rootName && typeof x.version === "number" && x.version > maxV) maxV = x.version;
+          });
+          var version = maxV + 1;
+          var nid = "sc-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+          var rec = {
+            id: nid, name: rootName + " " + version + ".0", rootName: rootName, version: version,
+            gender: src.gender || "", avatar: src.avatar || "", bgImg: src.bgImg || "",
+            intro: src.intro || "", desc: src.desc, bgIntro: src.bgIntro || "",
+            opening: src.opening || "", exampleDialogue: src.exampleDialogue || "", outputRules: src.outputRules || ""
+          };
+          storyCustomPersonas.push(rec);
+          var srcSetup = storySetups[sourceId];
+          if (srcSetup) storySetups[nid] = { user: srcSetup.user, worldview: srcSetup.worldview };
+          if (src.opening) {
+            storyHistories[nid] = [{ role: "assistant", content: storySubstitutePlaceholders(src.opening, rec.name), ts: Date.now() }];
+          }
+          storageSave();
+          renderStoryCharList();
+          toast("复制好喇：「" + rec.name + "」，只喺劇情版出現。");
+        }
+        /* 劇情版行內操作：同陪伴版名單同一套（改人設／複製／換頭像／還原頭像）。
+           陪伴版過嚟嘅 char 直接用陪伴版嗰套函數；故事自訂 char 就行故事版嗰套。 */
+        function buildStoryRowActions(row, p) {
+          var box = document.createElement("span");
+          box.className = "p-actions";
+          var editBtn = document.createElement("button");
+          editBtn.type = "button";
+          editBtn.className = "ghost small";
+          editBtn.textContent = "改人设";
+          editBtn.addEventListener("click", function (e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            try { if (p.storyOnly) storyOpenCharForm(p.id); else openPersonaEditor(p.id); } catch (err) {}
+          });
+          box.appendChild(editBtn);
+          var cpBtn = document.createElement("button");
+          cpBtn.type = "button";
+          cpBtn.className = "ghost small";
+          cpBtn.textContent = "复制";
+          cpBtn.addEventListener("click", function (e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            try { if (p.storyOnly) storyDuplicateChar(p.id); else duplicatePersona(p.id); } catch (err) {}
+          });
+          box.appendChild(cpBtn);
+          if (avatarFeatureOk()) {
+            var avBtn = document.createElement("button");
+            avBtn.type = "button";
+            avBtn.className = "ghost small";
+            avBtn.textContent = "换头像";
+            avBtn.addEventListener("click", function (e) {
+              if (e && e.stopPropagation) e.stopPropagation();
+              try {
+                pendingAvatarForId = personaAvatarKey(p.id);
+                var inp = $("avatarFileInput");
+                if (inp) { inp.value = ""; inp.click(); }
+              } catch (err) {}
+            });
+            box.appendChild(avBtn);
+            var hasOv = false;
+            try { hasOv = !!avatarOverrides[personaAvatarKey(p.id)]; } catch (e2) {}
+            if (hasOv) {
+              var rsBtn = document.createElement("button");
+              rsBtn.type = "button";
+              rsBtn.className = "ghost small";
+              rsBtn.textContent = "还原头像";
+              rsBtn.addEventListener("click", function (e) {
+                if (e && e.stopPropagation) e.stopPropagation();
+                try {
+                  pendingAvatarResetId = personaAvatarKey(p.id);
+                  $("avatarResetText").textContent = p.storyOnly
+                    ? "真係還原「" + p.name + "」個頭像？會用返建 char 嗰陣嗰張，你上傳嗰張會清走。"
+                    : (p.copy
+                      ? "真係還原「" + p.name + "」個頭像？會用返复制嗰阵嗰張，你上傳嗰張會清走。"
+                      : "真係還原「" + p.name + "」個頭像？會用返預設嗰張，你上傳嗰張會清走。");
+                  try { $("personaPanel").style.display = "block"; $("personaAvatar").setAttribute("aria-expanded", "true"); } catch (e3) {}
+                  $("avatarResetConfirm").style.display = "block";
+                } catch (err) {}
+              });
+              box.appendChild(rsBtn);
+            }
+          }
+          if (box.childNodes.length) row.appendChild(box);
         }
         function renderStoryCharList() {
           var list = $("storyCharList");
@@ -6682,16 +6802,8 @@
               ck.textContent = "✓ 而家係佢";
               row.appendChild(ck);
             }
+            buildStoryRowActions(row, p);
             if (p.storyOnly) {
-              var edBtn = document.createElement("button");
-              edBtn.type = "button";
-              edBtn.className = "ghost small";
-              edBtn.textContent = "改人設";
-              edBtn.addEventListener("click", function (e) {
-                e.stopPropagation();
-                storyOpenCharForm(p.id);
-              });
-              row.appendChild(edBtn);
               var del = document.createElement("button");
               del.type = "button";
               del.className = "p-del";
@@ -6809,6 +6921,50 @@
           $("storySend").disabled = on;
           $("storyPending").style.display = on ? "block" : "none";
         }
+        /* 小說視圖格式化：先行通用 markdown（斜體／粗體／代碼），再將引號入面
+           嘅對白包起嚟上色。代碼內容唔包。未閉合嘅引號原樣保留。 */
+        function storyWrapDialogue(el) {
+          try {
+            var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+            var nodes = [];
+            var n;
+            while ((n = walker.nextNode())) {
+              var pe = n.parentElement;
+              if (pe && pe.closest && pe.closest("code")) continue;
+              nodes.push(n);
+            }
+            var re = /“[^”\n]+”|“[^“\n]+“|"[^"\n]+"/g;
+            nodes.forEach(function (tn) {
+              var text = tn.nodeValue;
+              if (!text) return;
+              re.lastIndex = 0;
+              var m, last = 0, parts = [];
+              while ((m = re.exec(text))) {
+                if (m.index > last) parts.push({ t: text.slice(last, m.index), dlg: false });
+                parts.push({ t: m[0], dlg: true });
+                last = m.index + m[0].length;
+              }
+              if (!parts.length) return;
+              if (last < text.length) parts.push({ t: text.slice(last), dlg: false });
+              var frag = document.createDocumentFragment();
+              parts.forEach(function (part) {
+                if (part.dlg) {
+                  var sp = document.createElement("span");
+                  sp.className = "story-dialogue";
+                  sp.textContent = part.t;
+                  frag.appendChild(sp);
+                } else {
+                  frag.appendChild(document.createTextNode(part.t));
+                }
+              });
+              tn.parentNode.replaceChild(frag, tn);
+            });
+          } catch (e) {}
+        }
+        function storyFormatNovel(el, text) {
+          chatAppendFormatted(el, chatStripFences(text));
+          storyWrapDialogue(el);
+        }
         function renderStoryChat(scroll) {
           var box = $("storyMsgs");
           if (!box) return;
@@ -6831,8 +6987,8 @@
               d.appendChild(q);
             }
             var tx = document.createElement("span");
-            tx.className = "chat-text";
-            chatAppendFormatted(tx, chatStripFences(m.content));
+            tx.className = m.role === "user" ? "story-user-block" : "story-prose";
+            storyFormatNovel(tx, m.content);
             d.appendChild(tx);
             if (typeof m.ts === "number" && isFinite(m.ts)) {
               var tm = document.createElement("span");
@@ -6957,14 +7113,13 @@
           var exTxt = c.storyOnly ? storySubstitutePlaceholders((c.exampleDialogue || "").trim(), c.name) : "";
           var ruleTxt = c.storyOnly ? storySubstitutePlaceholders((c.outputRules || "").trim(), c.name) : "";
           var sysParts = [];
-          if (userTxt || worldTxt || exTxt || ruleTxt) {
-            sysParts.push("【剧情模式说明】你现在是 char（" + c.name + "），按你的人设行动和说话。对方是主控（user），你们的故事发生在本消息附带的世界观里；主控的人设如下，你要记住并据此互动。回复时保持角色，用剧情口吻。");
-            if (userTxt) sysParts.push("【主控（user）人设】\n" + userTxt);
-            if (worldTxt) sysParts.push("【世界观】\n" + worldTxt);
-            if (exTxt) sysParts.push("【示例对话】\n" + exTxt);
-            if (ruleTxt) sysParts.push("【输出规则】\n" + ruleTxt);
-          }
-          var context = sysParts.length ? [{ role: "system", content: sysParts.join("\n") }].concat(baseContext) : baseContext;
+          sysParts.push("【剧情模式说明】你现在是 char（" + c.name + "），按你的人设行动和说话。对方是主控（user），你们的故事发生在本消息附带的世界观里；主控的人设如下，你要记住并据此互动。");
+          sysParts.push("【写作风格】用小说体写：第三人称，长篇扩写，每次回复写成完整的小说段落（一般数百字），不要只回一两句。旁白和描写用简体中文，对白保留角色自己的口音和说话习惯。同时描写 char 和 user 的动作、神态、心理，让上下文连贯。直接写成小说段落，不要用（）括号标注动作；段落之间空行分开。如与下面【输出规则】冲突，以输出规则为准。");
+          if (userTxt) sysParts.push("【主控（user）人设】\n" + userTxt);
+          if (worldTxt) sysParts.push("【世界观】\n" + worldTxt);
+          if (exTxt) sysParts.push("【示例对话】\n" + exTxt);
+          if (ruleTxt) sysParts.push("【输出规则】\n" + ruleTxt);
+          var context = [{ role: "system", content: sysParts.join("\n") }].concat(baseContext);
           chatPostChat(context, null, { persona: currentChar(), noMcp: true }).then(function (r) {
             storySetSending(false);
             if (r.reply) {
@@ -7203,6 +7358,7 @@
             if (!chatHistories[nid]) chatHistories[nid] = [];
             storageSave();
             renderPersonaPanel();
+            try { renderStoryCharList(); } catch (e) {}
             toast("复制好喇：「" + name + "」。佢有自己嘅聊天记录同人设，预设嗰位原封不动。");
           } catch (e) {}
         }
@@ -7320,6 +7476,9 @@
         }
         function openPersonaEditor(id) {
           editingPersonaId = id;
+          /* 編輯器喺陪伴者面板入面：由劇情版撳入嚟嗰陣，面板可能收埋咗，
+             先打開佢，唔係編輯器開咗都睇唔到。 */
+          try { $("personaPanel").style.display = "block"; $("personaAvatar").setAttribute("aria-expanded", "true"); } catch (e) {}
           var p = personaById(id);
           var name = p ? p.name : id;
           try { $("personaResetConfirm").style.display = "none"; } catch (e) {}
@@ -7437,6 +7596,7 @@
               storageSave();
               closePersonaEditor();
               renderPersonaPanel();
+              try { renderStoryCharList(); renderStoryChatHead(); } catch (e2) {}
               toast("人設保存好喇，傾計嗰陣會用你改呢版。");
             } catch (e) { personaEditStatus("保存唔到，部機唔合作，再試下。"); }
           });
@@ -7460,6 +7620,7 @@
               storageSave();
               closePersonaEditor();
               renderPersonaPanel();
+              try { renderStoryCharList(); renderStoryChatHead(); } catch (e2) {}
               toast(wasCopy ? "還原好喇，用返复制嗰陣嗰版人設。" : "還原好喇，用返預設人設。");
             } catch (e) {}
           });
@@ -7475,6 +7636,7 @@
               $("avatarResetConfirm").style.display = "none";
               renderPersonaAvatar();
               renderPersonaPanel();
+              try { renderStoryCharList(); } catch (e) {}
               avatarStatusMsg("頭像還原好喇，用返預設嗰張。");
             } catch (e) {}
           });
@@ -7494,6 +7656,7 @@
                   storageSave();
                   renderPersonaAvatar();
                   renderPersonaPanel();
+                  try { renderStoryCharList(); } catch (e) {}
                   avatarStatusMsg("頭像換好喇，得你部機睇得到，冇上傳去邊度。");
                 } catch (e) { avatarStatusMsg("換唔到，部機唔合作，再試下。"); }
               });
