@@ -534,6 +534,17 @@
       .chat-text em { font-style: italic; }
       .chat-text strong { font-weight: 700; }
       .chat-text code, .chat-quote code, .chat-quote-bar code { background: rgba(0, 0, 0, 0.08); border-radius: 4px; padding: 0 4px; font-size: 0.88em; }
+      .math { font-family: "STIX Two Math", "Cambria Math", "Times New Roman", serif; font-style: italic; }
+      .math-num, .math-func { font-style: normal; }
+      .math-frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.2; margin: 0 0.08em; }
+      .math-frac > .math-num-part { border-bottom: 1px solid currentColor; padding: 0 0.18em; }
+      .math-frac > .math-den-part { padding: 0 0.18em; }
+      .math-radicand { border-top: 1px solid currentColor; padding: 0 0.12em; }
+      .math-display { display: block; text-align: center; margin: 8px 0; font-size: 1.08em; overflow-x: auto; overflow-y: hidden; }
+      .math sup, .math sub { font-size: 0.72em; line-height: 0; }
+      .math-overline { border-top: 1px solid currentColor; }
+      .math-underline { border-bottom: 1px solid currentColor; }
+      .math-boxed { border: 1px solid currentColor; border-radius: 3px; padding: 0 0.25em; }
       .chat-time { display: block; text-align: right; font-size: 0.68rem; color: #8a8a8a; margin-top: 2px; line-height: 1.2; }
       .chat-speak { align-self: flex-end; margin-top: 4px; padding: 2px 10px; font-size: 0.8rem; line-height: 1.5; background: transparent; border: 1px solid #d8cfba; border-radius: 999px; color: #7a7264; cursor: pointer; }
       .chat-speak.playing { border-color: #b4552d; color: #b4552d; }
@@ -5195,6 +5206,314 @@
         function chatStripFences(text) {
           return String(text || "").split("\n").filter(function (ln) { return !/^\s*```\w*\s*$/.test(ln); }).join("\n");
         }
+        /* ---------- LaTeX 公式子集渲染：$...$ / $$...$$ / \(...\) / \[...\] 顯示成數學符號 ----------
+           唔靠任何外部庫，離線都得。覆蓋常見寫法：希臘字母、上下標、分數、根號、
+           函數名、常用符號、\text、\left\right、簡單環境。儲存嘅原文唔會改，淨係顯示嗰陣轉。 */
+        var MATH_SYMBOLS = {
+          alpha: "α", beta: "β", gamma: "γ", Gamma: "Γ", delta: "δ", Delta: "Δ",
+          epsilon: "ε", varepsilon: "ε", zeta: "ζ", eta: "η", theta: "θ", Theta: "Θ",
+          iota: "ι", kappa: "κ", lambda: "λ", Lambda: "Λ", mu: "μ", nu: "ν",
+          xi: "ξ", Xi: "Ξ", pi: "π", Pi: "Π", rho: "ρ", sigma: "σ", Sigma: "Σ",
+          tau: "τ", phi: "φ", Phi: "Φ", chi: "χ", psi: "ψ", Psi: "Ψ",
+          omega: "ω", Omega: "Ω", infty: "∞", partial: "∂", nabla: "∇",
+          pm: "±", mp: "∓", times: "×", div: "÷", cdot: "·", cdots: "⋯",
+          ldots: "…", dots: "…", vdots: "⋮", ddots: "⋱",
+          le: "≤", leq: "≤", ge: "≥", geq: "≥", ne: "≠", neq: "≠",
+          approx: "≈", equiv: "≡", sim: "∼", simeq: "≃", cong: "≅",
+          propto: "∝", ll: "≪", gg: "≫", prec: "≺", succ: "≻",
+          rightarrow: "→", leftarrow: "←", Rightarrow: "⇒", Leftarrow: "⇐",
+          Leftrightarrow: "⇔", leftrightarrow: "↔", to: "→", gets: "←",
+          in: "∈", notin: "∉", ni: "∋", subset: "⊂", supset: "⊃",
+          subseteq: "⊆", supseteq: "⊇", cup: "∪", cap: "∩",
+          sum: "∑", prod: "∏", int: "∫", oint: "∮",
+          perp: "⊥", parallel: "∥", angle: "∠", hbar: "ħ", ell: "ℓ",
+          emptyset: "∅", varnothing: "∅", forall: "∀", exists: "∃",
+          degree: "°", circ: "∘", bullet: "•", ast: "∗", star: "⋆",
+          dagger: "†", ddagger: "‡", S: "§", P: "¶", pounds: "£",
+          lbrace: "{", rbrace: "}", langle: "⟨", rangle: "⟩",
+          lfloor: "⌊", rfloor: "⌋", lceil: "⌈", rceil: "⌉",
+          vert: "|", Vert: "∥", mid: "∣", aleph: "ℵ", Re: "ℜ", Im: "ℑ", wp: "℘",
+          otimes: "⊗", oplus: "⊕", prime: "′", dprime: "″", checkmark: "✓"
+        };
+        var MATH_FUNCS = { sin: 1, cos: 1, tan: 1, cot: 1, sec: 1, csc: 1, arcsin: 1, arccos: 1, arctan: 1, sinh: 1, cosh: 1, tanh: 1, coth: 1, log: 1, ln: 1, lg: 1, exp: 1, lim: 1, min: 1, max: 1, det: 1, gcd: 1, deg: 1, dim: 1, ker: 1, Pr: 1 };
+        var MATH_IGNORE = { displaystyle: 1, textstyle: 1, scriptstyle: 1, scriptscriptstyle: 1, limits: 1, nolimits: 1, big: 1, Big: 1, bigg: 1, Bigg: 1, bigl: 1, Bigl: 1, biggr: 1, Biggr: 1, bigm: 1, Bigm: 1, mathstrut: 1, vphantom: 1, hphantom: 1 };
+        function mathLikely(b) {
+          if (!b || !b.trim()) return false;
+          if (/[\\^_{}=<>*!|]/.test(b)) return true;
+          if (/^[\d\s+\-*/().,%]+$/.test(b)) return true;
+          if (/^[A-Za-z0-9]{1,3}$/.test(b)) return true;
+          if (/\//.test(b) && /^[A-Za-z0-9\s+\-*/().]+$/.test(b)) return true;
+          return false;
+        }
+        function mathMatchAt(s, i) {
+          var n = s.length;
+          if (s[i] === "$" && s[i + 1] === "$") {
+            var end = s.indexOf("$$", i + 2);
+            if (end !== -1 && end > i + 2 && end - (i + 2) <= 2000) {
+              return { body: s.slice(i + 2, end), display: true, end: end + 2 };
+            }
+            return null;
+          }
+          if (s[i] === "$") {
+            var j = i + 1;
+            while (j < n && s[j] !== "\n" && s[j] !== "$") j++;
+            if (j < n && s[j] === "$" && j > i + 1 && j - (i + 1) <= 500) {
+              var body = s.slice(i + 1, j);
+              if (mathLikely(body)) return { body: body, display: false, end: j + 1 };
+            }
+            return null;
+          }
+          if (s[i] === "\\" && s[i + 1] === "(") {
+            var k = s.indexOf("\\)", i + 2);
+            if (k !== -1 && k > i + 2 && s.slice(i + 2, k).indexOf("\n") === -1) {
+              var b2 = s.slice(i + 2, k);
+              if (mathLikely(b2)) return { body: b2, display: false, end: k + 2 };
+            }
+            return null;
+          }
+          if (s[i] === "\\" && s[i + 1] === "[") {
+            var k2 = s.indexOf("\\]", i + 2);
+            if (k2 !== -1 && k2 > i + 2 && k2 - (i + 2) <= 2000) {
+              return { body: s.slice(i + 2, k2), display: true, end: k2 + 2 };
+            }
+            return null;
+          }
+          return null;
+        }
+        function mathFlushText(frag, run) {
+          if (!run) return;
+          /* 數字串用正體，字母維持斜體。 */
+          var parts = run.split(/(\d[\d.,]*)/);
+          parts.forEach(function (part) {
+            if (!part) return;
+            if (/^\d/.test(part)) {
+              var sp = document.createElement("span");
+              sp.className = "math-num";
+              sp.textContent = part;
+              frag.appendChild(sp);
+            } else {
+              frag.appendChild(document.createTextNode(part));
+            }
+          });
+        }
+        function mathParseRawGroup(src, i, end) {
+          var k = i;
+          while (k < end && (src[k] === " " || src[k] === "\n" || src[k] === "\t")) k++;
+          if (k >= end) return null;
+          if (src[k] !== "{") return { text: src[k], next: k + 1 };
+          var depth = 0, out = "";
+          for (var m = k; m < end; m++) {
+            if (src[m] === "{") { depth++; if (depth > 1) out += src[m]; }
+            else if (src[m] === "}") { depth--; if (depth === 0) return { text: out, next: m + 1 }; out += src[m]; }
+            else out += src[m];
+          }
+          return { text: out, next: end };
+        }
+        function mathParseAtom(src, i, end, display) {
+          var k = i;
+          while (k < end && (src[k] === " " || src[k] === "\n" || src[k] === "\t")) k++;
+          if (k >= end || src[k] === "}") return null;
+          if (src[k] === "{") {
+            var g = mathParseRange(src, k + 1, end, display);
+            return { frag: g.frag, next: g.next };
+          }
+          if (src[k] === "\\") {
+            var r = mathParseCommand(src, k, end, display);
+            var frag = document.createDocumentFragment();
+            if (r.frag) frag.appendChild(r.frag);
+            if (r.text) mathFlushText(frag, r.text);
+            return { frag: frag, next: r.next };
+          }
+          var frag2 = document.createDocumentFragment();
+          mathFlushText(frag2, src[k]);
+          return { frag: frag2, next: k + 1 };
+        }
+        function mathParseCommand(src, i, end, display) {
+          var j = i + 1, name = "";
+          if (j < end && /[a-zA-Z]/.test(src[j])) {
+            while (j < end && /[a-zA-Z]/.test(src[j])) { name += src[j]; j++; }
+          } else if (j < end) {
+            name = src[j]; j++;
+          } else {
+            return { text: "\\", next: j };
+          }
+          if (name === "{") return { text: "{", next: j };
+          if (name === "}") return { text: "}", next: j };
+          if (name === "$" || name === "%" || name === "&" || name === "#" || name === "_" || name === "^") return { text: name, next: j };
+          if (name === ",") return { text: " ", next: j };
+          if (name === ";") return { text: "  ", next: j };
+          if (name === ":") return { text: " ", next: j };
+          if (name === "!") return { text: "", next: j };
+          if (name === " ") return { text: " ", next: j };
+          if (name === "/") return { text: "/", next: j };
+          if (name === "\\") {
+            if (display) {
+              var br = document.createElement("br");
+              return { frag: br, next: j };
+            }
+            return { text: " ", next: j };
+          }
+          if (MATH_IGNORE[name]) return { text: "", next: j };
+          if (name === "quad") return { text: "  ", next: j };
+          if (name === "qquad") return { text: "    ", next: j };
+          if (name === "space") return { text: " ", next: j };
+          if (name === "left" || name === "right" || name === "bigl" || name === "bigr" || name === "Bigl" || name === "Bigr" || name === "biggl" || name === "biggr" || name === "Biggl" || name === "Biggr" || name === "middle") {
+            var k = j;
+            while (k < end && src[k] === " ") k++;
+            if (k < end && src[k] === "\\") {
+              var r2 = mathParseCommand(src, k, end, display);
+              return { frag: r2.frag || null, text: r2.text || "", next: r2.next };
+            }
+            if (k < end) {
+              if (src[k] === ".") return { text: "", next: k + 1 };
+              return { text: src[k], next: k + 1 };
+            }
+            return { text: "", next: j };
+          }
+          if (name === "frac" || name === "dfrac" || name === "tfrac" || name === "binom") {
+            var a1 = mathParseAtom(src, j, end, display);
+            var a2 = a1 ? mathParseAtom(src, a1.next, end, display) : null;
+            if (!a1 || !a2) return { text: "", next: j };
+            var f = document.createElement("span");
+            f.className = "math-frac";
+            var num = document.createElement("span"); num.className = "math-num-part"; num.appendChild(a1.frag);
+            var den = document.createElement("span"); den.className = "math-den-part"; den.appendChild(a2.frag);
+            f.appendChild(num); f.appendChild(den);
+            if (name === "binom") {
+              var w = document.createDocumentFragment();
+              w.appendChild(document.createTextNode("("));
+              w.appendChild(f);
+              w.appendChild(document.createTextNode(")"));
+              return { frag: w, next: a2.next };
+            }
+            return { frag: f, next: a2.next };
+          }
+          if (name === "sqrt") {
+            var k3 = j;
+            while (k3 < end && src[k3] === " ") k3++;
+            var root = null;
+            if (src[k3] === "[") {
+              var close = src.indexOf("]", k3);
+              if (close !== -1 && close < end) { root = src.slice(k3 + 1, close); k3 = close + 1; }
+            }
+            var rad = mathParseAtom(src, k3, end, display);
+            if (!rad) return { text: "√", next: j };
+            var w2 = document.createDocumentFragment();
+            if (root) {
+              var rs = document.createElement("sup");
+              rs.appendChild(mathParseRange(root, 0, root.length, display).frag);
+              w2.appendChild(rs);
+            }
+            w2.appendChild(document.createTextNode("√"));
+            var rd = document.createElement("span"); rd.className = "math-radicand"; rd.appendChild(rad.frag);
+            w2.appendChild(rd);
+            return { frag: w2, next: rad.next };
+          }
+          if (name === "text" || name === "mbox" || name === "mathrm" || name === "mathbf" || name === "mathit" || name === "operatorname" || name === "textnormal" || name === "textrm") {
+            var raw = mathParseRawGroup(src, j, end);
+            if (!raw) return { text: "", next: j };
+            var sp2 = document.createElement("span");
+            if (name === "mathbf") sp2.style.fontWeight = "700";
+            if (name === "mathrm" || name === "operatorname" || name === "textrm" || name === "textnormal") sp2.className = "math-func";
+            sp2.textContent = raw.text;
+            return { frag: sp2, next: raw.next };
+          }
+          if (name === "begin" || name === "end") {
+            var env = mathParseRawGroup(src, j, end);
+            return { text: "", next: env ? env.next : j };
+          }
+          if (name === "overline" || name === "underline" || name === "boxed") {
+            var a3 = mathParseAtom(src, j, end, display);
+            if (!a3) return { text: "", next: j };
+            var ob = document.createElement("span");
+            ob.className = name === "overline" ? "math-overline" : (name === "underline" ? "math-underline" : "math-boxed");
+            ob.appendChild(a3.frag);
+            return { frag: ob, next: a3.next };
+          }
+          if (name === "bar" || name === "hat" || name === "vec" || name === "dot" || name === "tilde" || name === "breve" || name === "check") {
+            var a4 = mathParseAtom(src, j, end, display);
+            if (!a4) return { text: "", next: j };
+            var marks = { bar: "\u0304", hat: "\u0302", vec: "\u20D7", dot: "\u0307", tilde: "\u0303", breve: "\u0306", check: "\u030C" };
+            var w3 = document.createDocumentFragment();
+            w3.appendChild(a4.frag);
+            w3.appendChild(document.createTextNode(marks[name]));
+            return { frag: w3, next: a4.next };
+          }
+          if (name === "color" || name === "textcolor") {
+            var c1 = mathParseRawGroup(src, j, end);
+            if (name === "textcolor" && c1) {
+              var a5 = mathParseAtom(src, c1.next, end, display);
+              return a5 ? { frag: a5.frag, next: a5.next } : { text: "", next: j };
+            }
+            return { text: "", next: c1 ? c1.next : j };
+          }
+          if (name === "hspace" || name === "vspace") {
+            var h = mathParseRawGroup(src, j, end);
+            return { text: " ", next: h ? h.next : j };
+          }
+          if (MATH_FUNCS[name]) {
+            var fn = document.createElement("span");
+            fn.className = "math-func";
+            fn.textContent = name;
+            return { frag: fn, next: j };
+          }
+          if (Object.prototype.hasOwnProperty.call(MATH_SYMBOLS, name)) {
+            return { text: MATH_SYMBOLS[name], next: j };
+          }
+          /* 唔識嘅指令：出個名算，唔好成段吞咗。 */
+          return { text: name, next: j };
+        }
+        function mathParseRange(src, i, end, display) {
+          var frag = document.createDocumentFragment();
+          var run = "";
+          function flush() { mathFlushText(frag, run); run = ""; }
+          while (i < end) {
+            var ch = src[i];
+            if (ch === "}") { flush(); return { frag: frag, next: i + 1 }; }
+            if (ch === "{") {
+              flush();
+              var g = mathParseRange(src, i + 1, end, display);
+              frag.appendChild(g.frag);
+              i = g.next; continue;
+            }
+            if (ch === "^" || ch === "_") {
+              flush();
+              var atom = mathParseAtom(src, i + 1, end, display);
+              if (atom) {
+                var tag = document.createElement(ch === "^" ? "sup" : "sub");
+                tag.appendChild(atom.frag);
+                frag.appendChild(tag);
+                i = atom.next;
+              } else { run += ch; i++; }
+              continue;
+            }
+            if (ch === "\\") {
+              flush();
+              var r = mathParseCommand(src, i, end, display);
+              if (r.frag) frag.appendChild(r.frag);
+              if (r.text) mathFlushText(frag, r.text);
+              i = r.next; continue;
+            }
+            if (ch === "'") {
+              flush();
+              var primes = 0;
+              while (i < end && src[i] === "'") { primes++; i++; }
+              frag.appendChild(document.createTextNode(primes >= 2 ? "″" : "′"));
+              continue;
+            }
+            if (ch === "&") { run += "  "; i++; continue; }
+            if (ch === "~") { run += " "; i++; continue; }
+            run += ch; i++;
+          }
+          flush();
+          return { frag: frag, next: i };
+        }
+        function mathRender(body, display) {
+          var el = document.createElement(display ? "div" : "span");
+          el.className = display ? "math math-display" : "math";
+          el.appendChild(mathParseRange(body, 0, body.length, display).frag);
+          return el;
+        }
         function chatAppendFormatted(parent, text) {
           var s = String(text || "");
           var i = 0, n = s.length, buf = "";
@@ -5215,6 +5534,17 @@
             }
           }
           while (i < n) {
+            /* \$ 係字面 $，唔開公式；$...$ / $$...$$ / \(...\) / \[...\] 先行公式，
+               要放喺 * 號檢查前面，唔係公式入面嘅 * 會俾人當咗斜體。 */
+            if (s[i] === "\\" && s[i + 1] === "$") { buf += "$"; i += 2; continue; }
+            if (s[i] === "$" || (s[i] === "\\" && (s[i + 1] === "(" || s[i + 1] === "["))) {
+              var mm = mathMatchAt(s, i);
+              if (mm) {
+                flush();
+                parent.appendChild(mathRender(mm.body, mm.display));
+                i = mm.end; continue;
+              }
+            }
             if (s[i] === "*" && s[i + 1] === "*" && i + 2 < n && !isSpace(s[i + 2])) {
               var be = findCloser(i + 2, "**");
               if (be !== -1 && s.slice(i + 2, be).indexOf("\n") === -1) {
@@ -6748,6 +7078,7 @@
                       : "真係還原「" + p.name + "」個頭像？會用返預設嗰張，你上傳嗰張會清走。");
                   try { $("personaPanel").style.display = "block"; $("personaAvatar").setAttribute("aria-expanded", "true"); } catch (e3) {}
                   $("avatarResetConfirm").style.display = "block";
+                  try { $("avatarResetConfirm").scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e4) {}
                 } catch (err) {}
               });
               box.appendChild(rsBtn);
@@ -6925,39 +7256,44 @@
            嘅對白包起嚟上色。代碼內容唔包。未閉合嘅引號原樣保留。 */
         function storyWrapDialogue(el) {
           try {
-            var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
-            var nodes = [];
-            var n;
-            while ((n = walker.nextNode())) {
-              var pe = n.parentElement;
-              if (pe && pe.closest && pe.closest("code")) continue;
-              nodes.push(n);
-            }
             var re = /“[^”\n]+”|“[^“\n]+“|"[^"\n]+"/g;
-            nodes.forEach(function (tn) {
-              var text = tn.nodeValue;
-              if (!text) return;
-              re.lastIndex = 0;
-              var m, last = 0, parts = [];
-              while ((m = re.exec(text))) {
-                if (m.index > last) parts.push({ t: text.slice(last, m.index), dlg: false });
-                parts.push({ t: m[0], dlg: true });
-                last = m.index + m[0].length;
+            /* 第一遍：收集所有文字節點（代碼同公式入面嘅唔包），拼成全段文字搵引號對。
+               引號對可以橫跨公式元素（例如對白入面有條式），所以唔可以逐個文字節點獨立判斷。 */
+            function collectTextNodes() {
+              var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+              var nodes = [];
+              var n;
+              while ((n = walker.nextNode())) {
+                var pe = n.parentElement;
+                if (pe && pe.closest && pe.closest("code, .math")) continue;
+                nodes.push(n);
               }
-              if (!parts.length) return;
-              if (last < text.length) parts.push({ t: text.slice(last), dlg: false });
-              var frag = document.createDocumentFragment();
-              parts.forEach(function (part) {
-                if (part.dlg) {
+              return nodes;
+            }
+            var nodes = collectTextNodes();
+            var full = nodes.map(function (tn) { return tn.nodeValue; }).join("");
+            var pairs = [];
+            var m;
+            re.lastIndex = 0;
+            while ((m = re.exec(full))) pairs.push({ start: m.index, end: m.index + m[0].length });
+            /* 第二遍：逐對引號包起嚟。每包一對就重新收集節點；包嘢唔改字數，偏移仍然啱。 */
+            pairs.forEach(function (pair) {
+              var cur = collectTextNodes();
+              var off = 0;
+              cur.forEach(function (tn) {
+                var len = tn.nodeValue.length;
+                var ns = Math.max(pair.start, off), ne = Math.min(pair.end, off + len);
+                if (ns < ne) {
+                  var node = tn;
+                  if (ne < off + len) node.splitText(ne - off);
+                  if (ns > off) node = node.splitText(ns - off);
                   var sp = document.createElement("span");
                   sp.className = "story-dialogue";
-                  sp.textContent = part.t;
-                  frag.appendChild(sp);
-                } else {
-                  frag.appendChild(document.createTextNode(part.t));
+                  node.parentNode.insertBefore(sp, node);
+                  sp.appendChild(node);
                 }
+                off += len;
               });
-              tn.parentNode.replaceChild(frag, tn);
             });
           } catch (e) {}
         }
@@ -7436,6 +7772,7 @@
                     ? "真係還原「" + p.name + "」個頭像？會用返复制嗰阵嗰張，你上傳嗰張會清走。"
                     : "真係還原「" + p.name + "」個頭像？會用返預設嗰張，你上傳嗰張會清走。";
                   $("avatarResetConfirm").style.display = "block";
+                  try { $("avatarResetConfirm").scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e3) {}
                 } catch (err) {}
               });
               box.appendChild(rsBtn);
@@ -7484,6 +7821,9 @@
           try { $("personaResetConfirm").style.display = "none"; } catch (e) {}
           try { $("personaEditTitle").textContent = "改人设：" + name; } catch (e) {}
           try { $("personaEditPanel").style.display = "block"; } catch (e) {}
+          /* 由劇情版撳入嚟嗰陣，編輯器喺頁頂嘅面板入面，唔碌過去用家睇唔到，
+             以為個掣冇反應——碌到編輯器面前（同 MCP 刪除確認同一個教訓）。 */
+          try { $("personaEditPanel").scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) {}
           var ta = $("personaEditText");
           /* 自訂人設冇預設原文，唔使上網拉：直接編輯佢本身嗰段描述，
              亦冇「还原预设」呢回事，收起個掣。 */
