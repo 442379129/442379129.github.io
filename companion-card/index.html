@@ -498,6 +498,9 @@
       .chat-msg.him { align-self: flex-start; background: #ffffff; color: #1c1c1c; border-bottom-left-radius: 5px; }
       .chat-msg.me { align-self: flex-end; background: #dcf8c6; color: #1c1c1c; border-bottom-right-radius: 5px; }
       .chat-msg .chat-text { display: block; }
+      .chat-text em { font-style: italic; }
+      .chat-text strong { font-weight: 700; }
+      .chat-text code, .chat-quote code, .chat-quote-bar code { background: rgba(0, 0, 0, 0.08); border-radius: 4px; padding: 0 4px; font-size: 0.88em; }
       .chat-time { display: block; text-align: right; font-size: 0.68rem; color: #8a8a8a; margin-top: 2px; line-height: 1.2; }
       .chat-speak { align-self: flex-end; margin-top: 4px; padding: 2px 10px; font-size: 0.8rem; line-height: 1.5; background: transparent; border: 1px solid #d8cfba; border-radius: 999px; color: #7a7264; cursor: pointer; }
       .chat-speak.playing { border-color: #b4552d; color: #b4552d; }
@@ -4926,6 +4929,67 @@
         }
         /* scroll === false 嗰陣唔搶滾動（例如確認卡取消、超額清理後重畫）；
            預設同以前一樣：發送、收到回覆、切換陪伴者、初次渲染都碌到最底。 */
+        /* 氣泡入面嘅輕量格式：*斜體*、**粗體**、`代碼` 要顯示出嚟，唔好原樣露出符號。
+           唔用 innerHTML，逐段砌 text 節點，AI 回覆入面嘅 HTML 一律當純文字。
+           ``` 獨佔一行嗰啲圍欄行（多數係 AI 手誤圍住成段）成行抌咗，入面嘅內容照常顯示；
+           冇配對嘅符號原樣保留，唔好食咗佢。 */
+        function chatStripFences(text) {
+          return String(text || "").split("\n").filter(function (ln) { return !/^\s*```\w*\s*$/.test(ln); }).join("\n");
+        }
+        function chatAppendFormatted(parent, text) {
+          var s = String(text || "");
+          var i = 0, n = s.length, buf = "";
+          function flush() { if (buf) { parent.appendChild(document.createTextNode(buf)); buf = ""; } }
+          function isSpace(ch) { return ch === " " || ch === "\n" || ch === "\t" || ch === "\r"; }
+          /* 搵收尾符：收尾符前面嗰個字唔可以係空白；撞到唔合格嘅就繼續向後搵，
+             唔好成段放棄。單 * 收尾後面唔可以跟多個 *（嗰個係粗體嘅收尾）。 */
+          function findCloser(from, delim) {
+            var at = from;
+            while (true) {
+              var idx = s.indexOf(delim, at);
+              if (idx === -1) return -1;
+              if (idx > from && !isSpace(s[idx - 1])) {
+                if (delim === "*" && s[idx + 1] === "*") { at = idx + 1; continue; }
+                return idx;
+              }
+              at = idx + 1;
+            }
+          }
+          while (i < n) {
+            if (s[i] === "*" && s[i + 1] === "*" && i + 2 < n && !isSpace(s[i + 2])) {
+              var be = findCloser(i + 2, "**");
+              if (be !== -1 && s.slice(i + 2, be).indexOf("\n") === -1) {
+                flush();
+                var st = document.createElement("strong");
+                st.textContent = s.slice(i + 2, be);
+                parent.appendChild(st);
+                i = be + 2; continue;
+              }
+            }
+            if (s[i] === "*" && i + 1 < n && !isSpace(s[i + 1])) {
+              var ie = findCloser(i + 1, "*");
+              if (ie !== -1 && s.slice(i + 1, ie).indexOf("\n") === -1) {
+                flush();
+                var em = document.createElement("em");
+                em.textContent = s.slice(i + 1, ie);
+                parent.appendChild(em);
+                i = ie + 1; continue;
+              }
+            }
+            if (s[i] === "`" && i + 1 < n && !isSpace(s[i + 1])) {
+              var ce = findCloser(i + 1, "`");
+              if (ce !== -1 && s.slice(i + 1, ce).indexOf("\n") === -1) {
+                flush();
+                var cd = document.createElement("code");
+                cd.textContent = s.slice(i + 1, ce);
+                parent.appendChild(cd);
+                i = ce + 1; continue;
+              }
+            }
+            buf += s[i]; i++;
+          }
+          flush();
+        }
         function renderChat(scroll) {
           var box = $("chatMsgs");
           if (!box) return;
@@ -4968,14 +5032,14 @@
               qw.textContent = m.quote.role === "user" ? "你" : "佢";
               var qt = document.createElement("span");
               qt.className = "q-text";
-              qt.textContent = m.quote.text;
+              chatAppendFormatted(qt, chatStripFences(m.quote.text));
               q.appendChild(qw);
               q.appendChild(qt);
               d.appendChild(q);
             }
             var tx = document.createElement("span");
             tx.className = "chat-text";
-            tx.textContent = m.content;
+            chatAppendFormatted(tx, chatStripFences(m.content));
             d.appendChild(tx);
             if (typeof m.ts === "number" && isFinite(m.ts)) {
               var tm = document.createElement("span");
@@ -5042,7 +5106,8 @@
           if (!text) return;
           chatActiveQuote = { role: m.role, text: text.slice(0, 2000) };
           $("chatQuoteWho").textContent = m.role === "user" ? "引用你嘅訊息" : "引用佢嘅回覆";
-          $("chatQuoteText").textContent = text;
+          $("chatQuoteText").textContent = "";
+          chatAppendFormatted($("chatQuoteText"), chatStripFences(text));
           $("chatQuoteBar").style.display = "flex";
           try { $("chatInput").focus(); } catch (e) {}
         }
