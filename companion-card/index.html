@@ -122,6 +122,8 @@
       #storyMode { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; margin-top: 16px; }
       #storyMode > section.card { min-width: 0; }
       #storyMode .span2 { grid-column: auto; }
+      .story-img-preview { margin: 8px 0 0; }
+      .story-img-preview img { max-width: 140px; max-height: 140px; border-radius: 10px; border: 1px solid var(--line); display: block; }
       .persona-avatar {
         flex: none; width: 46px; height: 46px; padding: 0; margin-top: 8px;
         border-radius: 50%; overflow: hidden; background: var(--surface-2);
@@ -1468,10 +1470,60 @@
           <div id="storyCharList"></div>
           <button type="button" class="ghost small" id="storyCharAddBtn" style="margin-top:12px;">＋ 新增 char 人設（只喺劇情版）</button>
           <div id="storyCharForm" style="display:none; margin-top:6px;">
-            <label class="flabel" for="storyCharName">char 名</label>
+            <label class="flabel" for="storyCharName">char 名 *</label>
             <input type="text" id="storyCharName" placeholder="例如：阿城、師父……" aria-label="char 名" />
-            <label class="flabel" for="storyCharDesc">char 人設（佢係咩人、點講嘢、點對主控，寫清楚啲）</label>
-            <textarea id="storyCharDesc" rows="4" placeholder="例如：一個沉默寡言嘅劍客，講嘢唔超過十個字，但會用行動護住主控……" aria-label="char 人設"></textarea>
+            <label class="flabel" for="storyCharGender">性別</label>
+            <select id="storyCharGender" aria-label="性別">
+              <option value="">不指定</option>
+              <option value="男">男</option>
+              <option value="女">女</option>
+              <option value="其他">其他</option>
+            </select>
+            <p class="flabel">頭像（可選，只存喺你部機）</p>
+            <div class="row">
+              <button type="button" class="ghost small" id="storyCharAvatarBtn">選擇頭像</button>
+              <button type="button" class="ghost small" id="storyCharAvatarRemove">移除頭像</button>
+            </div>
+            <p class="story-img-preview" id="storyCharAvatarPreview" style="display:none;"><img id="storyCharAvatarImg" alt="頭像預覽" /></p>
+            <input type="file" id="storyCharAvatarFile" accept="image/*" style="display:none;" aria-label="選擇頭像相片" />
+            <p class="flabel">背景圖（可選，呢個 char 嘅聊天窗背景，只存喺你部機）</p>
+            <div class="row">
+              <button type="button" class="ghost small" id="storyCharBgBtn">選擇背景圖</button>
+              <button type="button" class="ghost small" id="storyCharBgRemove">移除背景圖</button>
+            </div>
+            <p class="story-img-preview" id="storyCharBgPreview" style="display:none;"><img id="storyCharBgImg" alt="背景圖預覽" /></p>
+            <input type="file" id="storyCharBgFile" accept="image/*" style="display:none;" aria-label="選擇背景圖" />
+            <label class="flabel" for="storyCharIntro">簡介（可選，名單入面顯示嘅一句話）</label>
+            <input type="text" id="storyCharIntro" maxlength="200" placeholder="例如：沉默寡言嘅劍客，只對主控笑" aria-label="簡介" />
+            <label class="flabel" for="storyCharDesc">角色設定 *（外貌、身份、性格、經歷、對主控嘅情感同態度、講嘢風格，寫清楚啲）</label>
+            <textarea id="storyCharDesc" rows="6" maxlength="4000" placeholder="例如：&#10;外貌：高瘦，左眼下有粒痣，成日著黑衫。&#10;身份：退役殺手，而家喺碼頭做搬運。&#10;性格：嘴硬心軟，唔識講好聽嘢。&#10;對{{user}}的情感：表面嫌棄，實際護到實。&#10;【扮演風格】講嘢短，唔超過十個字；緊張嗰陣會摸刀柄。" aria-label="角色設定"></textarea>
+            <p class="hint" id="storyCharDescCount" style="margin-top:4px;">0 / 4000</p>
+            <div class="row">
+              <button type="button" class="ghost small" data-story-ph="storyCharDesc" data-story-token="{{user}}">添加{{user}}</button>
+              <button type="button" class="ghost small" data-story-ph="storyCharDesc" data-story-token="{{char}}">添加{{char}}</button>
+            </div>
+            <label class="flabel" for="storyCharBgIntro">背景介紹（可選，淨係喺故事未開始嗰陣顯示，唔會發畀 AI，純文字，唔支援 HTML）</label>
+            <textarea id="storyCharBgIntro" rows="3" maxlength="2000" placeholder="例如：民國初年，上海灘，碼頭工人同租界巡捕嘅世界……" aria-label="背景介紹"></textarea>
+            <label class="flabel" for="storyCharOpening">開場白（可選，故事嘅第一句，會成為第一條回覆；改咗只會影響下一次清空之後嘅新開頭）</label>
+            <textarea id="storyCharOpening" rows="3" maxlength="2000" placeholder="例如：碼頭嘅霧未散，{{char}} 踎喺貨堆後面，抬頭望住你：「跟住我，唔好出聲。」" aria-label="開場白"></textarea>
+            <div class="row">
+              <button type="button" class="ghost small" data-story-ph="storyCharOpening" data-story-token="{{user}}">添加{{user}}</button>
+              <button type="button" class="ghost small" data-story-ph="storyCharOpening" data-story-token="{{char}}">添加{{char}}</button>
+            </div>
+            <label class="flabel" for="storyCharStorySetting">故事設定（可選，故事背景、人物、情節——就係呢個 char 嘅世界觀，同下面「user 同世界觀」嗰格係同一個，會同步）</label>
+            <textarea id="storyCharStorySetting" rows="4" maxlength="4000" placeholder="例如：民國初年嘅上海，租界、茶館、碼頭，槍同舊禮教並存，冇超能力……" aria-label="故事設定"></textarea>
+            <div class="row">
+              <button type="button" class="ghost small" data-story-ph="storyCharStorySetting" data-story-token="{{user}}">添加{{user}}</button>
+              <button type="button" class="ghost small" data-story-ph="storyCharStorySetting" data-story-token="{{char}}">添加{{char}}</button>
+            </div>
+            <label class="flabel" for="storyCharExample">示例對話（可選，寫段示範對話或者文風描述，等 AI 學住咁講嘢）</label>
+            <textarea id="storyCharExample" rows="4" maxlength="4000" placeholder="例如：{{user}}：「你點解成日跟住我？」&#10;{{char}}：「路係大家行嘅。」" aria-label="示例對話"></textarea>
+            <div class="row">
+              <button type="button" class="ghost small" data-story-ph="storyCharExample" data-story-token="{{user}}">添加{{user}}</button>
+              <button type="button" class="ghost small" data-story-ph="storyCharExample" data-story-token="{{char}}">添加{{char}}</button>
+            </div>
+            <label class="flabel" for="storyCharRules">輸出規則（可選，規定回覆嘅格式，例如點分段、用咩標記）</label>
+            <textarea id="storyCharRules" rows="3" maxlength="2000" placeholder="例如：動作同心理描寫用 * 圍住；對白直接寫，唔加引號；每段唔超過三句。" aria-label="輸出規則"></textarea>
             <div class="row" style="margin-top:12px;">
               <button type="button" id="storyCharSave">保存呢個 char</button>
               <button type="button" class="ghost" id="storyCharCancel">取消</button>
@@ -1488,8 +1540,8 @@
         </section>
 
         <section class="card span2" id="storySetup">
-          <h2>user 同世界觀</h2>
-          <p class="sub">主控係你，世界觀係呢個故事發生嘅地方同規則。寫好，發訊息嗰陣就會一併話畀 char 知；唔寫，佢就按自己人設同你傾。</p>
+          <h2 id="storySetupTitle">user 同世界觀</h2>
+          <p class="sub">主控係你，世界觀係呢個故事發生嘅地方同規則。寫好，發訊息嗰陣就會一併話畀 char 知；唔寫，佢就按自己人設同你傾。每位 char 各有一份，換 char 就換另一份。</p>
           <label class="flabel" for="storyUserPersona">user 人設（主控）</label>
           <textarea id="storyUserPersona" rows="4" maxlength="4000" placeholder="例如：一個喺茶館打工嘅女仔，表面怕事，實際膽大心細，識少少醫術……" aria-label="user 人設"></textarea>
           <label class="flabel" for="storyWorldview">世界觀</label>
@@ -1503,11 +1555,24 @@
         <section class="card span2" id="storyChatSec">
           <h2 id="storyChatTitle">行劇情</h2>
           <p class="sub" id="storyChatHint"></p>
+          <p class="sub" id="storyBgIntro" style="display:none;"></p>
           <div class="chat-msgs" id="storyMsgs"></div>
           <p class="alarm-empty" id="storyEmpty">未開始。上面揀好 char，寫好 user 同世界觀，喺度打第一句，個故事就開始。</p>
           <p class="chat-pending" id="storyPending" style="display:none;">諗緊，唔好催。</p>
           <p class="hint" id="storyStatus" role="status"></p>
           <div class="mcp-err" id="storyErrDetail" style="display:none;" role="status"></div>
+          <div class="chat-quote-bar" id="storyQuoteBar" style="display:none;">
+            <div class="q-body"><span class="q-who" id="storyQuoteWho"></span><span class="q-text" id="storyQuoteText"></span></div>
+            <button type="button" class="ghost small" id="storyQuoteCancel" aria-label="取消引用">✕</button>
+          </div>
+          <div class="chat-edit-panel" id="storyEditPanel" style="display:none;">
+            <p class="hint" style="margin:0 0 6px;">改緊呢句回覆，改完之後對話會按改好嘅版本繼續。</p>
+            <textarea id="storyEditText" aria-label="修改回覆內容"></textarea>
+            <div class="row" style="margin-top:8px;">
+              <button type="button" id="storyEditSave">保存修改</button>
+              <button type="button" class="ghost" id="storyEditCancel">取消</button>
+            </div>
+          </div>
           <div class="row" style="margin-top:10px; align-items:flex-end;">
             <textarea id="storyInput" rows="2" class="grow" placeholder="寫低主控講嘅嘢、做嘅嘢，或者推進劇情嘅一句……" aria-label="輸入劇情訊息"></textarea>
             <button type="button" id="storySend">發送</button>
@@ -1516,10 +1581,25 @@
             <button type="button" class="ghost small" id="storyClear">清空呢段劇情</button>
           </div>
           <div class="note" id="storyClearConfirm" style="display:none;">
-            <p style="margin:0 0 6px;">呢段劇情嘅對話刪晒，一句都唔留，冇得返轉頭。諗清楚，先好撳確認。</p>
+            <p style="margin:0 0 6px;" id="storyClearText">呢段劇情嘅對話刪晒，一句都唔留，冇得返轉頭。諗清楚，先好撳確認。</p>
             <div class="row">
               <button type="button" id="storyClearYes">確認清空</button>
               <button type="button" class="ghost" id="storyClearNo">算數，留返</button>
+            </div>
+          </div>
+          <div class="chat-sheet-backdrop" id="storySheetBackdrop"></div>
+          <div class="chat-sheet" id="storyMsgSheet" role="dialog" aria-label="訊息操作">
+            <p class="sheet-title" id="storySheetTitle"></p>
+            <div id="storySheetActions">
+              <button type="button" class="ghost" id="storySheetQuote">引用</button>
+              <button type="button" class="ghost" id="storySheetEdit">修改回覆</button>
+              <button type="button" class="ghost sheet-danger" id="storySheetRetract">撤回</button>
+              <button type="button" class="ghost" id="storySheetCancel">取消</button>
+            </div>
+            <div id="storySheetConfirm" style="display:none;">
+              <p style="text-align:center; margin:6px 0 10px;">撤回呢條訊息？撤回之後佢唔會再出現喺記錄入面，亦唔會再發畀 AI。</p>
+              <button type="button" class="sheet-danger" id="storySheetRetractYes">確認撤回</button>
+              <button type="button" class="ghost" id="storySheetRetractNo">算數，留返</button>
             </div>
           </div>
         </section>
@@ -1740,16 +1820,20 @@
            入劇情版就自動跟邊個）；劇情版自加嘅人設只存喺呢度，唔返陪伴版；
            user 人設同世界觀只喺劇情版用；劇情對話同陪伴版對話分開存。 */
         var cardMode = "companion";
-        var storyCustomPersonas = []; // {id, name, desc} 只喺劇情版出現
+        var storyCustomPersonas = []; // {id, name, gender, avatar, bgImg, intro, desc, bgIntro, opening, exampleDialogue, outputRules} 只喺劇情版出現
         var storyActiveCharId = "";
         var storySyncedFromCompanionId = "";
         var storyHistories = {}; // { charId: [{role, content, ts}] }
         var storyHistory = [];
-        var storyUserPersona = "";
-        var storyWorldview = "";
+        var storySetups = {}; // { charId: {user, worldview} } 每位 char 各有一份 user 人設同世界觀
         var storySending = false;
         var editingStoryCharId = "";
         var pendingDeleteStoryCharId = "";
+        var storyActionIndex = -1;
+        var storyActiveQuote = null;
+        var storyEditIndex = -1;
+        var storyCharFormAvatar = "";
+        var storyCharFormBgImg = "";
         /* 多組 AI 設定：chatProfiles 存幾組可切換嘅設定，activeChatProfileId 指向而家嗰組；
            chatSettings 繼續係「而家生效嗰組」嘅工作副本，city 同 mcpServers 全局共用，唔入組。 */
         var chatProfiles = []; // [{id, name, preset, provider, baseUrl, apiKey, model, modelManual}]
@@ -1866,12 +1950,41 @@
           if (Object.prototype.toString.call(savedData.storyCustomPersonas) === "[object Array]") {
             storyCustomPersonas = savedData.storyCustomPersonas.filter(function (p) {
               return p && typeof p.id === "string" && typeof p.name === "string" && typeof p.desc === "string";
+            }).map(function (p) {
+              return {
+                id: p.id, name: p.name, desc: p.desc.slice(0, 4000),
+                gender: (p.gender === "男" || p.gender === "女" || p.gender === "其他") ? p.gender : "",
+                avatar: (typeof p.avatar === "string" && p.avatar.indexOf("data:image/") === 0 && p.avatar.length <= 400000) ? p.avatar : "",
+                bgImg: (typeof p.bgImg === "string" && p.bgImg.indexOf("data:image/") === 0 && p.bgImg.length <= 400000) ? p.bgImg : "",
+                intro: (typeof p.intro === "string") ? p.intro.slice(0, 200) : "",
+                bgIntro: (typeof p.bgIntro === "string") ? p.bgIntro.slice(0, 2000) : "",
+                opening: (typeof p.opening === "string") ? p.opening.slice(0, 2000) : "",
+                exampleDialogue: (typeof p.exampleDialogue === "string") ? p.exampleDialogue.slice(0, 4000) : "",
+                outputRules: (typeof p.outputRules === "string") ? p.outputRules.slice(0, 2000) : ""
+              };
             });
           }
           if (typeof savedData.storyActiveCharId === "string") storyActiveCharId = savedData.storyActiveCharId;
           if (typeof savedData.storySyncedFromCompanionId === "string") storySyncedFromCompanionId = savedData.storySyncedFromCompanionId;
-          if (typeof savedData.storyUserPersona === "string") storyUserPersona = savedData.storyUserPersona.slice(0, 4000);
-          if (typeof savedData.storyWorldview === "string") storyWorldview = savedData.storyWorldview.slice(0, 4000);
+          if (savedData.storySetups && typeof savedData.storySetups === "object") {
+            Object.keys(savedData.storySetups).forEach(function (cid) {
+              var st = savedData.storySetups[cid];
+              if (st && typeof st === "object") {
+                storySetups[cid] = {
+                  user: (typeof st.user === "string") ? st.user.slice(0, 4000) : "",
+                  worldview: (typeof st.worldview === "string") ? st.worldview.slice(0, 4000) : ""
+                };
+              }
+            });
+          }
+          /* 舊版得一份通用 user／世界觀嗰陣，搬去而家呢位 char 名下，唔好抌咗佢 */
+          if (!Object.keys(storySetups).length && (typeof savedData.storyUserPersona === "string" || typeof savedData.storyWorldview === "string")) {
+            var legacyTarget = storyActiveCharId || activePersonaId;
+            storySetups[legacyTarget] = {
+              user: (typeof savedData.storyUserPersona === "string") ? savedData.storyUserPersona.slice(0, 4000) : "",
+              worldview: (typeof savedData.storyWorldview === "string") ? savedData.storyWorldview.slice(0, 4000) : ""
+            };
+          }
           if (savedData.storyHistories && typeof savedData.storyHistories === "object") {
             Object.keys(savedData.storyHistories).forEach(function (cid) {
               var arr = savedData.storyHistories[cid];
@@ -1945,7 +2058,7 @@
             voiceSettings: voiceSettings, ctxToggles: ctxToggles,
             cardMode: cardMode, storyCustomPersonas: storyCustomPersonas, storyActiveCharId: storyActiveCharId,
             storySyncedFromCompanionId: storySyncedFromCompanionId, storyHistories: storyHistories,
-            storyUserPersona: storyUserPersona, storyWorldview: storyWorldview
+            storySetups: storySetups
           };
         }
         function storageIsQuotaErr(e) {
@@ -4654,6 +4767,7 @@
         function setChatBg(id) {
           chatBgId = id;
           applyChatBg(id);
+          try { storyApplyCharBg(); } catch (e) {}
           storageSave();
         }
         document.querySelectorAll("[data-chat-bg]").forEach(function (btn) {
@@ -6396,10 +6510,30 @@
            char 會跟住陪伴版揀嗰位自動變，但只喺陪伴版揀嗰位變咗嗰陣先跟；
            陪伴版冇變，劇情版自己揀嘅 char 就唔會郁。AI 設定同陪伴版共用同一組，
            發訊息嗰陣唔帶 MCP、唔帶天氣同分區摘要，淨係帶 user 人設＋世界觀。 */
+        /* 佔位符：{{char}} 換成 char 個名，{{user}} 換成「主控」。只喺劇情版發出去
+           嗰陣換，存低嘅原文唔郁，陪伴版嗰邊完全唔掂。 */
+        function storySubstitutePlaceholders(text, charName) {
+          var t = typeof text === "string" ? text : "";
+          if (!t) return t;
+          return t.split("{{char}}").join(charName || "").split("{{user}}").join("主控");
+        }
+        function storyCustomById(id) {
+          for (var i = 0; i < storyCustomPersonas.length; i++) { if (storyCustomPersonas[i].id === id) return storyCustomPersonas[i]; }
+          return null;
+        }
         function allChars() {
           var list = allPersonas();
           storyCustomPersonas.forEach(function (p) {
-            list.push({ id: p.id, name: p.name, blurb: p.desc, avatar: "", desc: p.desc, custom: true, storyOnly: true });
+            var composed = p.desc || "";
+            if (p.gender) composed = "性別：" + p.gender + "\n" + composed;
+            composed = storySubstitutePlaceholders(composed, p.name);
+            list.push({
+              id: p.id, name: p.name, blurb: p.intro || p.desc, avatar: p.avatar || "",
+              desc: composed, custom: true, storyOnly: true,
+              gender: p.gender || "", bgImg: p.bgImg || "", intro: p.intro || "",
+              bgIntro: p.bgIntro || "", opening: p.opening || "",
+              exampleDialogue: p.exampleDialogue || "", outputRules: p.outputRules || ""
+            });
           });
           return list;
         }
@@ -6427,15 +6561,21 @@
           storyEnsureCharValid();
           storageSave();
         }
+        function storySetupFor(id) {
+          if (!storySetups[id]) storySetups[id] = { user: "", worldview: "" };
+          return storySetups[id];
+        }
         function storyReadSetupFromUI() {
+          var st = storySetupFor(storyActiveCharId);
           var u = $("storyUserPersona"), w = $("storyWorldview");
-          if (u) storyUserPersona = u.value.slice(0, 4000);
-          if (w) storyWorldview = w.value.slice(0, 4000);
+          if (u) st.user = u.value.slice(0, 4000);
+          if (w) st.worldview = w.value.slice(0, 4000);
         }
         function storyFillSetupUI() {
+          var st = storySetupFor(storyActiveCharId);
           var u = $("storyUserPersona"), w = $("storyWorldview");
-          if (u) u.value = storyUserPersona;
-          if (w) w.value = storyWorldview;
+          if (u) u.value = st.user;
+          if (w) w.value = st.worldview;
         }
         function applyCardMode() {
           var story = cardMode === "story";
@@ -6462,10 +6602,26 @@
           renderStoryChatHead();
           renderStoryChat();
         }
+        /* 呢位 char 有自己背景圖嗰陣，聊天窗就用佢張圖；冇就用返全局聊天背景。 */
+        function storyApplyCharBg() {
+          var box = $("storyMsgs");
+          if (!box) return;
+          var c = currentChar();
+          if (c && c.storyOnly && c.bgImg) {
+            box.style.backgroundColor = "";
+            box.style.backgroundImage = "url(\"" + c.bgImg + "\")";
+            box.style.backgroundSize = "cover";
+            box.style.backgroundPosition = "center";
+          } else {
+            try { applyChatBg(chatBgId); } catch (e) {}
+          }
+        }
         function renderStoryChatHead() {
           var c = currentChar();
           var t = $("storyChatTitle");
           if (t) t.textContent = "同 " + c.name + " 行劇情";
+          var st2 = $("storySetupTitle");
+          if (st2) st2.textContent = "user 同世界觀（" + c.name + "）";
           var h = $("storyChatHint");
           if (h) {
             var prof = "", mdl = "";
@@ -6477,6 +6633,7 @@
             try { mdl = chatEffectiveModel(); } catch (e) {}
             h.textContent = "用緊陪伴版同一組 AI 設定" + (prof ? "（" + prof + (mdl ? " · " + mdl : "") + "）" : "") + "，改設定去返陪伴版「同我傾下計」嗰度。呢段對話只存喺劇情版，同陪伴版嘅傾計分開。";
           }
+          try { storyApplyCharBg(); } catch (e) {}
         }
         function renderStoryCharList() {
           var list = $("storyCharList");
@@ -6555,22 +6712,85 @@
         }
         function storySwitchChar(id) {
           if (!charById(id)) return;
+          try { storyReadSetupFromUI(); } catch (e) {}
+          try { storyCloseMsgSheet(); } catch (e) {}
+          try { storyCloseEditPanel(); } catch (e) {}
+          try { storyClearQuote(); } catch (e) {}
           storyActiveCharId = id;
           storyEnsureCharValid();
           storageSave();
           renderStoryAll();
           storyStatus("");
         }
+        function compressStoryBgFile(file, done) {
+          var reader = new FileReader();
+          reader.onload = function () {
+            try {
+              var img = new Image();
+              img.onload = function () {
+                try {
+                  function render(maxSide, quality) {
+                    var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+                    var scale = Math.min(1, maxSide / Math.max(w, h));
+                    var cv = document.createElement("canvas");
+                    cv.width = Math.max(1, Math.round(w * scale));
+                    cv.height = Math.max(1, Math.round(h * scale));
+                    var ctx = cv.getContext("2d");
+                    ctx.drawImage(img, 0, 0, cv.width, cv.height);
+                    return cv.toDataURL("image/jpeg", quality);
+                  }
+                  var url = render(1200, 0.8);
+                  if (url.length > 400 * 1024) url = render(800, 0.7);
+                  if (url.length > 400 * 1024) { done(null, "張相壓完都太大，換張細啲嘅再試。"); return; }
+                  done(url, "");
+                } catch (e) { done(null, "張相處理唔到，換一張再試。"); }
+              };
+              img.onerror = function () { done(null, "張相讀唔到，換一張再試。"); };
+              img.src = String(reader.result || "");
+            } catch (e) { done(null, "張相處理唔到，換一張再試。"); }
+          };
+          reader.onerror = function () { done(null, "張相讀唔到，換一張再試。"); };
+          try { reader.readAsDataURL(file); } catch (e) { done(null, "張相讀唔到，換一張再試。"); }
+        }
+        function storyCharFormShowPreview(kind, url) {
+          var wrap = $(kind === "avatar" ? "storyCharAvatarPreview" : "storyCharBgPreview");
+          var img = $(kind === "avatar" ? "storyCharAvatarImg" : "storyCharBgImg");
+          if (!wrap || !img) return;
+          if (url) { img.src = url; wrap.style.display = "block"; }
+          else { img.removeAttribute("src"); wrap.style.display = "none"; }
+        }
+        function storyCharDescCountUpdate() {
+          var el = $("storyCharDescCount");
+          if (el) el.textContent = $("storyCharDesc").value.length + " / 4000";
+        }
+        function storyInsertPlaceholder(textareaId, token) {
+          var ta = $(textareaId);
+          if (!ta) return;
+          try { ta.focus(); } catch (e) {}
+          var start = (typeof ta.selectionStart === "number") ? ta.selectionStart : ta.value.length;
+          var end = (typeof ta.selectionEnd === "number") ? ta.selectionEnd : ta.value.length;
+          ta.value = ta.value.slice(0, start) + token + ta.value.slice(end);
+          var pos = start + token.length;
+          try { ta.selectionStart = pos; ta.selectionEnd = pos; } catch (e) {}
+          if (textareaId === "storyCharDesc") storyCharDescCountUpdate();
+        }
         function storyOpenCharForm(editId) {
           editingStoryCharId = editId || "";
-          if (editId) {
-            var p = null;
-            storyCustomPersonas.forEach(function (x) { if (x.id === editId) p = x; });
-            if (p) { $("storyCharName").value = p.name; $("storyCharDesc").value = p.desc; }
-          } else {
-            $("storyCharName").value = "";
-            $("storyCharDesc").value = "";
-          }
+          var p = editId ? storyCustomById(editId) : null;
+          $("storyCharName").value = p ? p.name : "";
+          $("storyCharGender").value = p ? (p.gender || "") : "";
+          $("storyCharIntro").value = p ? (p.intro || "") : "";
+          $("storyCharDesc").value = p ? p.desc : "";
+          $("storyCharBgIntro").value = p ? (p.bgIntro || "") : "";
+          $("storyCharOpening").value = p ? (p.opening || "") : "";
+          $("storyCharExample").value = p ? (p.exampleDialogue || "") : "";
+          $("storyCharRules").value = p ? (p.outputRules || "") : "";
+          $("storyCharStorySetting").value = editId ? storySetupFor(editId).worldview : "";
+          storyCharFormAvatar = p ? (p.avatar || "") : "";
+          storyCharFormBgImg = p ? (p.bgImg || "") : "";
+          storyCharFormShowPreview("avatar", storyCharFormAvatar);
+          storyCharFormShowPreview("bg", storyCharFormBgImg);
+          storyCharDescCountUpdate();
           $("storyCharFormStatus").textContent = "";
           $("storyCharForm").style.display = "block";
         }
@@ -6594,23 +6814,36 @@
           if (!box) return;
           try { voiceStopPlayback(); } catch (e) {}
           box.innerHTML = "";
-          storyHistory.forEach(function (m) {
+          storyHistory.forEach(function (m, idx) {
             var d = document.createElement("div");
             d.className = "chat-msg " + (m.role === "user" ? "me" : "him");
+            if (m.quote && typeof m.quote.text === "string" && m.quote.text) {
+              var q = document.createElement("div");
+              q.className = "chat-quote";
+              var qw = document.createElement("span");
+              qw.className = "q-who";
+              qw.textContent = m.quote.role === "user" ? "你" : "佢";
+              var qt = document.createElement("span");
+              qt.className = "q-text";
+              chatAppendFormatted(qt, chatStripFences(m.quote.text));
+              q.appendChild(qw);
+              q.appendChild(qt);
+              d.appendChild(q);
+            }
             var tx = document.createElement("span");
             tx.className = "chat-text";
             chatAppendFormatted(tx, chatStripFences(m.content));
             d.appendChild(tx);
-            if (typeof m.ts === "number") {
+            if (typeof m.ts === "number" && isFinite(m.ts)) {
               var tm = document.createElement("span");
               tm.className = "chat-time";
               var dt = new Date(m.ts);
-              tm.textContent = ("0" + dt.getHours()).slice(-2) + ":" + ("0" + dt.getMinutes()).slice(-2);
+              tm.textContent = pad2(dt.getHours()) + ":" + pad2(dt.getMinutes());
               d.appendChild(tm);
             }
-            if (m.role === "assistant") {
-              var actRow = document.createElement("div");
-              actRow.className = "chat-actions";
+            var actRow = document.createElement("div");
+            actRow.className = "chat-actions" + (m.role === "user" ? " me" : "");
+            if (m.role !== "user") {
               var spk = document.createElement("button");
               spk.type = "button";
               spk.className = "chat-speak";
@@ -6618,13 +6851,77 @@
               spk.setAttribute("aria-label", "朗讀呢句回覆");
               spk.addEventListener("click", function () { voiceSpeak(m.content, spk); });
               actRow.appendChild(spk);
-              d.appendChild(actRow);
             }
+            var menuBtn = document.createElement("button");
+            menuBtn.type = "button";
+            menuBtn.className = "chat-menu";
+            menuBtn.textContent = "⋯";
+            menuBtn.setAttribute("aria-label", "訊息操作：引用、修改、撤回");
+            menuBtn.addEventListener("click", function () { storyOpenMsgSheet(idx); });
+            actRow.appendChild(menuBtn);
+            d.appendChild(actRow);
             box.appendChild(d);
           });
           var empty = $("storyEmpty");
           if (empty) empty.style.display = storyHistory.length ? "none" : "block";
+          var bgIntroEl = $("storyBgIntro");
+          if (bgIntroEl) {
+            var cc = currentChar();
+            if (!storyHistory.length && cc && cc.storyOnly && cc.bgIntro) {
+              bgIntroEl.textContent = cc.bgIntro;
+              bgIntroEl.style.display = "block";
+            } else {
+              bgIntroEl.textContent = "";
+              bgIntroEl.style.display = "none";
+            }
+          }
           if (scroll !== false) { try { box.scrollTop = box.scrollHeight; } catch (e) {} }
+        }
+        /* ---------- 劇情版訊息操作：引用／修改／撤回（同陪伴版同一套做法） ---------- */
+        function storyOpenMsgSheet(idx) {
+          storyActionIndex = idx;
+          storyCloseEditPanel();
+          var m = storyHistory[idx];
+          if (!m) return;
+          $("storySheetTitle").textContent = m.role === "user" ? "你嘅訊息" : "佢嘅回覆";
+          $("storySheetEdit").style.display = m.role === "user" ? "none" : "block";
+          $("storySheetActions").style.display = "block";
+          $("storySheetConfirm").style.display = "none";
+          $("storySheetBackdrop").classList.add("show");
+          $("storyMsgSheet").classList.add("show");
+        }
+        function storyCloseMsgSheet() {
+          $("storySheetBackdrop").classList.remove("show");
+          $("storyMsgSheet").classList.remove("show");
+          storyActionIndex = -1;
+        }
+        function storySetQuote(idx) {
+          var m = storyHistory[idx];
+          if (!m) return;
+          var text = chatQuoteTextOf(m);
+          if (!text) return;
+          storyActiveQuote = { role: m.role, text: text.slice(0, 2000) };
+          $("storyQuoteWho").textContent = m.role === "user" ? "引用你嘅訊息" : "引用佢嘅回覆";
+          $("storyQuoteText").textContent = "";
+          chatAppendFormatted($("storyQuoteText"), chatStripFences(text));
+          $("storyQuoteBar").style.display = "flex";
+          try { $("storyInput").focus(); } catch (e) {}
+        }
+        function storyClearQuote() {
+          storyActiveQuote = null;
+          $("storyQuoteBar").style.display = "none";
+        }
+        function storyOpenEditPanel(idx) {
+          var m = storyHistory[idx];
+          if (!m || m.role === "user") return;
+          storyEditIndex = idx;
+          $("storyEditText").value = m.content;
+          $("storyEditPanel").style.display = "block";
+          try { $("storyEditText").focus(); } catch (e) {}
+        }
+        function storyCloseEditPanel() {
+          storyEditIndex = -1;
+          $("storyEditPanel").style.display = "none";
         }
         function storyDeliver(text) {
           if (storySending) return;
@@ -6633,22 +6930,39 @@
           if (!chatSettings.baseUrl) { storyShowErrDetail(""); storyStatus("接口地址未填。去返陪伴版「同我傾下計」設定嗰度補返，先行到劇情。"); return; }
           if (!chatEffectiveModel()) { storyShowErrDetail(""); storyStatus("用邊個模型都未揀。去返陪伴版「同我傾下計」設定嗰度，拉一次模型嚟揀，或者手填返個模型名。"); return; }
           var newMsg = { role: "user", content: text, ts: Date.now() };
+          if (storyActiveQuote) {
+            newMsg.quote = { role: storyActiveQuote.role, text: storyActiveQuote.text };
+          }
           var baseContext = storyHistory.concat([newMsg]).slice(-20).map(chatBuildContextMessage);
+          if (storyActiveQuote && baseContext.length) {
+            var lastCtx = baseContext[baseContext.length - 1];
+            var qLabel = storyActiveQuote.role === "user" ? "你之前講過" : "佢之前回覆過";
+            var qPrefix = "【引用" + qLabel + "：「" + storyActiveQuote.text + "」】\n";
+            if (typeof lastCtx.content === "string") lastCtx.content = qPrefix + lastCtx.content;
+            else if (Object.prototype.toString.call(lastCtx.content) === "[object Array]" && lastCtx.content.length && lastCtx.content[0].type === "text") lastCtx.content[0].text = qPrefix + lastCtx.content[0].text;
+          }
           storyHistory.push(newMsg);
           if (storyHistory.length > 200) storyHistory = storyHistory.slice(storyHistory.length - 200);
           storyHistories[storyActiveCharId] = storyHistory;
           $("storyInput").value = "";
+          storyClearQuote();
           storyStatus("");
           renderStoryChat();
           storageSave();
           storySetSending(true);
+          var c = currentChar();
+          var st = storySetupFor(storyActiveCharId);
+          var userTxt = storySubstitutePlaceholders(st.user.trim(), c.name);
+          var worldTxt = storySubstitutePlaceholders(st.worldview.trim(), c.name);
+          var exTxt = c.storyOnly ? storySubstitutePlaceholders((c.exampleDialogue || "").trim(), c.name) : "";
+          var ruleTxt = c.storyOnly ? storySubstitutePlaceholders((c.outputRules || "").trim(), c.name) : "";
           var sysParts = [];
-          var userTxt = storyUserPersona.trim();
-          var worldTxt = storyWorldview.trim();
-          if (userTxt || worldTxt) {
-            sysParts.push("【剧情模式说明】你现在是 char（" + currentChar().name + "），按你的人设行动和说话。对方是主控（user），你们的故事发生在本消息附带的世界观里；主控的人设如下，你要记住并据此互动。回复时保持角色，用剧情口吻。");
+          if (userTxt || worldTxt || exTxt || ruleTxt) {
+            sysParts.push("【剧情模式说明】你现在是 char（" + c.name + "），按你的人设行动和说话。对方是主控（user），你们的故事发生在本消息附带的世界观里；主控的人设如下，你要记住并据此互动。回复时保持角色，用剧情口吻。");
             if (userTxt) sysParts.push("【主控（user）人设】\n" + userTxt);
             if (worldTxt) sysParts.push("【世界观】\n" + worldTxt);
+            if (exTxt) sysParts.push("【示例对话】\n" + exTxt);
+            if (ruleTxt) sysParts.push("【输出规则】\n" + ruleTxt);
           }
           var context = sysParts.length ? [{ role: "system", content: sysParts.join("\n") }].concat(baseContext) : baseContext;
           chatPostChat(context, null, { persona: currentChar(), noMcp: true }).then(function (r) {
@@ -6688,20 +7002,42 @@
           var name = $("storyCharName").value.trim();
           var desc = $("storyCharDesc").value.trim();
           if (!name) { $("storyCharFormStatus").textContent = "char 名唔可以空。"; return; }
-          if (!desc) { $("storyCharFormStatus").textContent = "人設唔可以空，寫幾句先保存。"; return; }
+          if (!desc) { $("storyCharFormStatus").textContent = "角色設定唔可以空，寫幾句先保存。"; return; }
+          var gender = $("storyCharGender").value;
+          var fields = {
+            name: name,
+            gender: (gender === "男" || gender === "女" || gender === "其他") ? gender : "",
+            avatar: storyCharFormAvatar,
+            bgImg: storyCharFormBgImg,
+            intro: $("storyCharIntro").value.trim().slice(0, 200),
+            desc: desc.slice(0, 4000),
+            bgIntro: $("storyCharBgIntro").value.trim().slice(0, 2000),
+            opening: $("storyCharOpening").value.trim().slice(0, 2000),
+            exampleDialogue: $("storyCharExample").value.trim().slice(0, 4000),
+            outputRules: $("storyCharRules").value.trim().slice(0, 2000)
+          };
+          var worldview = $("storyCharStorySetting").value.trim().slice(0, 4000);
           if (editingStoryCharId) {
+            var eid = editingStoryCharId;
+            try { storyReadSetupFromUI(); } catch (e) {}
             storyCustomPersonas.forEach(function (x) {
-              if (x.id === editingStoryCharId) { x.name = name; x.desc = desc.slice(0, 4000); }
+              if (x.id === eid) { Object.keys(fields).forEach(function (k) { x[k] = fields[k]; }); }
             });
+            storySetupFor(eid).worldview = worldview;
             editingStoryCharId = "";
             $("storyCharForm").style.display = "none";
             storageSave();
-            renderStoryCharList();
-            renderStoryChatHead();
+            renderStoryAll();
             toast("改好喇。");
           } else {
             var nid = "sc-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-            storyCustomPersonas.push({ id: nid, name: name, desc: desc.slice(0, 4000) });
+            var rec = { id: nid };
+            Object.keys(fields).forEach(function (k) { rec[k] = fields[k]; });
+            storyCustomPersonas.push(rec);
+            storySetupFor(nid).worldview = worldview;
+            if (fields.opening) {
+              storyHistories[nid] = [{ role: "assistant", content: storySubstitutePlaceholders(fields.opening, name), ts: Date.now() }];
+            }
             $("storyCharForm").style.display = "none";
             storageSave();
             storySwitchChar(nid);
@@ -6717,6 +7053,7 @@
           if (!id) return;
           storyCustomPersonas = storyCustomPersonas.filter(function (p) { return p.id !== id; });
           delete storyHistories[id];
+          delete storySetups[id];
           pendingDeleteStoryCharId = "";
           $("storyCharDeleteConfirm").style.display = "none";
           storyEnsureCharValid();
@@ -6729,17 +7066,99 @@
           $("storySetupStatus").textContent = "保存好喇，下一句就會用呢版。";
         });
         $("storyClear").addEventListener("click", function () {
+          var c = currentChar();
+          if (c && c.storyOnly && c.opening) {
+            $("storyClearText").textContent = "呢段劇情嘅對話刪晒，冇得返轉頭。清完之後，開場白會重新出現，作為新故事嘅開頭。諗清楚，先好撳確認。";
+          } else {
+            $("storyClearText").textContent = "呢段劇情嘅對話刪晒，一句都唔留，冇得返轉頭。諗清楚，先好撳確認。";
+          }
           $("storyClearConfirm").style.display = "block";
         });
         $("storyClearNo").addEventListener("click", function () {
           $("storyClearConfirm").style.display = "none";
         });
         $("storyClearYes").addEventListener("click", function () {
-          storyHistory = [];
+          var c = currentChar();
+          if (c && c.storyOnly && c.opening) {
+            storyHistory = [{ role: "assistant", content: storySubstitutePlaceholders(c.opening, c.name), ts: Date.now() }];
+          } else {
+            storyHistory = [];
+          }
           storyHistories[storyActiveCharId] = storyHistory;
           $("storyClearConfirm").style.display = "none";
+          try { storyClearQuote(); } catch (e) {}
+          try { storyCloseEditPanel(); } catch (e) {}
           storageSave();
           renderStoryChat();
+        });
+        /* ---------- 劇情版訊息操作接線：引用／修改／撤回 ---------- */
+        $("storySheetBackdrop").addEventListener("click", storyCloseMsgSheet);
+        $("storySheetCancel").addEventListener("click", storyCloseMsgSheet);
+        $("storySheetQuote").addEventListener("click", function () { var i = storyActionIndex; storyCloseMsgSheet(); storySetQuote(i); });
+        $("storySheetEdit").addEventListener("click", function () { var i = storyActionIndex; storyCloseMsgSheet(); storyOpenEditPanel(i); });
+        $("storySheetRetract").addEventListener("click", function () { $("storySheetActions").style.display = "none"; $("storySheetConfirm").style.display = "block"; });
+        $("storySheetRetractNo").addEventListener("click", function () { $("storySheetActions").style.display = "block"; $("storySheetConfirm").style.display = "none"; });
+        $("storySheetRetractYes").addEventListener("click", function () {
+          var i = storyActionIndex;
+          storyCloseMsgSheet();
+          if (i < 0 || i >= storyHistory.length) return;
+          storyHistory.splice(i, 1);
+          storyHistories[storyActiveCharId] = storyHistory;
+          if (storyEditIndex === i) storyCloseEditPanel();
+          else if (storyEditIndex > i) storyEditIndex--;
+          storageSave();
+          renderStoryChat();
+        });
+        $("storyQuoteCancel").addEventListener("click", storyClearQuote);
+        $("storyEditCancel").addEventListener("click", storyCloseEditPanel);
+        $("storyEditSave").addEventListener("click", function () {
+          var i = storyEditIndex;
+          if (i < 0 || i >= storyHistory.length) { storyCloseEditPanel(); return; }
+          var v = $("storyEditText").value;
+          if (!v.trim()) { toast("改完唔可以係空嘅，唔想留就撤回佢。"); return; }
+          storyHistory[i].content = v;
+          storyHistories[storyActiveCharId] = storyHistory;
+          storyCloseEditPanel();
+          storageSave();
+          renderStoryChat();
+          toast("改好喇，之後會按改好嘅版本繼續傾。");
+        });
+        /* ---------- 劇情版建角色表單接線：字數、佔位符、頭像同背景圖 ---------- */
+        $("storyCharDesc").addEventListener("input", storyCharDescCountUpdate);
+        document.querySelectorAll("[data-story-ph]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            storyInsertPlaceholder(btn.getAttribute("data-story-ph"), btn.getAttribute("data-story-token"));
+          });
+        });
+        $("storyCharAvatarBtn").addEventListener("click", function () { var inp = $("storyCharAvatarFile"); if (inp) { inp.value = ""; inp.click(); } });
+        $("storyCharAvatarRemove").addEventListener("click", function () { storyCharFormAvatar = ""; storyCharFormShowPreview("avatar", ""); });
+        $("storyCharAvatarFile").addEventListener("change", function () {
+          var f = this.files && this.files[0];
+          this.value = "";
+          if (!f) return;
+          if (f.type && f.type.indexOf("image/") !== 0) { $("storyCharFormStatus").textContent = "呢個唔係相嚟，揀返張相再試。"; return; }
+          $("storyCharFormStatus").textContent = "壓緊張相……";
+          compressAvatarFile(f, function (url, err) {
+            if (!url) { $("storyCharFormStatus").textContent = err || "張相處理唔到，換一張再試。"; return; }
+            storyCharFormAvatar = url;
+            storyCharFormShowPreview("avatar", url);
+            $("storyCharFormStatus").textContent = "頭像揀好喇，保存之後先正式生效。";
+          });
+        });
+        $("storyCharBgBtn").addEventListener("click", function () { var inp = $("storyCharBgFile"); if (inp) { inp.value = ""; inp.click(); } });
+        $("storyCharBgRemove").addEventListener("click", function () { storyCharFormBgImg = ""; storyCharFormShowPreview("bg", ""); });
+        $("storyCharBgFile").addEventListener("change", function () {
+          var f = this.files && this.files[0];
+          this.value = "";
+          if (!f) return;
+          if (f.type && f.type.indexOf("image/") !== 0) { $("storyCharFormStatus").textContent = "呢個唔係相嚟，揀返張相再試。"; return; }
+          $("storyCharFormStatus").textContent = "壓緊張相……";
+          compressStoryBgFile(f, function (url, err) {
+            if (!url) { $("storyCharFormStatus").textContent = err || "張相處理唔到，換一張再試。"; return; }
+            storyCharFormBgImg = url;
+            storyCharFormShowPreview("bg", url);
+            $("storyCharFormStatus").textContent = "背景圖揀好喇，保存之後先正式生效。";
+          });
         });
         /* ---------- 复制陪伴者 ----------
            任何一位陪伴者都可以复制：复制出嚟嗰位自動叫「原名 1.0／2.0／3.0……」，
@@ -7121,6 +7540,7 @@
           copiedPersonas = copiedPersonas.filter(function (p) { return p.id !== id; });
           delete chatHistories[id];
           delete storyHistories[id];
+          delete storySetups[id];
           delete personaOverrides[id];
           try { delete avatarOverrides[id]; } catch (e) {}
           pendingDeletePersonaId = "";
