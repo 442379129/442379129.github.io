@@ -6826,6 +6826,7 @@
                 pendingDeletePersonaId = p.id;
                 $("personaDeleteText").textContent = "真係刪咗「" + p.name + "」？呢個人設同佢嘅對話記錄會一併刪晒，冇得返轉頭。";
                 $("personaDeleteConfirm").style.display = "block";
+                try { $("personaDeleteConfirm").scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e2) {}
               });
               row.appendChild(del);
             }
@@ -7144,8 +7145,24 @@
                 pendingDeleteStoryCharId = p.id;
                 $("storyCharDeleteText").textContent = "真係刪咗 char「" + p.name + "」？呢個人設同佢嗰段劇情會一併刪晒，冇得返轉頭。";
                 $("storyCharDeleteConfirm").style.display = "block";
+                try { $("storyCharDeleteConfirm").scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e2) {}
               });
               row.appendChild(del);
+            } else if (p.custom || p.copy) {
+              /* 陪伴版過嚟嘅自訂／副本：喺劇情版一樣刪得，行陪伴版嗰套刪除流程。 */
+              var del2 = document.createElement("button");
+              del2.type = "button";
+              del2.className = "p-del";
+              del2.textContent = "刪除";
+              del2.addEventListener("click", function (e) {
+                e.stopPropagation();
+                pendingDeletePersonaId = p.id;
+                $("personaDeleteText").textContent = "真係刪咗「" + p.name + "」？呢個人設同佢嘅對話記錄會一併刪晒，冇得返轉頭。";
+                try { $("personaPanel").style.display = "block"; $("personaAvatar").setAttribute("aria-expanded", "true"); } catch (e2) {}
+                $("personaDeleteConfirm").style.display = "block";
+                try { $("personaDeleteConfirm").scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e3) {}
+              });
+              row.appendChild(del2);
             }
             row.addEventListener("click", function () {
               storySwitchChar(p.id);
@@ -7811,6 +7828,39 @@
           } catch (e) {}
           return map;
         }
+        /* 預設人設原文快取：拉到一次就存低，下次接口連唔上（例如冇開 VPN）嗰陣，
+           編輯器都仲有原文可以改，唔使對住個空框。快取唔入備份，拉到新版會自動蓋過。 */
+        var PERSONA_CACHE_KEY = "davidCompanionPersonas.v1";
+        function personaCacheLoad() {
+          try {
+            var raw = localStorage.getItem(PERSONA_CACHE_KEY);
+            var m = raw ? JSON.parse(raw) : null;
+            return (m && typeof m === "object") ? m : {};
+          } catch (e) { return {}; }
+        }
+        function personaCacheSave(map) {
+          try {
+            var cur = personaCacheLoad();
+            var any = false;
+            Object.keys(map || {}).forEach(function (k) {
+              if (typeof map[k] === "string" && map[k]) { cur[k] = map[k]; any = true; }
+            });
+            if (any) localStorage.setItem(PERSONA_CACHE_KEY, JSON.stringify(cur));
+          } catch (e) {}
+        }
+        function personaCacheFill(lookupId, ta, isDavidVoice) {
+          var cached = "";
+          try { cached = personaCacheLoad()[lookupId] || ""; } catch (e) {}
+          if (typeof cached === "string" && cached) {
+            if (ta) ta.value = cached.slice(0, 4000);
+            personaEditCountUpdate();
+            personaEditStatus(isDavidVoice
+              ? "而家連唔上接口，用緊上次存低嗰版先。改完撳「保存」，一樣生效。"
+              : "现在连不上接口，先用上次存下来的版本。改完保存，一样生效。");
+            return true;
+          }
+          return false;
+        }
         function openPersonaEditor(id) {
           editingPersonaId = id;
           /* 編輯器喺陪伴者面板入面：由劇情版撳入嚟嗰陣，面板可能收埋咗，
@@ -7864,24 +7914,29 @@
             }).then(function (data) {
               if (editingPersonaId !== id) return;
               var map = parsePersonasMap(data);
+              personaCacheSave(map);
               var txt = (typeof map[lookupId] === "string") ? map[lookupId] : "";
               if (txt) {
                 if (ta) ta.value = txt.slice(0, 4000);
                 personaEditCountUpdate();
                 personaEditStatus("拉到喇。改完撳「保存」，之後傾計就會用你改呢版；唔改就撳「取消」。");
-              } else {
+              } else if (!personaCacheFill(lookupId, ta, isDavidVoice)) {
                 personaEditStatus(isDavidVoice
                   ? "接口嗰邊冇返到呢位嘅人設原文返嚟。你可以照樣喺下面打字改，打完撳保存，一樣生效。"
                   : "沒有拉到這位的人設原文。你可以照樣在下面輸入，保存後一樣生效。");
               }
             }, function () {
               if (editingPersonaId !== id) return;
-              personaEditStatus(isDavidVoice
-                ? "拉唔到接口嗰邊嘅預設人設——多數係網絡問題。你可以照樣喺下面打字改，打完撳保存，一樣生效。"
-                : "拉不到預設人設，可能是網絡問題。你可以照樣在下面輸入，保存後一樣生效。");
+              if (!personaCacheFill(lookupId, ta, isDavidVoice)) {
+                personaEditStatus(isDavidVoice
+                  ? "拉唔到接口嗰邊嘅預設人設——多數係網絡問題。你可以照樣喺下面打字改，打完撳保存，一樣生效。"
+                  : "拉不到預設人設，可能是網絡問題。你可以照樣在下面輸入，保存後一樣生效。");
+              }
             });
           } catch (e) {
-            personaEditStatus("拉不到預設人設，可能是網絡問題。你可以照樣在下面輸入，保存後一樣生效。");
+            if (!personaCacheFill(lookupId, ta, isDavidVoice)) {
+              personaEditStatus("拉不到預設人設，可能是網絡問題。你可以照樣在下面輸入，保存後一樣生效。");
+            }
           }
         }
         function closePersonaEditor() {
