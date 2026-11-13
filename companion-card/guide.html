@@ -113,7 +113,7 @@ mark.fab-hit-current { background: #f39c12; color: #fff;}
 
 聊天功能要她自己提供 AI 服务的 API 密钥（BYOK），卡片不提供。步骤：1）在「同我倾下计」区点设定开关打开设置；2）「AI 服务」下拉里选 DeepSeek、ChatGPT、Gemini、Claude 或自订/中转站，选好后「接口地址」会自动填好（DeepSeek 是 https://api.deepseek.com，ChatGPT 是 https://api.openai.com/v1，Gemini 是 https://generativelanguage.googleapis.com/v1beta/openai，Claude 是 https://api.anthropic.com/v1，中转站要手动填对方给的地址，注意很多中转站地址末尾要自己加上 /v1 才能连上）；3）「API 锁匙」里粘贴她自己的密钥（去各服务官网注册申请：DeepSeek 在 platform.deepseek.com，OpenAI 在 platform.openai.com，Gemini 在 aistudio.google.com，Claude 在 console.anthropic.com，中转站按卖家给的教程）；4）点「拉取模型」，再在下拉里选一个模型，拉不到也可以在「手动输入模型名」里手填（例如 deepseek-chat），手动那格有字就优先用手动的；5）点「保存设定」，然后在输入框打字发消息就能聊。密钥只存在她自己手机浏览器里，备份文件里不含密钥。可以存多组设定（「新增一组设定」），点一行就切换。聊天花的是她自己账户的钱。Claude 官方接口不能发图片、不能用 MCP。每条消息下面有个「⋯」，点开能引用这条、修改他的回复、撤回这条：引用后发出去他就知道在回哪句，改完回复对话按改好的版本继续，撤回后记录里就没有了也不会再发给 AI。他回复里的 *斜体*、**粗体** 会直接显示成斜体、粗体，``` 围栏行会自动去掉。
 
-【她在用的中转站】她自己在用的几家中转站（邀请链接）：肖恩 https://go.toter.me/register?code=36FPGR （注册送 7000 额度）；舒芙蕾 https://shufulei.net/register?aff=PIZZ ；橘子汽水 https://juziqishui.net/register?aff=WsXU ；7喜 https://7up.ing/sign-up?aff=mORU ；玖时 https://api.jiushi.xin/register?aff=AOzO ；启明星 https://cn.qimingx.net/sign-up?aff=GchL 。首次使用要先去网站注册账号、创建 API 密钥，再把密钥和接口地址填进卡里；提醒她先小额充值试试。
+【她在用的中转站】她自己在用的几家中转站（邀请链接）：肖恩 https://go.toter.me/register?code=36FPGR （注册送 7000 额度）；舒芙蕾 https://shufulei.net/register?aff=PIZZ ；橘子汽水 https://juziqishui.net/register?aff=WsXU ；7喜 https://7up.ing/sign-up?aff=mORU ；玖时 https://api.jiushi.xin/register?aff=AOzO ；启明星 https://cn.qimingx.net/sign-up?aff=GchL 。首次使用要先去网站注册账号、创建 API 密钥，再把密钥和接口地址填进卡里；提醒她先小额充值试试。如果她说显示「連接聊天接口失敗」，一般是手机到聊天接口的网络不通：卡的接口在境外，内地直连有时不稳定，让她换个网络环境（比如开 VPN）再试；出错时聊天区下面的灰色小字写的是接口返回的真正原因，照着那句去查。
 
 声音（朗读和语音输入）：聊天设置里有个「声音」区，接 MiniMax 或 ElevenLabs 任意一家就能用，钥匙是她自己的，存在她自己手机上，备份不带走。MiniMax：去 platform.minimax.io（国际版）或 platform.minimaxi.com（国内版）注册登录，左边点「接口密钥」创建 API Key、立刻复制（只显示一次）；卡里地址和钥匙必须配对（国际版 https://api.minimax.io，国内版 https://api.minimaxi.com），混用报 login fail；Group ID 一般留空；声音在下拉里选 20 把现成的，克隆的声把 voice_id 手填进手动那格。ElevenLabs：去 elevenlabs.io 注册登录，头像 → Settings → API Keys（或直接开 elevenlabs.io/app/settings/api-keys），Create API Key、立刻复制，权限至少勾 Text to Speech、Speech to Text、Voices 读取；卡里点「拉取声音列表」会把她账号里的声音分组列出（现成的、自己捏的、克隆的），也可以手填 Voice ID。填好点「保存聲音設定」，点回复旁的喇叭试一声。每条回复旁边有个喇叭键「🔊 读」，点一下读出来、再点停；朗读默认跳过【】、（）、斜体里的内容，粗体和 “…” 默认照读，五个开关可逐个改；输入框旁边有个 🎤 键，点一下录音、再点停，最长 2 分钟，转好的文字填进输入框让她看过再发送。提醒她：ElevenLabs 的即时克隆和捏出来的声音只属于她自己的账号，别人拿了 ID 也用不了，只有 Professional 克隆分享后别人才可用。隐私：朗读的句子和录音会发到她选的那家声音服务去合成/辨识，接口不存音频。麦克风点不开是浏览器没给权限，去浏览器设置里允许。拉不到声音列表、报 401，先查钥匙权限、钥匙对不对、余额够不够。
 
@@ -251,6 +251,7 @@ MCP 是让聊天时能调用外部服务做事的接口（例如点外卖、查�
   <li>模型名对不对（手动那格是不是留了旧名字）。</li>
   <li>账户里还有没有余额。</li>
   <li>出错时聊天区下面会有一行灰色小字，写的是接口返回的真正原因，照着那句去查。</li>
+  <li>如果显示的是「連接聊天接口失敗」，一般是手机到聊天接口的网络不通：卡的接口在境外，内地直连有时不稳定，换个网络环境（比如开 VPN）再试；能正常打开网页不代表这条路是通的。</li>
 </ul>
 <p class="back"><a href="#toc">↑ 回到目录</a></p>
 
