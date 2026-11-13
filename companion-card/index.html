@@ -502,6 +502,26 @@
       .chat-speak { align-self: flex-end; margin-top: 4px; padding: 2px 10px; font-size: 0.8rem; line-height: 1.5; background: transparent; border: 1px solid #d8cfba; border-radius: 999px; color: #7a7264; cursor: pointer; }
       .chat-speak.playing { border-color: #b4552d; color: #b4552d; }
       .chat-speak:disabled { opacity: 0.5; cursor: default; }
+      .chat-actions { display: flex; gap: 6px; margin-top: 4px; }
+      .chat-actions.me { justify-content: flex-end; }
+      .chat-actions .chat-speak { margin-top: 0; align-self: auto; }
+      .chat-menu { padding: 2px 10px; font-size: 0.8rem; line-height: 1.5; background: transparent; border: 1px solid #d8cfba; border-radius: 999px; color: #7a7264; cursor: pointer; }
+      .chat-quote { display: block; border-left: 3px solid #b4552d; background: rgba(0, 0, 0, 0.05); border-radius: 0 6px 6px 0; padding: 4px 8px; margin: 2px 0 6px; font-size: 0.82rem; color: #5a5348; }
+      .chat-quote .q-who { display: block; font-size: 0.72rem; font-weight: 700; color: #b4552d; margin-bottom: 1px; }
+      .chat-quote .q-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+      .chat-quote-bar { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; border-left: 3px solid #b4552d; background: var(--surface-2); border-radius: 0 8px 8px 0; padding: 8px 10px; font-size: 0.85rem; color: var(--ink-soft); }
+      .chat-quote-bar .q-body { flex: 1; min-width: 0; }
+      .chat-quote-bar .q-who { font-weight: 700; color: #b4552d; font-size: 0.78rem; }
+      .chat-quote-bar .q-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+      .chat-edit-panel { margin-top: 10px; }
+      .chat-edit-panel textarea { width: 100%; box-sizing: border-box; min-height: 90px; padding: 8px 10px; border: 1px solid #d8cfba; border-radius: 10px; font: inherit; font-size: 0.92rem; line-height: 1.5; background: var(--surface); color: var(--ink); }
+      .chat-sheet-backdrop { position: fixed; inset: 0; z-index: 66; background: rgba(20, 12, 8, 0.45); display: none; }
+      .chat-sheet-backdrop.show { display: block; }
+      .chat-sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 67; background: var(--surface); border-radius: 16px 16px 0 0; padding: 10px 14px calc(16px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.25); display: none; }
+      .chat-sheet.show { display: block; }
+      .chat-sheet button { display: block; width: 100%; text-align: center; padding: 12px; margin: 6px 0; font-size: 1rem; }
+      .chat-sheet .sheet-title { text-align: center; font-size: 0.82rem; color: var(--ink-soft); margin: 2px 0 6px; }
+      .chat-sheet .sheet-danger { color: #b3261e; }
       .ctx-check { display: block; margin: 8px 0; line-height: 1.5; cursor: pointer; }
       .ctx-check input { margin-right: 8px; }
       .chat-img { display: block; max-width: 100%; border-radius: 8px; margin: 2px 0 4px; cursor: pointer; }
@@ -991,6 +1011,18 @@
           </div>
           <input type="file" id="chatAttachImages" accept="image/*" multiple style="display:none;" aria-label="选图片" />
           <input type="file" id="chatAttachFiles" accept=".txt,.md,.csv,.json,.log,.xml,.yaml,.yml" multiple style="display:none;" aria-label="选档案" />
+          <div class="chat-quote-bar" id="chatQuoteBar" style="display:none;">
+            <div class="q-body"><span class="q-who" id="chatQuoteWho"></span><span class="q-text" id="chatQuoteText"></span></div>
+            <button type="button" class="ghost small" id="chatQuoteCancel" aria-label="取消引用">✕</button>
+          </div>
+          <div class="chat-edit-panel" id="chatEditPanel" style="display:none;">
+            <p class="hint" style="margin:0 0 6px;">改緊呢句回覆，改完之後對話會按改好嘅版本繼續。</p>
+            <textarea id="chatEditText" aria-label="修改回覆內容"></textarea>
+            <div class="row" style="margin-top:8px;">
+              <button type="button" id="chatEditSave">保存修改</button>
+              <button type="button" class="ghost" id="chatEditCancel">取消</button>
+            </div>
+          </div>
           <div class="row" style="margin-top:10px; align-items:flex-end;">
             <button type="button" class="ghost" id="chatAttachBtn" aria-label="加附件">＋</button>
             <textarea id="chatInput" rows="2" class="grow" placeholder="想同我講嘅嘢，打低佢……" aria-label="輸入訊息"></textarea>
@@ -1005,6 +1037,21 @@
             <div class="row">
               <button type="button" id="chatClearYes">確認清空</button>
               <button type="button" class="ghost" id="chatClearNo">算數，留返</button>
+            </div>
+          </div>
+          <div class="chat-sheet-backdrop" id="chatSheetBackdrop"></div>
+          <div class="chat-sheet" id="chatMsgSheet" role="dialog" aria-label="訊息操作">
+            <p class="sheet-title" id="chatSheetTitle"></p>
+            <div id="chatSheetActions">
+              <button type="button" class="ghost" id="chatSheetQuote">引用</button>
+              <button type="button" class="ghost" id="chatSheetEdit">修改回覆</button>
+              <button type="button" class="ghost sheet-danger" id="chatSheetRetract">撤回</button>
+              <button type="button" class="ghost" id="chatSheetCancel">取消</button>
+            </div>
+            <div id="chatSheetConfirm" style="display:none;">
+              <p style="text-align:center; margin:6px 0 10px;">撤回呢條訊息？撤回之後佢唔會再出現喺記錄入面，亦唔會再發畀 AI。</p>
+              <button type="button" class="sheet-danger" id="chatSheetRetractYes">確認撤回</button>
+              <button type="button" class="ghost" id="chatSheetRetractNo">算數，留返</button>
             </div>
           </div>
         </section>
@@ -1641,6 +1688,9 @@
           if (Object.prototype.toString.call(m.files) === "[object Array]") {
             var fls = m.files.filter(function (f) { return f && typeof f.name === "string" && typeof f.text === "string"; }).map(function (f) { return { name: f.name, text: f.text }; }).slice(0, 4);
             if (fls.length) out.files = fls;
+          }
+          if (m.quote && typeof m.quote === "object" && (m.quote.role === "user" || m.quote.role === "assistant") && typeof m.quote.text === "string" && m.quote.text) {
+            out.quote = { role: m.quote.role, text: m.quote.text.slice(0, 2000) };
           }
           if (m.imagesStripped === true) out.imagesStripped = true;
           return out;
@@ -4883,7 +4933,7 @@
           chatShowErrDetail("");
           box.innerHTML = "";
           $("chatEmpty").style.display = chatHistory.length ? "none" : "block";
-          chatHistory.forEach(function (m) {
+          chatHistory.forEach(function (m, idx) {
             var d = document.createElement("div");
             d.className = "chat-msg " + (m.role === "user" ? "me" : "him");
             if (m.images && m.images.length) {
@@ -4910,6 +4960,19 @@
                 d.appendChild(chip);
               });
             }
+            if (m.quote && typeof m.quote.text === "string" && m.quote.text) {
+              var q = document.createElement("div");
+              q.className = "chat-quote";
+              var qw = document.createElement("span");
+              qw.className = "q-who";
+              qw.textContent = m.quote.role === "user" ? "你" : "佢";
+              var qt = document.createElement("span");
+              qt.className = "q-text";
+              qt.textContent = m.quote.text;
+              q.appendChild(qw);
+              q.appendChild(qt);
+              d.appendChild(q);
+            }
             var tx = document.createElement("span");
             tx.className = "chat-text";
             tx.textContent = m.content;
@@ -4921,6 +4984,8 @@
               tm.textContent = pad2(dt.getHours()) + ":" + pad2(dt.getMinutes());
               d.appendChild(tm);
             }
+            var actRow = document.createElement("div");
+            actRow.className = "chat-actions" + (m.role === "user" ? " me" : "");
             if (m.role !== "user") {
               var spk = document.createElement("button");
               spk.type = "button";
@@ -4928,12 +4993,74 @@
               spk.textContent = "🔊 讀";
               spk.setAttribute("aria-label", "讀出呢句回覆");
               spk.addEventListener("click", function () { voiceSpeak(m.content, spk); });
-              d.appendChild(spk);
+              actRow.appendChild(spk);
             }
+            var menuBtn = document.createElement("button");
+            menuBtn.type = "button";
+            menuBtn.className = "chat-menu";
+            menuBtn.textContent = "⋯";
+            menuBtn.setAttribute("aria-label", "訊息操作：引用、修改、撤回");
+            menuBtn.addEventListener("click", function () { chatOpenMsgSheet(idx); });
+            actRow.appendChild(menuBtn);
+            d.appendChild(actRow);
             box.appendChild(d);
           });
           chatRenderExtras(box);
           if (scroll !== false) box.scrollTop = box.scrollHeight;
+        }
+        /* ---------- 訊息操作：引用／修改／撤回 ---------- */
+        var chatActionIndex = -1;
+        var chatActiveQuote = null;
+        var chatEditIndex = -1;
+        function chatQuoteTextOf(m) {
+          if (typeof m.content === "string" && m.content) return m.content;
+          if (m.images && m.images.length) return "[圖片]";
+          if (m.files && m.files.length) return "[檔案]";
+          return "";
+        }
+        function chatOpenMsgSheet(idx) {
+          chatActionIndex = idx;
+          chatCloseEditPanel();
+          var m = chatHistory[idx];
+          if (!m) return;
+          $("chatSheetTitle").textContent = m.role === "user" ? "你嘅訊息" : "佢嘅回覆";
+          $("chatSheetEdit").style.display = m.role === "user" ? "none" : "block";
+          $("chatSheetActions").style.display = "block";
+          $("chatSheetConfirm").style.display = "none";
+          $("chatSheetBackdrop").classList.add("show");
+          $("chatMsgSheet").classList.add("show");
+        }
+        function chatCloseMsgSheet() {
+          $("chatSheetBackdrop").classList.remove("show");
+          $("chatMsgSheet").classList.remove("show");
+          chatActionIndex = -1;
+        }
+        function chatSetQuote(idx) {
+          var m = chatHistory[idx];
+          if (!m) return;
+          var text = chatQuoteTextOf(m);
+          if (!text) return;
+          chatActiveQuote = { role: m.role, text: text.slice(0, 2000) };
+          $("chatQuoteWho").textContent = m.role === "user" ? "引用你嘅訊息" : "引用佢嘅回覆";
+          $("chatQuoteText").textContent = text;
+          $("chatQuoteBar").style.display = "flex";
+          try { $("chatInput").focus(); } catch (e) {}
+        }
+        function chatClearQuote() {
+          chatActiveQuote = null;
+          $("chatQuoteBar").style.display = "none";
+        }
+        function chatOpenEditPanel(idx) {
+          var m = chatHistory[idx];
+          if (!m || m.role === "user") return;
+          chatEditIndex = idx;
+          $("chatEditText").value = m.content;
+          $("chatEditPanel").style.display = "block";
+          try { $("chatEditText").focus(); } catch (e) {}
+        }
+        function chatCloseEditPanel() {
+          chatEditIndex = -1;
+          $("chatEditPanel").style.display = "none";
         }
         function chatErrorLine(status) {
           if (currentPersona().custom) {
@@ -5825,7 +5952,20 @@
             if (attachments.images && attachments.images.length) newMsg.images = attachments.images.slice(0, 4);
             if (attachments.files && attachments.files.length) newMsg.files = attachments.files.slice(0, 4);
           }
+          /* 有引用嗰陣：記錄入面留 quote 欄位畀畫面顯示；發出去嗰串就將引用
+             拼喺今次條訊息最前面，等 AI 知道你回緊邊句。舊記錄嘅 quote
+             唔會再拼入上下文——嗰句本身已經喺記錄入面。 */
+          if (chatActiveQuote) {
+            newMsg.quote = { role: chatActiveQuote.role, text: chatActiveQuote.text };
+          }
           var baseContext = chatHistory.concat([newMsg]).slice(-20).map(chatBuildContextMessage);
+          if (chatActiveQuote && baseContext.length) {
+            var lastCtx = baseContext[baseContext.length - 1];
+            var qLabel = chatActiveQuote.role === "user" ? "你之前講過" : "佢之前回覆過";
+            var qPrefix = "【引用" + qLabel + "：「" + chatActiveQuote.text + "」】\n";
+            if (typeof lastCtx.content === "string") lastCtx.content = qPrefix + lastCtx.content;
+            else if (Object.prototype.toString.call(lastCtx.content) === "[object Array]" && lastCtx.content.length && lastCtx.content[0].type === "text") lastCtx.content[0].text = qPrefix + lastCtx.content[0].text;
+          }
           /* Claude 官方守衛：Anthropic 接口唔食 OpenAI 格式嘅圖片 blocks。
              只要今次要發嘅上下文（連埋舊記錄）有任何一條帶圖，就成條攔住：
              唔發請求、唔入記錄、唔清待發附件，等用家轉設定或者清對話。 */
@@ -5839,6 +5979,7 @@
           if (chatHistory.length > 200) chatHistory = chatHistory.slice(chatHistory.length - 200);
           chatHistories[activePersonaId] = chatHistory;
           $("chatInput").value = "";
+          chatClearQuote();
           chatPendingImages = [];
           chatPendingFiles = [];
           try { renderChatAttachPreview(); } catch (e) {}
@@ -5885,6 +6026,40 @@
           });
         }
         $("chatSend").addEventListener("click", chatSendNow);
+        /* 訊息操作面板（引用／修改／撤回）嘅掣 */
+        $("chatSheetBackdrop").addEventListener("click", chatCloseMsgSheet);
+        $("chatSheetCancel").addEventListener("click", chatCloseMsgSheet);
+        $("chatSheetQuote").addEventListener("click", function () { var i = chatActionIndex; chatCloseMsgSheet(); chatSetQuote(i); });
+        $("chatSheetEdit").addEventListener("click", function () { var i = chatActionIndex; chatCloseMsgSheet(); chatOpenEditPanel(i); });
+        $("chatSheetRetract").addEventListener("click", function () { $("chatSheetActions").style.display = "none"; $("chatSheetConfirm").style.display = "block"; });
+        $("chatSheetRetractNo").addEventListener("click", function () { $("chatSheetActions").style.display = "block"; $("chatSheetConfirm").style.display = "none"; });
+        $("chatSheetRetractYes").addEventListener("click", function () {
+          var i = chatActionIndex;
+          chatCloseMsgSheet();
+          if (i < 0 || i >= chatHistory.length) return;
+          var wasLast = (i === chatHistory.length - 1);
+          chatHistory.splice(i, 1);
+          chatHistories[activePersonaId] = chatHistory;
+          if (wasLast) chatReplyExtras = null;
+          if (chatEditIndex === i) chatCloseEditPanel();
+          else if (chatEditIndex > i) chatEditIndex--;
+          storageSave();
+          renderChat();
+        });
+        $("chatQuoteCancel").addEventListener("click", chatClearQuote);
+        $("chatEditCancel").addEventListener("click", chatCloseEditPanel);
+        $("chatEditSave").addEventListener("click", function () {
+          var i = chatEditIndex;
+          if (i < 0 || i >= chatHistory.length) { chatCloseEditPanel(); return; }
+          var v = $("chatEditText").value;
+          if (!v.trim()) { toast("改完唔可以係空嘅，唔想留就撤回佢。"); return; }
+          chatHistory[i].content = v;
+          chatHistories[activePersonaId] = chatHistory;
+          chatCloseEditPanel();
+          storageSave();
+          renderChat();
+          toast("改好喇，之後會按改好嘅版本繼續傾。");
+        });
         $("chatInput").addEventListener("keydown", function (e) {
           if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); chatSendNow(); }
         });
@@ -5895,6 +6070,8 @@
           chatHistory = [];
           chatHistories[activePersonaId] = chatHistory;
           chatReplyExtras = null;
+          chatClearQuote();
+          chatCloseEditPanel();
           storageSave();
           renderChat();
           $("chatClearConfirm").style.display = "none";
@@ -6012,6 +6189,8 @@
           pendingDeletePersonaId = "";
           $("personaDeleteConfirm").style.display = "none";
           chatReplyExtras = null;
+          chatClearQuote();
+          chatCloseEditPanel();
           storageSave();
           renderPersonaAvatar();
           renderPersonaPanel();
