@@ -156,6 +156,13 @@
         margin-top: 14px; background: var(--surface); border: 1px solid var(--line);
         border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 18px;
       }
+      /* 劇情版入面，面板只為咗某一位 char 嘅編輯器／確認框而打開，名單同新增掣收埋，
+         等劇情版得返 char 嗰行一個改人設嘅入口，唔會喺上面改錯人。編輯器自己個標題
+         唔係面板嘅直屬子元素，唔受呢條規則影響。 */
+      #personaPanel.story-focus > .persona-panel-title,
+      #personaPanel.story-focus > #personaList,
+      #personaPanel.story-focus > #personaAddBtn,
+      #personaPanel.story-focus > #personaForm { display: none !important; }
       .persona-panel-title { margin: 0; font-weight: 700; }
       .persona-item {
         display: flex; align-items: center; gap: 12px; cursor: pointer;
@@ -6854,8 +6861,7 @@
           try { renderGreeting(); } catch (e) {}
           try { storySyncCharFromCompanion(); if (cardMode === "story") renderStoryAll(); } catch (e) {}
           chatStatus("");
-          $("personaPanel").style.display = "none";
-          $("personaAvatar").setAttribute("aria-expanded", "false");
+          try { personaPanelClose(); } catch (e2) {}
         }
         /* ---------- 劇情版 ----------
            陪伴版同劇情版一次只顯示一個，頂部版本掣撳一下就切過去。
@@ -6931,6 +6937,24 @@
           if (u) u.value = st.user;
           if (w) w.value = st.worldview;
         }
+        /* 陪伴者面板歸陪伴版：完整名單只喺陪伴版出現。劇情版入面，面板只會為咗
+           某一位 char 嘅編輯器／確認框而打開（story-focus，名單收埋），等劇情版
+           得返 char 嗰行一個改人設嘅入口。 */
+        function personaPanelOpen() {
+          var panel = $("personaPanel");
+          if (cardMode === "story") panel.classList.add("story-focus"); else panel.classList.remove("story-focus");
+          panel.style.display = "block";
+          $("personaAvatar").setAttribute("aria-expanded", "true");
+        }
+        function personaPanelClose() {
+          var panel = $("personaPanel");
+          panel.classList.remove("story-focus");
+          panel.style.display = "none";
+          $("personaAvatar").setAttribute("aria-expanded", "false");
+        }
+        function personaPanelHideIfStory() {
+          if (cardMode === "story") personaPanelClose();
+        }
         function applyCardMode() {
           var story = cardMode === "story";
           var nav = $("companionNav"), grid = $("companionGrid"), sm = $("storyMode"), fab = $("fabNav"), badge = $("modeToggle");
@@ -6939,6 +6963,7 @@
           if (sm) sm.style.display = story ? "" : "none";
           if (fab) fab.style.display = story ? "none" : "";
           if (badge) badge.textContent = story ? "劇情版 ⇄" : "陪伴版 ⇄";
+          if (story) { try { personaPanelClose(); } catch (e2) {} }
           if (story) { try { storySyncCharFromCompanion(); renderStoryAll(); } catch (e) {} }
         }
         function setCardMode(mode) {
@@ -7077,7 +7102,7 @@
                     : (p.copy
                       ? "真係還原「" + p.name + "」個頭像？會用返复制嗰阵嗰張，你上傳嗰張會清走。"
                       : "真係還原「" + p.name + "」個頭像？會用返預設嗰張，你上傳嗰張會清走。");
-                  try { $("personaPanel").style.display = "block"; $("personaAvatar").setAttribute("aria-expanded", "true"); } catch (e3) {}
+                  try { personaPanelOpen(); } catch (e3) {}
                   $("avatarResetConfirm").style.display = "block";
                   try { $("avatarResetConfirm").scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e4) {}
                 } catch (err) {}
@@ -7158,7 +7183,7 @@
                 e.stopPropagation();
                 pendingDeletePersonaId = p.id;
                 $("personaDeleteText").textContent = "真係刪咗「" + p.name + "」？呢個人設同佢嘅對話記錄會一併刪晒，冇得返轉頭。";
-                try { $("personaPanel").style.display = "block"; $("personaAvatar").setAttribute("aria-expanded", "true"); } catch (e2) {}
+                try { personaPanelOpen(); } catch (e2) {}
                 $("personaDeleteConfirm").style.display = "block";
                 try { $("personaDeleteConfirm").scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e3) {}
               });
@@ -7865,7 +7890,7 @@
           editingPersonaId = id;
           /* 編輯器喺陪伴者面板入面：由劇情版撳入嚟嗰陣，面板可能收埋咗，
              先打開佢，唔係編輯器開咗都睇唔到。 */
-          try { $("personaPanel").style.display = "block"; $("personaAvatar").setAttribute("aria-expanded", "true"); } catch (e) {}
+          try { personaPanelOpen(); } catch (e) {}
           var p = personaById(id);
           var name = p ? p.name : id;
           try { $("personaResetConfirm").style.display = "none"; } catch (e) {}
@@ -7943,6 +7968,7 @@
           editingPersonaId = "";
           try { $("personaEditPanel").style.display = "none"; } catch (e) {}
           try { $("personaResetConfirm").style.display = "none"; } catch (e) {}
+          try { personaPanelHideIfStory(); } catch (e2) {}
         }
         function compressAvatarFile(file, done) {
           var reader = new FileReader();
@@ -8022,6 +8048,7 @@
           $("avatarResetNo").addEventListener("click", function () {
             pendingAvatarResetId = "";
             try { $("avatarResetConfirm").style.display = "none"; } catch (e) {}
+            try { personaPanelHideIfStory(); } catch (e2) {}
           });
           $("avatarResetYes").addEventListener("click", function () {
             try {
@@ -8033,6 +8060,7 @@
               renderPersonaPanel();
               try { renderStoryCharList(); } catch (e) {}
               avatarStatusMsg("頭像還原好喇，用返預設嗰張。");
+              try { personaPanelHideIfStory(); } catch (e2) {}
             } catch (e) {}
           });
           $("avatarFileInput").addEventListener("change", function () {
@@ -8059,10 +8087,15 @@
           });
         } catch (e) {}
         $("personaAvatar").addEventListener("click", function () {
+          if (cardMode === "story") {
+            /* 陪伴者面板返咗陪伴版：喺劇情版撳頭像，就切返過去開面板。 */
+            setCardMode("companion");
+            personaPanelOpen();
+            return;
+          }
           var panel = $("personaPanel");
           var open = panel.style.display !== "none";
-          panel.style.display = open ? "none" : "block";
-          this.setAttribute("aria-expanded", open ? "false" : "true");
+          if (open) personaPanelClose(); else personaPanelOpen();
         });
         $("personaAddBtn").addEventListener("click", function () {
           $("personaForm").style.display = "block";
@@ -8090,6 +8123,7 @@
         $("personaDeleteNo").addEventListener("click", function () {
           pendingDeletePersonaId = "";
           $("personaDeleteConfirm").style.display = "none";
+          try { personaPanelHideIfStory(); } catch (e) {}
         });
         $("personaDeleteYes").addEventListener("click", function () {
           var id = pendingDeletePersonaId;
@@ -8116,6 +8150,7 @@
           renderPersonaAvatar();
           renderPersonaPanel();
           try { applyCopyPack(); } catch (e) {}
+          try { personaPanelHideIfStory(); } catch (e2) {}
         });
 
         /* 初始化聊天區 */
