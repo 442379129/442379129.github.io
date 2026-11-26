@@ -370,7 +370,7 @@
           题，其余为选择、判断、配对、排序等客观题。先自己作答，再点按钮看得分和解析；名词解释、简答题、论述题写完后对照参考答案与要点自评。答对满分的题会锁定，答案和解析固定显示；答错的题可以改了再做。只要一道题曾经答错过，它就会一直留在错题集里——就算后来订正答对、锁定了，也能用「只看错题」翻出来复习。
         </p>
         <p>
-          文中<button type="button" class="term" id="sample-term">红色带虚线的词</button>可以点开看名词解释（解释为帮助理解的拓展说明，具体以教材为准）。用浏览器菜单把本页「添加到主屏幕」，下次点图标就能直接进来做题。右侧三个悬浮球：金色是搜题与筛选（顶部可输关键词即时搜题），绿色是资料夹（把联网查到的资料贴进来和题目对照），紫色是期末跳转（点一下先清掉筛选，直接跳到拿破仑帝国第一题 WMS-081）；做题时选中任意文字，还会弹出色笔，可以荧光标重点、用红笔圈、补笔记。资料、标注和做题记录一样，只保留在本次打开期间。
+          文中<button type="button" class="term" id="sample-term">红色带虚线的词</button>可以点开看名词解释（解释为帮助理解的拓展说明，具体以教材为准）。用浏览器菜单把本页「添加到主屏幕」，下次点图标就能直接进来做题。右侧三个悬浮球：金色是搜题与筛选（顶部可输关键词即时搜题），绿色是资料夹（把联网查到的资料贴进来和题目对照），紫色是期末跳转（点一下先清掉筛选，直接跳到拿破仑帝国第一题 WMS-081）；做题时选中任意文字，还会弹出色笔，可以荧光标重点、用红笔圈、补笔记。做题记录、资料和标注会自动保存在这台设备的浏览器里，退出重进还在；想重来时在搜题面板里点「重新开始（清空记录）」。
         </p>
         <div class="stats" id="stats-line"></div>
         <div class="bar" role="progressbar" aria-label="做题进度" aria-valuemin="0" aria-valuemax="149" id="stats-bar">
@@ -436,7 +436,7 @@
         <h2 class="serif">资料夹</h2>
         <button type="button" class="x" id="mat-close" aria-label="关闭资料夹">✕</button>
       </div>
-      <p class="hint">把联网搜到的资料粘贴到这里，做题时调出来和题目对照，也可以当补充知识点存着。资料只保留在本次打开期间，关掉页面就会清空。</p>
+      <p class="hint">把联网搜到的资料粘贴到这里，做题时调出来和题目对照，也可以当补充知识点存着。资料会保存在这台设备的浏览器里，退出重进还在。</p>
       <form class="mat-form" id="mat-form">
         <label for="mat-title">标题</label>
         <input type="text" id="mat-title" placeholder="给这份资料起个名，例如：奥格斯堡和约要点" />
@@ -528,18 +528,50 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
       var QMAP = {};
       QUESTIONS.forEach(function (q) { QMAP[q.id] = q; });
 
-      // ---------- state (kept for this visit) ----------
+      // ---------- state (saved on this device) ----------
       var progress = {}; // id -> {score, answer, essayText, everWrong}
       var drafts = {};   // id -> {sel, tf, matchSel, orderRank, essayText, showRef, pts}
       var ui = { chapter: "全部", typeFilter: "all", wrongOnly: false, confirmReset: false, keyword: "" };
 
-      // ---------- materials + colour-pen highlights (this visit only) ----------
+      // ---------- materials + colour-pen highlights (saved on this device) ----------
       var materials = []; // {id, title, content, source, qid}
       var highlights = []; // {id, qid, text, color, note}
       var matSeq = 0, hlSeq = 0;
       var matEditingId = null;
       var pendingSel = null; // {qid, text, rect}
       var activeHlId = null;
+
+      var STORAGE_KEY = "wms-question-bank-state-v1";
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            progress: progress,
+            drafts: drafts,
+            materials: materials,
+            highlights: highlights,
+            matSeq: matSeq,
+            hlSeq: hlSeq,
+          }));
+        } catch (e) {}
+      }
+      function clearSavedState() {
+        try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      }
+      function loadState() {
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          var saved = JSON.parse(raw);
+          if (!saved || typeof saved !== "object") return;
+          if (saved.progress && typeof saved.progress === "object") progress = saved.progress;
+          if (saved.drafts && typeof saved.drafts === "object") drafts = saved.drafts;
+          if (Array.isArray(saved.materials)) materials = saved.materials;
+          if (Array.isArray(saved.highlights)) highlights = saved.highlights;
+          if (typeof saved.matSeq === "number") matSeq = saved.matSeq;
+          if (typeof saved.hlSeq === "number") hlSeq = saved.hlSeq;
+        } catch (e) {}
+      }
+      loadState();
 
       function draft(q) {
         if (drafts[q.id]) return drafts[q.id];
@@ -668,6 +700,7 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
           essayText: essayText !== undefined ? essayText : (prev ? prev.essayText : ""),
           everWrong: (prev && prev.everWrong) || score < 0.999,
         };
+        saveState();
       }
 
       function cardHtml(q) {
@@ -889,6 +922,7 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
           renderAll();
           scrollToCard(q.id);
         }
+        saveState();
       });
       listEl.addEventListener("change", function (e) {
         var sel = e.target.closest("select[data-act]");
@@ -901,6 +935,7 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
           var item = sel.getAttribute("data-item");
           if (sel.value === "") delete d.orderRank[item]; else d.orderRank[item] = Number(sel.value);
         }
+        saveState();
       });
       listEl.addEventListener("keydown", function (e) {
         if (e.key !== "Enter" && e.key !== " ") return;
@@ -912,6 +947,7 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
         if (!ta) return;
         var card = e.target.closest("[data-qid]");
         draft(QMAP[card.getAttribute("data-qid")]).essayText = ta.value;
+        saveState();
       });
       function scrollToCard(id) {
         var el = document.querySelector('[data-qid="' + id + '"]');
@@ -1052,6 +1088,7 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
             '<button type="button" class="btn-plain" id="reset-no">取消</button></span>';
           document.getElementById("reset-yes").addEventListener("click", function () {
             progress = {}; drafts = {}; materials = []; highlights = [];
+            clearSavedState();
             matEditingId = null; activeHlId = null;
             document.getElementById("hl-pop").hidden = true;
             ui.wrongOnly = false; ui.confirmReset = false;
@@ -1184,6 +1221,7 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
         }
         cancelMatEdit();
         renderMaterials();
+        saveState();
       });
       matFilter.addEventListener("change", renderMaterials);
       function renderMaterials() {
@@ -1244,6 +1282,7 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
             materials = materials.filter(function (m) { return m.id !== id; });
             if (matEditingId === id) cancelMatEdit();
             renderMaterials();
+            saveState();
             showToast("资料已删除");
           });
         });
@@ -1347,6 +1386,7 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
           hidePenTool();
           if (window.getSelection) window.getSelection().removeAllRanges();
           renderList();
+          saveState();
           showToast("已标注，去题目里点这段文字可以改颜色、补笔记或删除");
         });
       });
@@ -1385,6 +1425,7 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
           hl.color = b.getAttribute("data-hlpen");
           closeHlPop();
           renderList();
+          saveState();
         });
       });
       document.getElementById("hl-save-note").addEventListener("click", function () {
@@ -1393,12 +1434,14 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
         hl.note = hlNote.value.trim();
         closeHlPop();
         renderList();
+        saveState();
         showToast(hl.note ? "笔记已保存" : "笔记已清空");
       });
       document.getElementById("hl-delete").addEventListener("click", function () {
         highlights = highlights.filter(function (x) { return x.id !== activeHlId; });
         closeHlPop();
         renderList();
+        saveState();
         showToast("标注已删除");
       });
       document.getElementById("hl-close").addEventListener("click", closeHlPop);
