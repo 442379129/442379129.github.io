@@ -70,6 +70,7 @@
       .serif { font-family: "Noto Serif SC", "Songti SC", "STSong", Georgia, serif; }
       button { font: inherit; cursor: pointer; color: inherit; }
       button:disabled { cursor: default; }
+      .opt[aria-disabled="true"], .ptrow[aria-disabled="true"] { cursor: default; }
       .wrap { max-width: 768px; margin: 0 auto; padding: 0 12px 110px; }
 
       /* header scrolls away with the page (never sticky) */
@@ -369,7 +370,7 @@
           题，其余为选择、判断、配对、排序等客观题。先自己作答，再点按钮看得分和解析；名词解释、简答题、论述题写完后对照参考答案与要点自评。答对满分的题会锁定，答案和解析固定显示；答错的题可以改了再做。只要一道题曾经答错过，它就会一直留在错题集里——就算后来订正答对、锁定了，也能用「只看错题」翻出来复习。
         </p>
         <p>
-          文中<button type="button" class="term" id="sample-term">红色带虚线的词</button>可以点开看名词解释（解释为帮助理解的拓展说明，具体以教材为准）。用浏览器菜单把本页「添加到主屏幕」，下次点图标就能直接进来做题。右侧两个悬浮球：金色是搜题与筛选（顶部可输关键词即时搜题），绿色是资料夹（把联网查到的资料贴进来和题目对照）；做题时选中任意文字，还会弹出色笔，可以荧光标重点、用红笔圈、补笔记。资料、标注和做题记录一样，只保留在本次打开期间。
+          文中<button type="button" class="term" id="sample-term">红色带虚线的词</button>可以点开看名词解释（解释为帮助理解的拓展说明，具体以教材为准）。用浏览器菜单把本页「添加到主屏幕」，下次点图标就能直接进来做题。右侧三个悬浮球：金色是搜题与筛选（顶部可输关键词即时搜题），绿色是资料夹（把联网查到的资料贴进来和题目对照），紫色是期末跳转（点一下先清掉筛选，直接跳到拿破仑帝国第一题 WMS-081）；做题时选中任意文字，还会弹出色笔，可以荧光标重点、用红笔圈、补笔记。资料、标注和做题记录一样，只保留在本次打开期间。
         </p>
         <div class="stats" id="stats-line"></div>
         <div class="bar" role="progressbar" aria-label="做题进度" aria-valuemin="0" aria-valuemax="149" id="stats-bar">
@@ -694,7 +695,7 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
             else if (graded && picked) cls += " wrongpick";
             else if (picked) cls += " picked";
             h += '<button type="button" class="' + cls + '" data-act="opt" data-letter="' + letter + '"' +
-              (locked ? " disabled" : "") + ' aria-pressed="' + picked + '">' + rich(opt) + "</button>";
+              (locked ? ' aria-disabled="true"' : "") + ' aria-pressed="' + picked + '">' + rich(opt) + "</button>";
           });
           h += "</div>";
         } else if (q.type === "true_false") {
@@ -748,7 +749,7 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
             h += '<div class="lbl" style="margin-top:12px">对照要点自评（意思对了就算命中）</div>';
             (q.expected_points || []).forEach(function (pt, i) {
               h += '<button type="button" class="ptrow' + (d.pts[i] ? " on" : "") + '" data-act="pt" data-i="' + i + '"' +
-                (locked ? " disabled" : "") + ' aria-pressed="' + !!d.pts[i] + '">' +
+                (locked ? ' aria-disabled="true"' : "") + ' aria-pressed="' + !!d.pts[i] + '">' +
                 '<span class="ptbox">' + (d.pts[i] ? "✓" : "") + "</span><span>" + rich(pt) + "</span></button>";
             });
             if (!locked) h += '<button type="button" class="btn" data-act="selfgrade">' + (graded ? "重新保存自评" : "保存自评得分") + "</button>";
@@ -843,6 +844,9 @@ const TERMS = {"新航路开辟": "15世纪末至16世纪初，欧洲航海家�
         var q = QMAP[card.getAttribute("data-qid")];
         var d = draft(q);
         var act = btn.getAttribute("data-act");
+        var p = progress[q.id];
+        var locked = !!p && p.score >= 0.999;
+        if (locked && (act === "opt" || act === "tf" || act === "pt")) return;
         if (act === "lookup") {
           document.getElementById("search-input").value = q.stem.replace(/[？?]$/, "");
           updateSearchLink();
